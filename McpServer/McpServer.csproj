@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>McpAgentServer</RootNamespace>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.6.0-preview.1" />
+    <PackageReference Include="ModelContextProtocol" Version="0.6.0-preview.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Agents\Agents.csproj" />
+    <ProjectReference Include="..\Models\Models\Models.csproj" />
+    <ProjectReference Include="..\MultiAgentAiMcp.ServiceDefaults\MultiAgentAiMcp.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "multi-agent": {
+      "command": "dotnet",
+      "args": [ "run", "--project", "C:/Users/ailon/repo/MultiAgentAiMcp/McpServer/McpServer.csproj", "--", "--stdio" ],
+      "env": {
+        "OLLAMA_ENDPOINT": "http://localhost:11434",
+        "OLLAMA_MODEL": "qwen3-vl:30b-a3b-instruct-q8_0"
+      }
+    }
+  }
+}

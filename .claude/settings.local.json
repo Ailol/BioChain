@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "mcp__filesystem__write_file",
+      "mcp__filesystem__edit_file"
+    ]
+  }
+}
