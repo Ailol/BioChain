@@ -58,9 +58,10 @@ Desktop.ini
 *.userosscache
 *.sln.docstates
 
-# Secrets
+# Secrets - LOCAL CONFIG FILES (never committed)
 .env
 *.env.local
+appsettings.Local.json
 appsettings.*.local.json
 secrets.json
 
