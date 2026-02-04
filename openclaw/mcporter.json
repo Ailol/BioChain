@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "multiagent": {
-      "baseUrl": "http://mcpserver/mcp"
-    }
-  },
-  "imports": []
-}
