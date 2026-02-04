@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
+# Increase Node.js memory limit
+ENV NODE_OPTIONS="--max-old-space-size=768"
+
 WORKDIR /app
 
 # Install OpenClaw and mcporter globally
