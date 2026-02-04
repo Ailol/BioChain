@@ -1,10 +1,11 @@
 # OpenClaw Gateway Docker Setup
 FROM node:22-slim
 
-# Install dependencies
+# Install dependencies including git (required for npm)
 RUN apt-get update && apt-get install -y \
     chromium \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Puppeteer to use installed Chromium
@@ -28,5 +29,5 @@ COPY workspace/ /root/.openclaw/workspace/
 # Expose gateway port
 EXPOSE 18789
 
-# Version: 1.0.1 - Railway deploy trigger
+# Start OpenClaw gateway
 CMD ["openclaw", "gateway"]
