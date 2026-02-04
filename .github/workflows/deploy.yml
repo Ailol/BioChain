@@ -1,0 +1,31 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Set Railway Variables
+        run: |
+          railway variables set "ConnectionStrings__Personality=${{ secrets.POSTGRES_CONNECTION_STRING }}" || true
+          railway variables set "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" || true
+          railway variables set "OLLAMA_ENDPOINT=${{ secrets.OLLAMA_ENDPOINT }}" || true
+          railway variables set "OLLAMA_MODEL=${{ secrets.OLLAMA_MODEL }}" || true
+          railway variables set "OpenClaw__Enabled=false" || true
+          railway variables set "ASPNETCORE_URLS=http://+:\$PORT" || true
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Deploy
+        run: railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
