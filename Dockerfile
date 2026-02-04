@@ -2,24 +2,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy solution and ALL project files first
-COPY *.sln ./
-COPY nuget.config ./
-COPY McpServer/*.csproj ./McpServer/
-COPY Agents/*.csproj ./Agents/
-COPY OpenClaw/*.csproj ./OpenClaw/
-COPY Models/Models/*.csproj ./Models/Models/
-COPY MultiAgentAiMcp.ServiceDefaults/*.csproj ./MultiAgentAiMcp.ServiceDefaults/
-
-# Restore ALL dependencies using solution
-RUN dotnet restore McpAgentServer.sln
-
-# Copy everything else
+# Copy everything
 COPY . .
 
-# Build release
-WORKDIR /src/McpServer
-RUN dotnet publish -c Release -o /app/publish --no-restore
+# Restore and publish in one step (simpler, more reliable)
+RUN dotnet publish McpServer/McpServer.csproj -c Release -o /app/publish
 
 # Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
