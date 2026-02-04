@@ -20,17 +20,13 @@ RUN npm install -g openclaw mcporter
 RUN mkdir -p /root/.openclaw /root/.mcporter /root/.openclaw/workspace
 
 # Copy mcporter config (points to MCP server)
-COPY openclaw/mcporter.json /root/.mcporter/mcporter.json
+COPY mcporter.json /root/.mcporter/mcporter.json
 
 # Copy OpenClaw workspace (SOUL.md, etc.)
-COPY openclaw/workspace/ /root/.openclaw/workspace/
+COPY workspace/ /root/.openclaw/workspace/
 
 # Expose gateway port
 EXPOSE 18789
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:18789/health || exit 1
 
 # Start OpenClaw gateway
 CMD ["openclaw", "gateway"]
