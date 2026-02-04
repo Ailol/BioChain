@@ -1,0 +1,12 @@
+{
+  "gateway": {
+    "mode": "cloud",
+    "port": 18789
+  },
+  "anthropic": {
+    "apiKey": "${ANTHROPIC_API_KEY}"
+  },
+  "mcp": {
+    "configPath": "/root/.mcporter/mcporter.json"
+  }
+}

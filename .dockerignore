@@ -1,38 +1,16 @@
-# Build artifacts
-**/bin/
-**/obj/
-**/out/
-
-# IDE
-.vs/
-.vscode/
-.idea/
+.git
+.vs
+.vscode
+.idea
+**/bin
+**/obj
+**/node_modules
+.env
+*.md
+Thumbs.db
+.DS_Store
+k8s
 *.user
 *.suo
-
-# Git
-.git/
-.gitignore
-
-# Docker
-Dockerfile*
-docker-compose*
-.docker/
-
-# Local settings
-appsettings.*.local.json
-*.local.json
-.env
-.env.*
-
-# Test results
-TestResults/
-coverage/
-
-# Aspire
-.aspire/
-
-# Other
-*.md
-*.txt
-!README.md
+docker-compose*.yml
+openclaw

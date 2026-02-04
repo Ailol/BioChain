@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "multiagent": {
-      "baseUrl": "https://multiagentaimcp-production.up.railway.app/mcp"
+      "baseUrl": "http://mcpserver/mcp"
     }
   },
   "imports": []

@@ -1,36 +1,37 @@
-# OpenClaw Gateway Docker Setup
+# OpenClaw Gateway - Debian slim
 FROM node:22-slim
 
-# Install dependencies including git (required for npm)
-RUN apt-get update && apt-get install -y \
+# Install dependencies (including openssh for git)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
-    curl \
     git \
+    openssh-client \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Puppeteer to use installed Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-
-# Increase Node.js memory limit
-ENV NODE_OPTIONS="--max-old-space-size=768"
+ENV NODE_OPTIONS="--max-old-space-size=1400"
+ENV NODE_LLAMA_CPP_SKIP_DOWNLOAD=true
 
 WORKDIR /app
 
-# Install OpenClaw and mcporter globally
-RUN npm install -g openclaw mcporter
+# Configure git to use https instead of ssh
+RUN git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 
-# Create directories for persistent data
+# Install OpenClaw and mcporter
+RUN npm install -g openclaw mcporter --ignore-scripts && \
+    npm cache clean --force
+
+# Create directories
 RUN mkdir -p /root/.openclaw /root/.mcporter /root/.openclaw/workspace
 
-# Copy mcporter config (points to MCP server)
+# Copy configs
 COPY mcporter.json /root/.mcporter/mcporter.json
-
-# Copy OpenClaw workspace (SOUL.md, etc.)
+COPY openclaw.json /root/.openclaw/openclaw.json
 COPY workspace/ /root/.openclaw/workspace/
 
-# Expose gateway port
 EXPOSE 18789
 
-# Start OpenClaw gateway
 CMD ["openclaw", "gateway"]

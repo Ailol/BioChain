@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: mcpserver
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+        env:
+        - name: ASPNETCORE_URLS
+          value: "{{ .Values.env.ASPNETCORE_URLS }}"
+        - name: OLLAMA_ENDPOINT
+          value: "{{ .Values.env.OLLAMA_ENDPOINT }}"
+        - name: OLLAMA_MODEL
+          value: "{{ .Values.env.OLLAMA_MODEL }}"
+        - name: OpenClaw__Enabled
+          value: "{{ .Values.env.OpenClaw__Enabled }}"
+        - name: ConnectionStrings__Personality
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secrets
+              key: postgres-connection-string
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote }}
+            cpu: {{ .Values.resources.requests.cpu | quote }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote }}
+            cpu: {{ .Values.resources.limits.cpu | quote }}

@@ -1,0 +1,25 @@
+replicaCount: 1
+
+image:
+  repository: ailol/mcpserver
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 13370
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "50m"
+  limits:
+    memory: "256Mi"
+    cpu: "250m"
+
+env:
+  ASPNETCORE_URLS: "http://+:13370"
+  OLLAMA_ENDPOINT: "http://100.104.149.87:11434"
+  OLLAMA_MODEL: "qwen3-vl:30b-a3b-instruct"
+  OpenClaw__Enabled: "false"
