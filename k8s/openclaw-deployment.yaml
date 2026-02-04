@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  labels:
+    app: openclaw
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openclaw
+  template:
+    metadata:
+      labels:
+        app: openclaw
+    spec:
+      containers:
+      - name: openclaw
+        image: ghcr.io/ailol/multiagentaimcp/openclaw:latest
+        ports:
+        - containerPort: 18789
+        env:
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: anthropic-api-key
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size=1400"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "250m"
+          limits:
+            memory: "1.5Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: openclaw-data
+          mountPath: /root/.openclaw
+      volumes:
+      - name: openclaw-data
+        persistentVolumeClaim:
+          claimName: openclaw-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openclaw
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 18789
+  selector:
+    app: openclaw
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openclaw-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
