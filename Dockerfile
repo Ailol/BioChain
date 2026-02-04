@@ -2,14 +2,17 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
+# Copy solution and ALL project files first
 COPY *.sln ./
+COPY nuget.config ./
 COPY McpServer/*.csproj ./McpServer/
 COPY Agents/*.csproj ./Agents/
 COPY OpenClaw/*.csproj ./OpenClaw/
+COPY Models/Models/*.csproj ./Models/Models/
+COPY MultiAgentAiMcp.ServiceDefaults/*.csproj ./MultiAgentAiMcp.ServiceDefaults/
 
-# Restore dependencies
-RUN dotnet restore McpServer/McpServer.csproj
+# Restore ALL dependencies using solution
+RUN dotnet restore McpAgentServer.sln
 
 # Copy everything else
 COPY . .
