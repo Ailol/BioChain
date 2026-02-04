@@ -6,8 +6,6 @@
   },
   "deploy": {
     "startCommand": "dotnet McpServer.dll",
-    "healthcheckPath": "/mcp",
-    "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
