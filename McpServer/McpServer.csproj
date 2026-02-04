@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Agents\Agents.csproj" />
     <ProjectReference Include="..\Models\Models\Models.csproj" />
     <ProjectReference Include="..\MultiAgentAiMcp.ServiceDefaults\MultiAgentAiMcp.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\OpenClaw\OpenClaw.csproj" />
   </ItemGroup>
 
 </Project>

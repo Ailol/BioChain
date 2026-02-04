@@ -1,17 +1,80 @@
-services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_DB: personality
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - pgdata:/var/lib/postgresql/data
+# MultiAgentAiMcp Docker Compose
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose up -d --build      # Rebuild and start
+#   docker-compose logs -f mcpserver  # View logs
+#   docker-compose down               # Stop all
 
+services:
+  # MCP Server - Multi-Agent AI
+  mcpserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: multiagent-mcp
+    ports:
+      - "13370:13370"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:13370
+      - OLLAMA_ENDPOINT=${OLLAMA_ENDPOINT:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3-vl:30b-a3b-instruct-q8_0}
+      - ConnectionStrings__PersonalityDb=Host=postgres;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      - OpenClaw__Enabled=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:13370/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # PostgreSQL - Personality Storage
+  postgres:
+    image: postgres:16-alpine
+    container_name: multiagent-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=personality
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Use 5433 to avoid conflicts with local postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Optional: Ollama (if you want Ollama in Docker too)
+  # Uncomment if you don't have Ollama running locally
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: multiagent-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
+  #   restart: unless-stopped
 
 volumes:
-  pgdata:
-  ollama:
+  postgres_data:
+  # ollama_data:
+
+networks:
+  default:
+    name: multiagent-network

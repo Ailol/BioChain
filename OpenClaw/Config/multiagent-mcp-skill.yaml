@@ -1,0 +1,181 @@
+# MultiAgentMcp OpenClaw Skill Configuration
+# Place this file in your OpenClaw skills directory or use:
+#   openclaw skill install multiagent-mcp
+
+name: multiagent-mcp
+display_name: Multi-Agent MCP
+description: |
+  Multi-perspective AI discussions powered by specialized agent groups:
+  - Hats: Medicine + Systems Engineering thinking (7 agents)
+  - Neuro: Neurotransmitter-based personality analysis (7 agents)
+  - Group: Standard collaborative discussions (5 agents)
+  Plus personality profiling with PostgreSQL persistence.
+
+version: 1.0.0
+author: Agent-OA
+repository: https://github.com/your-repo/MultiAgentAiMcp
+license: MIT
+
+# Connection settings
+connection:
+  type: mcp
+  transport: http
+  endpoint: http://localhost:13370/mcp
+  timeout: 300  # 5 minutes for long agent discussions
+
+# Available tools
+tools:
+  - name: hats_chat
+    description: Run a Hats group chat - 7 agents bridging medicine and systems engineering perspectives
+    parameters:
+      topic:
+        type: string
+        required: true
+        description: The topic for discussion
+      maxIterations:
+        type: integer
+        default: 8
+        description: Maximum conversation turns
+
+  - name: neuro_chat
+    description: Run a Neuro group chat - 7 neurotransmitter agents analyze topics from neurochemical perspectives
+    parameters:
+      topic:
+        type: string
+        required: true
+        description: The topic for neurochemical analysis
+      maxIterations:
+        type: integer
+        default: 8
+        description: Maximum conversation turns
+
+  - name: group_chat
+    description: Run a standard 5-agent group discussion (Researcher, Creative, Critic, Planner, Synthesizer)
+    parameters:
+      topic:
+        type: string
+        required: true
+        description: The topic for discussion
+      maxIterations:
+        type: integer
+        default: 6
+        description: Maximum conversation turns
+
+  - name: get_personality
+    description: Get personality profile with behavior traits and neurotransmitter mappings
+    parameters:
+      person:
+        type: string
+        required: true
+        description: Person name to look up
+
+  - name: update_personality
+    description: Submit a behavior/event for neurotransmitter agents to evaluate and potentially add to personality profile
+    parameters:
+      person:
+        type: string
+        required: true
+        description: Person name
+      topic:
+        type: string
+        required: true
+        description: Topic/event name (e.g., Programming, Morning Routine)
+      context:
+        type: string
+        required: true
+        description: Context/description of the behavior or event
+
+  - name: full_personality_scan
+    description: Get comprehensive personality scan including traits, related hormones and peptides
+    parameters:
+      person:
+        type: string
+        required: true
+        description: Person name
+
+  - name: create_personality
+    description: Create a new person in the personality system
+    parameters:
+      name:
+        type: string
+        required: true
+        description: Person name to create
+
+  - name: scan_chat_update_personality
+    description: Analyze chat history for behavior patterns, optionally auto-add as traits
+    parameters:
+      person:
+        type: string
+        required: true
+        description: Person name
+      chatJson:
+        type: string
+        required: true
+        description: 'Chat JSON array: [{"role":"user","content":"..."}]'
+      autoAdd:
+        type: boolean
+        default: false
+        description: Automatically add discovered traits
+
+# Channel routing (optional)
+# Routes specific channels to specific agent types
+routing:
+  telegram:
+    default_tool: neuro_chat
+    greeting: "🧠 Hey! I'm your Neuro agent. Ask me anything and I'll analyze it from neurotransmitter perspectives."
+  
+  slack:
+    default_tool: hats_chat
+    greeting: "🎩 Hello! I'm your Hats agent, bridging medicine and systems engineering. What shall we discuss?"
+  
+  whatsapp:
+    default_tool: group_chat
+    greeting: "👋 Hi! I'm your multi-agent assistant. I can run group discussions, analyze personalities, or chat about anything."
+
+  discord:
+    default_tool: group_chat
+    greeting: "🤖 Multi-Agent MCP online! Use /hats, /neuro, or /group to start a discussion."
+
+  voice:
+    default_tool: hats_chat
+    greeting: "Multi-Agent assistant here. What would you like to discuss?"
+
+# Example invocations for the agent to learn from
+examples:
+  - input: "Run a hats discussion about work-life balance"
+    tool: hats_chat
+    arguments:
+      topic: "work-life balance and its effects on health and productivity"
+
+  - input: "What does my personality look like?"
+    tool: get_personality
+    arguments:
+      person: "{{user.name}}"
+
+  - input: "I've been procrastinating a lot lately"
+    tool: update_personality
+    arguments:
+      person: "{{user.name}}"
+      topic: "Procrastination"
+      context: "User reports increased procrastination behavior"
+
+  - input: "Analyze my burnout from a brain chemistry perspective"
+    tool: neuro_chat
+    arguments:
+      topic: "burnout, chronic stress, and recovery strategies from a neurochemical perspective"
+
+# Health check
+health:
+  endpoint: http://localhost:13370/health
+  interval: 30
+
+# Tags for discovery
+tags:
+  - multi-agent
+  - personality
+  - psychology
+  - neuroscience
+  - systems-thinking
+  - group-chat
+  - ollama
+  - mcp

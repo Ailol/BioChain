@@ -1,0 +1,41 @@
+# Fly.io Configuration
+# Deploy: fly launch --copy-config --yes
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "multiagent-mcp"
+primary_region = "ams"  # Amsterdam, change to your nearest
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  ASPNETCORE_URLS = "http://+:8080"
+  # OLLAMA_ENDPOINT set via secrets
+  # OLLAMA_MODEL set via secrets
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false  # Keep running for MCP
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+# Health check
+[checks]
+  [checks.health]
+    type = "http"
+    port = 8080
+    path = "/mcp"
+    method = "POST"
+    interval = "30s"
+    timeout = "5s"

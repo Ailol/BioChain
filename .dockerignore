@@ -1,0 +1,38 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker/
+
+# Local settings
+appsettings.*.local.json
+*.local.json
+.env
+.env.*
+
+# Test results
+TestResults/
+coverage/
+
+# Aspire
+.aspire/
+
+# Other
+*.md
+*.txt
+!README.md

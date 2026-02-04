@@ -1,4 +1,5 @@
 using Agents;
+using OpenClaw;
 
 // Check for stdio mode (backward compatibility with Claude Desktop direct connection)
 if (args.Contains("--stdio"))
@@ -30,6 +31,21 @@ static async Task RunHttpMode(string[] args)
             options.Stateless = true;  // If this option exists
         })
         .WithToolsFromAssembly();
+
+    // Add OpenClaw Gateway integration (optional - connects to OpenClaw for multi-channel access)
+    var enableOpenClaw = builder.Configuration.GetValue<bool>("OpenClaw:Enabled", false);
+    if (enableOpenClaw)
+    {
+        builder.Services.AddOpenClaw(options =>
+        {
+            options.GatewayUrl = builder.Configuration["OpenClaw:GatewayUrl"] ?? "ws://127.0.0.1:18789";
+            options.McpEndpoint = builder.Configuration["OpenClaw:McpEndpoint"] ?? "http://localhost:13370/mcp";
+            options.ReconnectDelaySeconds = builder.Configuration.GetValue("OpenClaw:ReconnectDelaySeconds", 5);
+            options.EnableVoice = builder.Configuration.GetValue("OpenClaw:EnableVoice", true);
+        });
+        Console.WriteLine("OpenClaw Gateway integration enabled");
+    }
+
     var app = builder.Build();
 
     // Map Aspire default endpoints (health, alive)
