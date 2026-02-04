@@ -28,5 +28,5 @@ COPY workspace/ /root/.openclaw/workspace/
 # Expose gateway port
 EXPOSE 18789
 
-# Start OpenClaw gateway
+# Version: 1.0.1 - Railway deploy trigger
 CMD ["openclaw", "gateway"]
