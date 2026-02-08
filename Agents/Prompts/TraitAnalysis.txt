@@ -1,0 +1,11 @@
+Analyze the following text and extract personality traits, behavioral patterns, values,
+and communication styles. For each trait, provide a topic name and explanation.
+
+Also suggest which neurotransmitter system might be most associated with each trait:
+{ntGuide}
+
+Text to analyze:
+{rawText}
+
+Return ONLY a JSON array (no markdown, no explanation):
+{traitJsonExample}

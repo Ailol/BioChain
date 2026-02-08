@@ -1,0 +1,19 @@
+Based on this personality profile, generate exactly {agentCount} specialized discussion agents.
+(A Synthesizer agent will be added automatically as the final agent.)
+
+Person: {person}
+Personality Traits:
+{traitsDescription}
+
+Generate agents that reflect and complement this personality's unique characteristics.
+Each agent should have a distinct perspective derived from the personality traits.
+
+Return ONLY valid JSON in this exact format (no markdown, no explanation, no code blocks):
+{agentJsonExample}
+
+Requirements:
+- Agent names should be descriptive single words (like "Motivator", "Analyst", "Empath", "Strategist")
+- Each agent should have 3-4 responsibilities that relate to the personality traits
+- Keep maxWords between 150-250
+- Make each agent's perspective unique and valuable for group discussions
+- Generate exactly {agentCount} agents

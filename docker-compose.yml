@@ -1,28 +1,27 @@
-# MultiAgentAiMcp Docker Compose - Full Stack
+# MultiAgentAiMcp Docker Compose
 # Usage:
 #   docker-compose up -d                    # Start all services
 #   docker-compose up -d --build            # Rebuild and start
-#   docker-compose up -d mcpserver postgres # Start without OpenClaw
 #   docker-compose logs -f mcpserver        # View logs
-#   docker-compose logs -f openclaw         # View OpenClaw logs
 #   docker-compose down                     # Stop all
 
 services:
   # MCP Server - Multi-Agent AI
-  mcpserver:
+  mcp:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: multiagent-mcp
     ports:
       - "13370:13370"
+    env_file:
+      - .env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:13370
-      - OLLAMA_ENDPOINT=${OLLAMA_ENDPOINT:-http://host.docker.internal:11434}
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3-vl:30b-a3b-instruct-q8_0}
-      - ConnectionStrings__PersonalityDb=Host=postgres;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
-      - OpenClaw__Enabled=false
+      - Llm__ChatEndpoint=http://host.docker.internal:8000
+      - Llm__EmbeddingEndpoint=http://host.docker.internal:11434
+      - PERSONALITY_DB=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,7 +37,7 @@ services:
 
   # PostgreSQL - Personality Storage
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: multiagent-postgres
     environment:
       - POSTGRES_USER=postgres
@@ -46,6 +45,7 @@ services:
       - POSTGRES_DB=personality
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5433:5432"
     healthcheck:
@@ -54,28 +54,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
-  # OpenClaw Gateway - WhatsApp/Telegram/Slack integration
-  openclaw:
-    build:
-      context: .
-      dockerfile: openclaw/Dockerfile
-    container_name: multiagent-openclaw
-    ports:
-      - "18789:18789"
-    environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENCLAW_GATEWAY_PORT=18789
-    volumes:
-      # Persist WhatsApp session and config
-      - openclaw_data:/root/.openclaw
-      - openclaw_mcporter:/root/.mcporter
-    depends_on:
-      - mcpserver
-    restart: unless-stopped
-    # Note: First run requires QR code scan for WhatsApp
-    # Run: docker-compose logs -f openclaw
-    # Then scan the QR code with WhatsApp
 
   # Optional: Ollama (if you want Ollama in Docker too)
   # ollama:
@@ -94,10 +72,44 @@ services:
   #             capabilities: [gpu]
   #   restart: unless-stopped
 
+  # Optional: vLLM chat model (GPU 0)
+  # vllm-chat:
+  #   image: vllm/vllm-openai:latest
+  #   container_name: multiagent-vllm-chat
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=0
+  #   command: ["--model", "Qwen/Qwen3-VL-4B", "--port", "8000"]
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             device_ids: ["0"]
+  #             capabilities: [gpu]
+  #   restart: unless-stopped
+
+  # Optional: vLLM embedding model (GPU 1)
+  # vllm-embed:
+  #   image: vllm/vllm-openai:latest
+  #   container_name: multiagent-vllm-embed
+  #   ports:
+  #     - "8001:8000"
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=1
+  #   command: ["--model", "BAAI/bge-small-en-v1.5", "--task", "embed", "--port", "8000"]
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             device_ids: ["1"]
+  #             capabilities: [gpu]
+  #   restart: unless-stopped
+
 volumes:
   postgres_data:
-  openclaw_data:
-  openclaw_mcporter:
   # ollama_data:
 
 networks:

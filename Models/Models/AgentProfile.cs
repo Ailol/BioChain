@@ -27,7 +27,8 @@ public class AgentProfile
         foreach (var r in Responsibilities)
             sb.AppendLine($"- {r}");
         sb.AppendLine(Style);
-        if (Conclusion)
+        // Only add default CONCLUSION instruction if Style doesn't already contain CONCLUSION guidance
+        if (Conclusion && !Style.Contains("CONCLUSION:", StringComparison.OrdinalIgnoreCase))
             sb.AppendLine("End with \"CONCLUSION:\" followed by 3-5 key takeaways.");
         if (MaxWords > 0)
             sb.AppendLine($"Keep your response focused and under {MaxWords} words.");

@@ -1,12 +1,22 @@
 {
-  "mcpServers": {
-    "multi-agent": {
-      "command": "dotnet",
-      "args": [ "run", "--project", "C:/Users/ailon/repo/MultiAgentAiMcp/McpServer/McpServer.csproj", "--", "--stdio" ],
-      "env": {
-        "OLLAMA_ENDPOINT": "http://localhost:11434",
-        "OLLAMA_MODEL": "qwen3-vl:30b-a3b-instruct-q8_0"
-      }
-    }
-  }
+	"mcpServers": {
+		"multi-agent": {
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"C:/Users/ailon/repo/MultiAgentAiMcp/McpServer/McpServer.csproj",
+				"--",
+				"--stdio"
+			],
+			"env": {
+				"Llm__Backend": "Vllm",
+				"Llm__ChatEndpoint": "http://localhost:8000",
+				"Llm__ThinkingModel": "cyankiwi/Qwen3-30B-A3B-Instruct-2507-AWQ-4bit",
+				"Llm__InstructModel": "cyankiwi/Qwen3-30B-A3B-Instruct-2507-AWQ-4bit",
+				"Llm__EmbeddingModel": "qwen3-embedding",
+				"PERSONALITY_DB": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres"
+			}
+		}
+	}
 }

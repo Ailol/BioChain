@@ -1,0 +1,56 @@
+{
+  "AgentGeneration": {
+    "JsonExample": [
+      {
+        "name": "AgentName1",
+        "role": "Role Title",
+        "responsibilities": ["responsibility 1", "responsibility 2", "responsibility 3"],
+        "style": "communication style description",
+        "maxWords": 200
+      },
+      {
+        "name": "AgentName2",
+        "role": "Role Title",
+        "responsibilities": ["responsibility 1", "responsibility 2", "responsibility 3"],
+        "style": "communication style description",
+        "maxWords": 200
+      }
+    ],
+    "RoleExamples": {
+      "senior engineers": ["Architect", "Backend", "Frontend", "DevOps", "SecurityLead", "Mentor"],
+      "product managers": ["Strategy", "Growth", "Technical", "UX", "DataDriven", "CustomerVoice"],
+      "medical team": ["Diagnostician", "Surgeon", "Pharmacist", "Nurse", "Researcher", "Ethicist"]
+    }
+  },
+  "Suggestions": {
+    "TopicTemplate": "{person} just texted you: \"{text}\"\n\nRelationship: {group}\n\n{profileSection}\n\nNEUROANALYSIS OF THIS MESSAGE:\n{analysis}\n\nYOUR TASK: Write the actual text message to send back to {person}.\n- You are the USER, not {person}\n- Write ONLY the message itself — no analysis, no explanation, no preamble\n- Use your knowledge of WHO {person} is AND the neuroanalysis above to craft a message that lands well with THEM specifically\n- Match the {group} relationship context in tone and boundaries\n- End your response with SUGGEST: followed by the exact text to send",
+    "SynthesizerTemplate": "Now pick the TOP {count} best suggestions from the agents above. For each, write ONLY the message text.\nFormat:\nSUGGEST: <message 1>\nSUGGEST: <message 2>\nSUGGEST: <message 3>\nDo NOT explain or analyze. Just the messages."
+  },
+  "ConversationAnalysis": {
+    "JsonExample": [
+      {
+        "startIndex": 0,
+        "endIndex": 2,
+        "reason": "Shows how they handle frustration",
+        "traits": [
+          {"topic": "Conflict Resolution", "explanation": "Tends to withdraw when frustrated", "speaker": "{targetName}"}
+        ]
+      }
+    ],
+    "PromptTemplate": "Analyze this conversation. {targetName} is the person being analyzed. {userName} is the other participant.\n\nFind 3-7 significant exchanges that reveal {targetName}'s personality traits, emotional patterns, values, communication style, or behavioral tendencies.\n\nFocus on:\n- Emotional reactions and how they handle situations\n- Communication patterns and style\n- Values and priorities expressed\n- Conflict handling or avoidance patterns\n- Interests and passions\n- Social dynamics and relationship patterns\n\nConversation:\n{conversationText}\n\nReturn JSON array only (no markdown, no explanation):\n{jsonExample}"
+  },
+  "TraitAnalysis": {
+    "JsonExample": [
+      { "topic": "Topic Name", "explanation": "Description of the trait", "suggestedNeurotransmitter": "Dopamine" },
+      { "topic": "Another Topic", "explanation": "Description", "suggestedNeurotransmitter": "Serotonin" }
+    ],
+    "NeurotransmitterGuide": {
+      "Dopamine": "reward, motivation, goal-pursuit, pleasure, drive",
+      "Serotonin": "mood stability, patience, contentment, social harmony",
+      "Norepinephrine": "alertness, stress response, urgency, fight-or-flight",
+      "GABA": "inhibition, relaxation, calming, anxiety reduction",
+      "Glutamate": "learning, memory, cognitive processing, curiosity",
+      "Acetylcholine": "focus, attention, precision, concentration"
+    }
+  }
+}

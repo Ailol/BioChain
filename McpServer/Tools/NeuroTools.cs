@@ -1,18 +1,77 @@
 using System.ComponentModel;
+using System.Text.Json;
 using ModelContextProtocol.Server;
 using Agents;
+using Models;
 
 namespace McpAgentServer.Tools;
 
+/// <summary>
+/// MCP tools for neuroresponse queries using vector similarity.
+/// </summary>
 [McpServerToolType]
-public class NeuroTools(MultiAgentService agentService)
+public class NeuroTools(NeuroService neuroService, GroupAgentService agentService, Agents.PersonalityService personalityService, EmbeddingService embeddingService)
 {
-    [McpServerTool(Name = "neuro_chat")]
-    [Description("Run a Neuro group chat discussion. All 7 agents (Dopamine, Serotonin, Norepinephrine, GABA, Glutamate, Acetylcholine, NeuroSynthesizer) collaborate on the topic, analyzing it from their respective neurotransmitter perspectives.")]
-    public async Task<string> NeuroChat(
-        [Description("The topic for the neurochemical group discussion")] string topic,
-        [Description("Maximum number of conversation turns (default: 8)")] int maxIterations = 8)
+    [McpServerTool(Name = "neurorespond")]
+    [Description("Analyze what someone (e.g., Karolina, Anja) wrote TO you. " +
+                 "Does a full neuroscan: neurotransmitters, hormones, peptides. " +
+                 "Analyzes their state, then crafts suggested responses for YOU to send back. " +
+                 "Example: 'neurorespond to karolina, relationship: Dating, text: I had a great time yesterday 😊'")]
+    public async Task<string> Neurorespond(
+        [Description("Person name who SENT the message (e.g., Karolina, Anja). Their personality will be scanned.")] string person,
+        [Description("What they wrote to you — the message you received")] string text,
+        [Description("Relationship context: Dating, Relationship, Friend, MindHat, ExWife, Family, Colleague, Acquaintance. " +
+                     "Defaults to Dating if not specified.")]
+        string? relationship = null,
+        [Description("Number of suggested responses to generate (0-5, default: 3)")] int suggestionCount = 3)
     {
-        return await agentService.RunNeuroGroupChatDiscussionAsync(topic, maxIterations);
+        try
+        {
+            var result = await neuroService.NeuroAnalyzeAsync(
+                person,
+                text,
+                relationship,
+                agentService,
+                personalityService,
+                suggestionCount);
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+    }
+
+    [McpServerTool(Name = "backfill_embeddings")]
+    [Description("Generate vector embeddings for all personality traits that don't have them yet. " +
+                 "This is required before neurorespond will work. Optionally filter by person name.")]
+    public async Task<string> BackfillEmbeddings(
+        [Description("Optional: limit to specific person (e.g., Karolina)")] string? person = null)
+    {
+        try
+        {
+            var result = await embeddingService.BackfillEmbeddingsAsync(person);
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(new { error = ex.Message });
+        }
+    }
+
+    [McpServerTool(Name = "backfill_hormone_peptide_embeddings")]
+    [Description("Generate vector embeddings for all hormone and peptide descriptions that don't have them yet. " +
+                 "This is required before full_personality_scan will use vector-computed hormone/peptide scores.")]
+    public async Task<string> BackfillHormonePeptideEmbeddings()
+    {
+        try
+        {
+            var result = await embeddingService.BackfillHormonePeptideEmbeddingsAsync();
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(new { error = ex.Message });
+        }
     }
 }

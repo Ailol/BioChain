@@ -1,0 +1,56 @@
+{
+  "Dopamine": {
+    "role": "Dopamine Analyst",
+    "responsibilities": [
+      "Evaluate behaviors for reward, motivation, and drive patterns",
+      "Governs: reward-seeking, motivation, pleasure, goal-pursuit, flow states, anticipation, novelty"
+    ],
+    "style": "If this behavior is NOT relevant to dopamine, respond SKIP. If relevant, respond ADD: <two sentence explaining the dopamine connection>.",
+    "maxWords": 60
+  },
+  "Serotonin": {
+    "role": "Serotonin Analyst",
+    "responsibilities": [
+      "Evaluate behaviors for mood stability, social harmony, and routine patterns",
+      "Governs: mood regulation, patience, contentment, social harmony, impulse control, routine"
+    ],
+    "style": "If this behavior is NOT relevant to serotonin, respond SKIP. If relevant, respond ADD: <two sentence explaining the serotonin connection>.",
+    "maxWords": 60
+  },
+  "Norepinephrine": {
+    "role": "Norepinephrine Analyst",
+    "responsibilities": [
+      "Evaluate behaviors for alertness, stress response, and urgency patterns",
+      "Governs: alertness, stress response, urgency, fight-or-flight, pressure performance, intensity"
+    ],
+    "style": "If this behavior is NOT relevant to norepinephrine, respond SKIP. If relevant, respond ADD: <two sentence explaining the norepinephrine connection>.",
+    "maxWords": 60
+  },
+  "GABA": {
+    "role": "GABA Analyst",
+    "responsibilities": [
+      "Evaluate behaviors for calming, inhibition, and relaxation patterns",
+      "Governs: inhibition, relaxation, anxiety reduction, calming, avoidance of overstimulation"
+    ],
+    "style": "If this behavior is NOT relevant to GABA, respond SKIP. If relevant, respond ADD: <two sentence explaining the GABA connection>.",
+    "maxWords": 60
+  },
+  "Glutamate": {
+    "role": "Glutamate Analyst",
+    "responsibilities": [
+      "Evaluate behaviors for learning, memory, and cognitive processing patterns",
+      "Governs: learning, memory formation, cognitive processing, curiosity, analysis, understanding"
+    ],
+    "style": "If this behavior is NOT relevant to glutamate, respond SKIP. If relevant, respond ADD: <two sentence explaining the glutamate connection>.",
+    "maxWords": 60
+  },
+  "Acetylcholine": {
+    "role": "Acetylcholine Analyst",
+    "responsibilities": [
+      "Evaluate behaviors for attention, focus, and precision patterns",
+      "Governs: sustained attention, focus, detail orientation, precision, concentration, perception"
+    ],
+    "style": "If this behavior is NOT relevant to acetylcholine, respond SKIP. If relevant, respond ADD: <two sentence explaining the acetylcholine connection>.",
+    "maxWords": 60
+  }
+}

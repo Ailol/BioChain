@@ -6,7 +6,32 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "mcp__filesystem__write_file",
-      "mcp__filesystem__edit_file"
+      "mcp__filesystem__edit_file",
+      "WebFetch(domain:docs.openclaw.ai)",
+      "Bash(docker exec:*)",
+      "Bash(docker build:*)",
+      "Bash(docker create:*)",
+      "Bash(docker cp:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec:*)",
+      "Bash(docker-compose config:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(docker compose up:*)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(ping:*)",
+      "Bash(python:*)",
+      "Bash(del:*)",
+      "Bash(dotnet add package:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet run:*)",
+      "Bash(docker compose build:*)",
+      "Bash(powershell -Command \"[Convert]::ToBase64String\\([IO.File]::ReadAllBytes\\(''C:\\\\Users\\\\ailon\\\\repo\\\\MultiAgentAiMcp\\\\cv\\\\CV_Consid.docx''\\)\\) | Set-Content -NoNewline ''C:\\\\Users\\\\ailon\\\\repo\\\\MultiAgentAiMcp\\\\cv\\\\cv_b64.txt''\")",
+      "Bash(powershell -Command \"$b64 = Get-Content -Raw ''C:\\\\Users\\\\ailon\\\\repo\\\\MultiAgentAiMcp\\\\cv\\\\cv_b64.txt''; $payload = ''{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"id\"\":1,\"\"method\"\":\"\"tools/call\"\",\"\"params\"\":{\"\"name\"\":\"\"analyze_document_file\"\",\"\"arguments\"\":{\"\"base64Content\"\":\"\"'' + $b64 + ''\"\",\"\"documentType\"\":\"\"docx\"\",\"\"targetPersonalityName\"\":\"\"ailo-cv\"\",\"\"embeddings\"\":false}}}''; [IO.File]::WriteAllText\\(''C:\\\\Users\\\\ailon\\\\repo\\\\MultiAgentAiMcp\\\\cv\\\\request.json'', $payload\\)\")",
+      "Bash(powershell -Command \"$b64 = Get-Content -Raw ''C:\\\\Users\\\\ailon\\\\repo\\\\MultiAgentAiMcp\\\\cv\\\\cv_b64.txt''; $args_obj = @{base64Content=$b64;documentType=''docx'';targetPersonalityName=''ailo-cv'';embeddings=$false}; $payload = @{jsonrpc=''2.0'';id=1;method=''tools/call'';params=@{name=''analyze_document_file'';arguments=$args_obj}} | ConvertTo-Json -Depth 5; [IO.File]::WriteAllText\\(''C:\\\\Users\\\\ailon\\\\repo\\\\MultiAgentAiMcp\\\\cv\\\\request.json'', $payload\\)\")",
+      "Bash(powershell:*)"
     ]
   }
 }

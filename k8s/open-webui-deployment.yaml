@@ -20,19 +20,20 @@ spec:
         ports:
         - containerPort: 8080
         env:
+        # Connect via Tailscale proxy
         - name: OLLAMA_BASE_URL
-          value: "http://100.104.149.87:11434"  # Your Tailscale Ollama
+          value: "http://ollama-proxy:11434"
         - name: WEBUI_SECRET_KEY
-          value: "your-secret-key-change-me"
+          value: "openclaw-webui-secret-2026"
         - name: ENABLE_SIGNUP
           value: "true"
         resources:
           requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
             memory: "512Mi"
             cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
         volumeMounts:
         - name: webui-data
           mountPath: /app/backend/data

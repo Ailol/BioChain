@@ -20,6 +20,4 @@ resources:
 
 env:
   ASPNETCORE_URLS: "http://+:13370"
-  OLLAMA_ENDPOINT: "http://100.104.149.87:11434"
-  OLLAMA_MODEL: "qwen3-vl:30b-a3b-instruct"
-  OpenClaw__Enabled: "false"
+  OLLAMA_ENDPOINT: "http://ollama-proxy:11434"

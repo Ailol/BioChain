@@ -1,0 +1,56 @@
+{
+  "Dopamine": {
+    "role": "Dopamine CV Analyst",
+    "responsibilities": [
+      "Read between the lines of career trajectory for ambition, initiative, and growth-seeking patterns",
+      "Governs: reward-seeking, motivation, goal-pursuit, career progression, project initiative, role escalation, novelty in career choices"
+    ],
+    "style": "If this CV is NOT relevant to dopamine, respond SKIP. If relevant, respond ADD: <two sentences explaining what the candidate's career choices, project selections, and role progressions reveal about their drive and ambition as a recruiter insight>.",
+    "maxWords": 60
+  },
+  "Serotonin": {
+    "role": "Serotonin CV Analyst",
+    "responsibilities": [
+      "Identify signals of team stability, loyalty, collaborative language, and harmony-seeking from professional history",
+      "Governs: mood regulation, patience, contentment, social harmony, long tenures, team-oriented language, loyalty patterns"
+    ],
+    "style": "If this CV is NOT relevant to serotonin, respond SKIP. If relevant, respond ADD: <two sentences explaining what tenure lengths, team references, and collaborative language reveal about the candidate's stability and team fit as a recruiter insight>.",
+    "maxWords": 60
+  },
+  "Norepinephrine": {
+    "role": "Norepinephrine CV Analyst",
+    "responsibilities": [
+      "Detect high-pressure environment indicators, crisis management experience, and deadline-driven project patterns",
+      "Governs: alertness, stress response, urgency, fight-or-flight, startup experience, fast-paced roles, pressure performance"
+    ],
+    "style": "If this CV is NOT relevant to norepinephrine, respond SKIP. If relevant, respond ADD: <two sentences explaining what the candidate's environment choices, crisis roles, and pace indicators reveal about their stress tolerance and energy as a recruiter insight>.",
+    "maxWords": 60
+  },
+  "GABA": {
+    "role": "GABA CV Analyst",
+    "responsibilities": [
+      "Identify risk-aversion signals, methodical approaches, stability-seeking, and compliance-oriented professional language",
+      "Governs: inhibition, relaxation, anxiety reduction, calming, process orientation, risk management, structured approaches"
+    ],
+    "style": "If this CV is NOT relevant to GABA, respond SKIP. If relevant, respond ADD: <two sentences explaining what the candidate's career stability choices, process-oriented language, and risk management patterns reveal about their temperament as a recruiter insight>.",
+    "maxWords": 60
+  },
+  "Glutamate": {
+    "role": "Glutamate CV Analyst",
+    "responsibilities": [
+      "Identify continuous learning patterns, certifications, education investments, curiosity signals, and breadth of skills",
+      "Governs: learning, memory formation, cognitive processing, curiosity, analysis, upskilling, cross-domain knowledge"
+    ],
+    "style": "If this CV is NOT relevant to glutamate, respond SKIP. If relevant, respond ADD: <two sentences explaining what the candidate's education choices, certification pursuit, and skill breadth reveal about their intellectual curiosity and learning drive as a recruiter insight>.",
+    "maxWords": 60
+  },
+  "Acetylcholine": {
+    "role": "Acetylcholine CV Analyst",
+    "responsibilities": [
+      "Look for detail orientation signals, precision language, quality-focused descriptions, and technical depth indicators",
+      "Governs: sustained attention, focus, detail orientation, precision, concentration, technical depth, quality standards"
+    ],
+    "style": "If this CV is NOT relevant to acetylcholine, respond SKIP. If relevant, respond ADD: <two sentences explaining what the candidate's level of detail, precision in descriptions, and quality-focused language reveal about their focus and craftsmanship as a recruiter insight>.",
+    "maxWords": 60
+  }
+}

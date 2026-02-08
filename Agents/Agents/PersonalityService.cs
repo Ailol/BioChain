@@ -1,188 +1,126 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using Npgsql;
+using Microsoft.Extensions.AI;
 using Models;
-using static Models.PersonalityService;
+using Repository;
 
 namespace Agents;
 
-public partial class PersonalityService
+public class PersonalityService
 {
-    private readonly HttpClient _httpClient;
-    private readonly string _modelName;
-    private readonly string _connectionString;
-    private readonly MultiAgentService _multiAgentService;
+    private readonly LlmService _llm;
+    private readonly PersonalityRepository _repo;
+    private readonly GroupAgentService _groupAgentService;
+    private readonly EmbeddingService _embeddingService;
+    private readonly VectorService _vectorService;
+    private readonly ConversationAnalysisConfig _conversationConfig;
 
-    public PersonalityService(MultiAgentService multiAgentService)
+    public PersonalityService(LlmService llm, GroupAgentService groupAgentService, EmbeddingService embeddingService, VectorService vectorService, PersonalityRepository repo)
     {
-        var endpoint = Environment.GetEnvironmentVariable("OLLAMA_ENDPOINT") ?? "http://localhost:11434";
-        _modelName = Environment.GetEnvironmentVariable("OLLAMA_MODEL") ?? "llama3.2";
-        _connectionString = Environment.GetEnvironmentVariable("PERSONALITY_DB")
-            ?? "Host=localhost;Database=personality;Username=postgres;Password=postgres";
-        _httpClient = new HttpClient { BaseAddress = new Uri(endpoint) };
-        _multiAgentService = multiAgentService;
+        _llm = llm;
+        _repo = repo;
+        _groupAgentService = groupAgentService;
+        _embeddingService = embeddingService;
+        _vectorService = vectorService;
+        _conversationConfig = LoadConversationConfig();
     }
 
-    public async Task<bool> CreatePersonalityAsync(string name)
+    private static ConversationAnalysisConfig LoadConversationConfig()
     {
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-        await using var cmd = new NpgsqlCommand("INSERT INTO person (name) VALUES (@name) ON CONFLICT DO NOTHING", conn);
-        cmd.Parameters.AddWithValue("name", name);
-        return await cmd.ExecuteNonQueryAsync() > 0;
-    }
+        var configPath = Path.Combine(AppContext.BaseDirectory, "Config", "Prompts.json");
+        if (!File.Exists(configPath))
+            configPath = Path.Combine(Directory.GetCurrentDirectory(), "Config", "Prompts.json");
 
-    public async Task<PersonalityResult> GetPersonalityAsync(string person)
-    {
-        const string sql = """
-            SELECT p.topic, p.explanation, nt.name, pr.name
-            FROM personality p
-            JOIN person pr ON pr.id = p.person_id
-            JOIN neurotransmitter nt ON nt.id = p.neurotransmitter_id
-            WHERE LOWER(pr.name) = LOWER(@name) ORDER BY p.topic;
-        """;
+        if (!File.Exists(configPath))
+            return new ConversationAnalysisConfig();
 
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("name", person);
-
-        var traits = new List<Trait>();
-        string? matchedName = null;
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            traits.Add(new Trait(reader.GetString(0), reader.GetString(1), reader.GetString(2)));
-            matchedName ??= reader.GetString(3);
-        }
-
-        if (traits.Count > 0)
-            return new PersonalityResult(new PersonalityProfile(matchedName!, traits));
-
-        var suggestions = await FindSimilarPersonsAsync(conn, person);
-        return new PersonalityResult(null, suggestions.Count > 0 ? suggestions : null);
+        var json = File.ReadAllText(configPath);
+        var config = JsonSerializer.Deserialize<PromptConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return config?.ConversationAnalysis ?? new ConversationAnalysisConfig();
     }
 
     public async Task<FullPersonalityScan?> GetFullPersonalityScanAsync(string person)
     {
-        const string sql = """
-            WITH person_neuro AS (
-                SELECT DISTINCT p.neurotransmitter_id, nt.name as neuro_name, pr.name as person_name
-                FROM personality p
-                JOIN person pr ON pr.id = p.person_id
-                JOIN neurotransmitter nt ON nt.id = p.neurotransmitter_id
-                WHERE LOWER(pr.name) = LOWER(@name)
-            )
-            SELECT
-                pn.person_name,
-                pn.neuro_name,
-                i.target_type,
-                CASE WHEN i.target_type = 'hormone' THEN h.name ELSE pe.name END as target_name,
-                i.strength
-            FROM person_neuro pn
-            JOIN interaction i ON i.neurotransmitter_id = pn.neurotransmitter_id
-            LEFT JOIN hormone h ON i.target_type = 'hormone' AND h.id = i.target_id
-            LEFT JOIN peptide pe ON i.target_type = 'peptide' AND pe.id = i.target_id
-            ORDER BY pn.neuro_name, i.strength DESC;
-        """;
+        var personalityResult = await _repo.GetPersonalityAsync(person);
+        if (personalityResult.Profile == null) return null;
 
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("name", person);
+        var traits = personalityResult.Profile.Traits;
+        var matchedName = personalityResult.Profile.Person;
 
-        var hormones = new Dictionary<string, float>();
-        var peptides = new Dictionary<string, float>();
-        string? matchedName = null;
+        var traitsWithEmbeddings = await _repo.GetTraitEmbeddingsWithMetadataAsync(person);
 
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            matchedName ??= reader.GetString(0);
-            var targetType = reader.GetString(2);
-            var targetName = reader.GetString(3);
-            var strength = reader.GetFloat(4);
+        if (traitsWithEmbeddings.Count == 0)
+            return new FullPersonalityScan(matchedName, traits, [], []);
 
-            var dict = targetType == "hormone" ? hormones : peptides;
-            dict[targetName] = Math.Max(dict.GetValueOrDefault(targetName), strength);
-        }
+        var rawEmbeddings = traitsWithEmbeddings.Select(t => t.Embedding).ToList();
+        var hormones = await _repo.ComputeVectorScoresAsync("hormone", rawEmbeddings);
+        var peptides = await _repo.ComputeVectorScoresAsync("peptide", rawEmbeddings);
 
-        if (matchedName == null) return null;
+        // Vector analysis
+        var clusters = _vectorService.ClusterTraits(traitsWithEmbeddings);
+        var neighbors = _vectorService.FindTraitNeighbors(traitsWithEmbeddings);
+        var centroids = _vectorService.ComputeNtCentroids(traitsWithEmbeddings);
+        var heatmap = await _vectorService.ComputeHeatmapAsync(traitsWithEmbeddings, "hormone");
 
-        var traits = (await GetPersonalityAsync(person)).Profile?.Traits ?? [];
-
-        return new FullPersonalityScan(
-            matchedName,
-            traits,
-            hormones.OrderByDescending(h => h.Value).Select(h => new Interaction(h.Key, h.Value)).ToList(),
-            peptides.OrderByDescending(p => p.Value).Select(p => new Interaction(p.Key, p.Value)).ToList()
-        );
+        return new FullPersonalityScan(matchedName, traits, hormones, peptides, clusters, neighbors, centroids, heatmap);
     }
 
-    private static async Task<List<string>> FindSimilarPersonsAsync(NpgsqlConnection conn, string search)
+    public async Task<NeuroGroupResult> UpdatePersonalityAsync(string person, string topic, string context, bool embeddings = true, bool useCVAgents = false)
     {
-        const string sql = """
-            SELECT name, similarity(LOWER(name), LOWER(@search)) as sim
-            FROM person
-            WHERE similarity(LOWER(name), LOWER(@search)) > 0.3
-            ORDER BY sim DESC
-            LIMIT 5;
-        """;
-
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("search", search);
-
-        var suggestions = new List<string>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            suggestions.Add(reader.GetString(0));
-
-        return suggestions;
-    }
-
-    public async Task<NeuroGroupResult> UpdatePersonalityAsync(string person, string topic, string context)
-    {
-        var decisions = await _multiAgentService.RunNeuroGroupChatAsync(person, topic, context);
+        var decisions = useCVAgents
+            ? await _groupAgentService.RunNeuroCVAnalysisAsync(person, topic, context)
+            : await _groupAgentService.RunNeuroAnalysisAsync(person, topic, context);
 
         if (decisions.Count == 0)
             return new NeuroGroupResult(person, topic, [], "No neurotransmitters found this relevant.");
 
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-
-        await new NpgsqlCommand($"INSERT INTO person (name) VALUES ('{person}') ON CONFLICT DO NOTHING", conn).ExecuteNonQueryAsync();
+        await _repo.EnsurePersonExistsAsync(person);
 
         var added = new List<Trait>();
         foreach (var decision in decisions)
         {
-            var sql = """
-                INSERT INTO personality (person_id, neurotransmitter_id, topic, explanation)
-                SELECT p.id, nt.id, @topic, @expl
-                FROM person p, neurotransmitter nt WHERE p.name = @person AND nt.name = @nt
-                ON CONFLICT (person_id, neurotransmitter_id, topic)
-                DO UPDATE SET explanation = EXCLUDED.explanation;
-            """;
-
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("topic", topic);
-            cmd.Parameters.AddWithValue("expl", decision.Explanation);
-            cmd.Parameters.AddWithValue("person", person);
-            cmd.Parameters.AddWithValue("nt", decision.Neurotransmitter);
-            await cmd.ExecuteNonQueryAsync();
-
+            // Upsert trait immediately without embedding
+            await _repo.UpsertPersonalityTraitAsync(person, decision.Neurotransmitter, topic, decision.Explanation, null);
             added.Add(new Trait(topic, decision.Explanation, decision.Neurotransmitter));
         }
 
-        return new NeuroGroupResult(person, topic, added, $"{added.Count} neurotransmitter(s) added entries.");
+        if (embeddings)
+        {
+            // Fire-and-forget: generate embeddings in background
+            _ = Task.Run(async () =>
+            {
+                foreach (var decision in decisions)
+                {
+                    try
+                    {
+                        var embedding = await _embeddingService.GenerateTraitEmbeddingAsync(topic, decision.Explanation);
+                        if (embedding != null)
+                        {
+                            var embeddingValue = EmbeddingService.ToPostgresVector(embedding);
+                            await _repo.UpdateTraitEmbeddingByContentAsync(person, decision.Neurotransmitter, topic, embeddingValue);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Background embedding failed for {person}/{decision.Neurotransmitter}: {ex.Message}");
+                    }
+                }
+            });
+        }
+
+        var msg = embeddings
+            ? $"{added.Count} neurotransmitter(s) added entries. Embeddings generating in background."
+            : $"{added.Count} neurotransmitter(s) added entries. Embeddings skipped.";
+        return new NeuroGroupResult(person, topic, added, msg);
     }
 
-    public async Task<ScanResult> ScanChatAsync(string person, List<OllamaMessage> chat, bool autoAdd = false)
+    public async Task<ScanResult> ScanChatAsync(string person, List<ChatMessage> chat, bool autoAdd = false)
     {
-        var text = string.Join("\n", chat.Select(m => $"{m.Role.ToUpper()}: {m.Content}"));
+        var text = string.Join("\n", chat.Select(m => $"{m.Role.ToString().ToUpper()}: {m.Text}"));
         var prompt = "Extract behavior traits as JSON: [{\"topic\":\"...\",\"explanation\":\"...\"}]. Only clear patterns. Empty [] if none.\n\n" + text;
 
-        var resp = await CallOllamaAsync([new OllamaMessage { Role = "user", Content = prompt }]);
-        var extracted = ParseTraits(resp);
+        var messages = new List<ChatMessage> { new(ChatRole.User, prompt) };
+        var resp = await _llm.ChatAsync(messages, _llm.ThinkingModel);
+        var extracted = ParseService.ParseTraits(resp);
         var added = new List<Trait>();
 
         if (autoAdd)
@@ -195,21 +133,200 @@ public partial class PersonalityService
         return new ScanResult(person, extracted, added);
     }
 
-    private async Task<string> CallOllamaAsync(List<OllamaMessage> messages)
+    // ===== Document Analysis Methods =====
+
+    public async Task<DocumentAnalysisResult> AnalyzeDocumentAsync(string text, string person, string documentType, bool embeddings = true, bool useCVAgents = false)
     {
-        var req = new OllamaChatRequest { Model = _modelName, Messages = messages, Stream = false };
-        var resp = await _httpClient.PostAsJsonAsync("/api/chat", req);
-        resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<OllamaChatResponse>())?.Message?.Content ?? "";
+        var prompt = "Analyze this document and extract personality and professional traits about the person. " +
+                     "Return a JSON array of traits: [{\"topic\":\"...\",\"explanation\":\"...\"}]. " +
+                     "Focus on: skills, work style, leadership patterns, communication style, values, interests, " +
+                     "professional strengths, and behavioral tendencies. Only clear patterns. Empty [] if none.\n\n" + text;
+
+        var llmMessages = new List<ChatMessage> { new(ChatRole.User, prompt) };
+        var resp = await _llm.ChatAsync(llmMessages, _llm.ThinkingModel);
+        var extracted = ParseService.ParseTraits(resp);
+
+        await _repo.CreatePersonAsync(person);
+
+        var added = new List<Trait>();
+        var neuroDecisions = new List<NeuroAgentDecision>();
+
+        foreach (var t in extracted)
+        {
+            var result = await UpdatePersonalityAsync(person, t.Topic, t.Explanation, embeddings, useCVAgents);
+            added.AddRange(result.Added);
+            neuroDecisions.AddRange(result.Added.Select(a =>
+                new NeuroAgentDecision(a.Topic, a.Neurotransmitter!, a.Explanation)));
+        }
+
+        return new DocumentAnalysisResult(person, documentType, extracted, added, neuroDecisions);
     }
 
-    private static List<Trait> ParseTraits(string json)
+    // ===== Conversation Analysis Methods =====
+
+    public async Task<ConversationAnalysisResult> AnalyzeConversationAsync(ConversationAnalysisRequest request)
     {
-        try
+        var format = request.FormatHint ?? ParseService.DetectConversationFormat(request.FileContent);
+
+        var messages = ParseService.ParseConversation(request.FileContent, format,
+            request.TargetPersonalityName, request.UserName);
+
+        var important = await ExtractImportantConversationsAsync(messages,
+            request.TargetPersonalityName, request.UserName);
+
+        var allTraits = important.SelectMany(i => i.ExtractedTraits).ToList();
+
+        var addedTraits = new List<Trait>();
+        var neuroDecisions = new List<NeuroAgentDecision>();
+
+        if (request.AutoAdd)
         {
-            var s = json.IndexOf('['); var e = json.LastIndexOf(']') + 1;
-            return s >= 0 && e > s ? JsonSerializer.Deserialize<List<Trait>>(json[s..e]) ?? [] : [];
+            await _repo.CreatePersonAsync(request.TargetPersonalityName);
+
+            foreach (var trait in allTraits.Where(t =>
+                ParseService.IsSpeakerMatch(t.Speaker, request.TargetPersonalityName)))
+            {
+                var result = await UpdatePersonalityAsync(
+                    request.TargetPersonalityName, trait.Topic, trait.Explanation);
+
+                addedTraits.AddRange(result.Added);
+                neuroDecisions.AddRange(result.Added.Select(a =>
+                    new NeuroAgentDecision(a.Topic, a.Neurotransmitter!, a.Explanation)));
+            }
         }
-        catch { return []; }
+
+        return new ConversationAnalysisResult(
+            request.TargetPersonalityName,
+            request.UserName,
+            format,
+            messages.Count,
+            important.Count,
+            important,
+            allTraits,
+            addedTraits,
+            neuroDecisions
+        );
+    }
+
+    private async Task<List<ImportantConversation>> ExtractImportantConversationsAsync(
+        List<ConversationMessage> messages,
+        string targetName,
+        string userName)
+    {
+        if (messages.Count == 0)
+            return [];
+
+        var conversationText = string.Join("\n", messages.Select((m, i) =>
+            $"[{i}] {(m.IsTargetPersonality ? targetName : userName)}: {m.Content}"));
+
+        var jsonExample = JsonSerializer.Serialize(_conversationConfig.JsonExample,
+            new JsonSerializerOptions { WriteIndented = true })
+            .Replace("{targetName}", targetName);
+
+        var prompt = _conversationConfig.PromptTemplate
+            .Replace("{targetName}", targetName)
+            .Replace("{userName}", userName)
+            .Replace("{conversationText}", conversationText)
+            .Replace("{jsonExample}", jsonExample);
+
+        var llmMessages = new List<ChatMessage> { new(ChatRole.User, prompt) };
+        var response = await _llm.ChatAsync(llmMessages, _llm.ThinkingModel);
+        return ParseService.ParseImportantConversations(response, messages);
+    }
+
+    public static Dictionary<string, AgentProfile> ToAgentProfiles(List<CustomAgent> agents)
+    {
+        var profiles = new Dictionary<string, AgentProfile>();
+        foreach (var agent in agents)
+        {
+            profiles[agent.Name] = new AgentProfile
+            {
+                Role = agent.Role,
+                Responsibilities = agent.Responsibilities,
+                Style = agent.Style,
+                MaxWords = agent.MaxWords,
+                Conclusion = agent.IsSynthesizer
+            };
+        }
+        return profiles;
+    }
+
+    public static ResponderGroup ParseResponderGroup(string? relationship)
+    {
+        if (!string.IsNullOrWhiteSpace(relationship) &&
+            Enum.TryParse<ResponderGroup>(relationship, true, out var parsedGroup))
+            return parsedGroup;
+        return ResponderGroup.Dating;
+    }
+
+    /// <summary>
+    /// Build a concise personality profile string for suggestion agents.
+    /// Raw data only — no hardcoded NT descriptions.
+    /// </summary>
+    public static string BuildPersonProfile(
+        string person,
+        NeuroresponseResult neuroResult,
+        List<HormoneScore>? hormones,
+        List<PeptideScore>? peptides)
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.AppendLine($"Neurochemistry: {string.Join(", ", neuroResult.NeurotransmitterWeights.Take(3).Select(w => $"{w.Neurotransmitter} {w.Weight:P0}"))}");
+
+        var traits = neuroResult.TopMatchingTraits.Take(5).ToList();
+        if (traits.Count > 0)
+            sb.AppendLine($"Active traits: {string.Join(", ", traits.Select(t => $"{t.Topic} ({t.Neurotransmitter}, {t.Similarity:P0})"))}");
+
+        if (hormones?.Count > 0)
+            sb.AppendLine($"Hormones: {string.Join(", ", hormones.Take(3).Select(h => $"{h.Name} ({h.Strength:P0})"))}");
+
+        if (peptides?.Count > 0)
+            sb.AppendLine($"Peptides: {string.Join(", ", peptides.Take(3).Select(p => $"{p.Name} ({p.Strength:P0})"))}");
+
+        return sb.ToString().Trim();
+    }
+
+    /// <summary>
+    /// Build a detailed personality profile for analysis agents.
+    /// Raw data only — agents interpret the neurotransmitter meanings themselves.
+    /// </summary>
+    public static string BuildEnhancedPersonProfile(
+        string person,
+        NeuroresponseResult neuroResult,
+        FullPersonalityScan? fullScan,
+        List<HormoneScore> hormones,
+        List<PeptideScore> peptides)
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.AppendLine("NEUROTRANSMITTER WEIGHTS:");
+        foreach (var w in neuroResult.NeurotransmitterWeights)
+            sb.AppendLine($"  {w.Neurotransmitter}: {w.Weight:P0} ({w.TraitCount} traits)");
+
+        if (fullScan?.Traits.Count > 0)
+        {
+            sb.AppendLine("\nPERSONALITY TRAITS:");
+            foreach (var group in fullScan.Traits.GroupBy(t => t.Neurotransmitter ?? "Unknown"))
+            {
+                sb.AppendLine($"  [{group.Key}]:");
+                foreach (var trait in group)
+                    sb.AppendLine($"    - {trait.Topic}: {trait.Explanation}");
+            }
+        }
+
+        if (neuroResult.TopMatchingTraits.Count > 0)
+        {
+            sb.AppendLine("\nMOST RELEVANT TRAITS FOR THIS MESSAGE:");
+            foreach (var t in neuroResult.TopMatchingTraits)
+                sb.AppendLine($"  - {t.Topic} ({t.Neurotransmitter}, {t.Similarity:P0})");
+        }
+
+        if (hormones.Count > 0)
+            sb.AppendLine($"\nHORMONES: {string.Join(", ", hormones.Select(h => $"{h.Name} ({h.Strength:P0})"))}");
+
+        if (peptides.Count > 0)
+            sb.AppendLine($"\nPEPTIDES: {string.Join(", ", peptides.Select(p => $"{p.Name} ({p.Strength:P0})"))}");
+
+        return sb.ToString().Trim();
     }
 }

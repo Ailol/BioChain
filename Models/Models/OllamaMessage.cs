@@ -2,8 +2,11 @@ using System.Text.Json.Serialization;
 
 namespace Models;
 
-// Ollama API DTOs
-public class OllamaMessage
+/// <summary>
+/// Simple DTO for deserializing chat messages from MCP tool JSON input.
+/// Convert to ChatMessage (Microsoft.Extensions.AI) for internal use.
+/// </summary>
+public class ChatMessageInput
 {
     [JsonPropertyName("role")]
     public string Role { get; set; } = "";

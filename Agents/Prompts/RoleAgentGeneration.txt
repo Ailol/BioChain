@@ -1,0 +1,20 @@
+Generate exactly {agentCount} specialized discussion agents that represent a team of {role}.
+(A Synthesizer agent will be added automatically as the final agent.)
+
+Create a diverse team where each agent represents a different specialty, seniority level, or perspective
+that you would find in a real-world team of {role}.
+
+Return ONLY valid JSON in this exact format (no markdown, no explanation, no code blocks):
+{agentJsonExample}
+
+Requirements:
+- Agent names should be descriptive role titles (like "Architect", "DevOps", "SecurityLead", "Mentor", "Analyst")
+- Each agent should have 3-4 responsibilities specific to their specialty within {role}
+- Style should reflect how that type of professional communicates
+- Keep maxWords between 150-250
+- Make each agent's perspective unique and valuable for technical/professional discussions
+- Include a mix of senior and specialist roles
+- Generate exactly {agentCount} agents
+
+Examples of good agent distributions for different roles:
+{roleExamples}

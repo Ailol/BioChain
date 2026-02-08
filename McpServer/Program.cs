@@ -1,5 +1,10 @@
+using System.ClientModel;
 using Agents;
-using OpenClaw;
+using Microsoft.Extensions.AI;
+using Models;
+using OllamaSharp;
+using OpenAI;
+using Repository;
 
 // Check for stdio mode (backward compatibility with Claude Desktop direct connection)
 if (args.Contains("--stdio"))
@@ -11,6 +16,64 @@ else
     await RunHttpMode(args);
 }
 
+// Create configuration: all LLM settings from appsettings.json Llm section, secrets from env vars
+static AgentConfiguration CreateConfiguration(IConfiguration appConfig)
+{
+    var llm = appConfig.GetSection("Llm");
+    return new AgentConfiguration
+    {
+        Backend = llm["Backend"] ?? "Ollama",
+        ChatEndpoint = llm["ChatEndpoint"]
+            ?? throw new InvalidOperationException("Llm:ChatEndpoint is required (set via Llm__ChatEndpoint env var or appsettings.json)"),
+        EmbeddingEndpoint = llm["EmbeddingEndpoint"],
+        ThinkingModel = llm["ThinkingModel"]
+            ?? throw new InvalidOperationException("Llm:ThinkingModel is required (set via Llm__ThinkingModel env var or appsettings.json)"),
+        InstructModel = llm["InstructModel"]
+            ?? throw new InvalidOperationException("Llm:InstructModel is required (set via Llm__InstructModel env var or appsettings.json)"),
+        EmbeddingModel = llm["EmbeddingModel"]
+            ?? throw new InvalidOperationException("Llm:EmbeddingModel is required (set via Llm__EmbeddingModel env var or appsettings.json)"),
+        PersonalityDb = Environment.GetEnvironmentVariable("PERSONALITY_DB")
+            ?? appConfig.GetConnectionString("Personality")
+            ?? throw new InvalidOperationException("PERSONALITY_DB env var or ConnectionStrings:Personality in appsettings.json is required"),
+        MaxParallelAgents = llm.GetValue("MaxParallelAgents", 3)
+    };
+}
+
+// Register IChatClient + IEmbeddingGenerator based on Backend config
+static void RegisterLlmServices(IServiceCollection services, AgentConfiguration config)
+{
+    var chatUri = new Uri(config.ChatEndpoint);
+    var embedUri = new Uri(config.EmbeddingEndpoint ?? config.ChatEndpoint);
+
+    if (config.Backend.Equals("Vllm", StringComparison.OrdinalIgnoreCase))
+    {
+        // vLLM: OpenAI-compatible endpoints (must include /v1/ path)
+        static Uri EnsureV1Path(Uri uri) =>
+            uri.AbsolutePath.Contains("/v1") ? uri : new Uri(uri, "v1/");
+
+        var chatOai = new OpenAIClient(new ApiKeyCredential("unused"),
+            new OpenAIClientOptions { Endpoint = EnsureV1Path(chatUri) });
+        services.AddSingleton<IChatClient>(chatOai.GetChatClient(config.InstructModel).AsIChatClient());
+
+        var embedOai = new OpenAIClient(new ApiKeyCredential("unused"),
+            new OpenAIClientOptions { Endpoint = EnsureV1Path(embedUri) });
+        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(
+            embedOai.GetEmbeddingClient(config.EmbeddingModel).AsIEmbeddingGenerator());
+    }
+    else
+    {
+        // Ollama: native OllamaSharp client (implements IChatClient + IEmbeddingGenerator)
+        var chatHttp = new HttpClient { BaseAddress = chatUri, Timeout = TimeSpan.FromMinutes(10) };
+        services.AddSingleton<IChatClient>(new OllamaApiClient(chatHttp, config.InstructModel));
+
+        var embedHttp = new HttpClient { BaseAddress = embedUri, Timeout = TimeSpan.FromMinutes(10) };
+        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(
+            new OllamaApiClient(embedHttp, config.EmbeddingModel));
+    }
+
+    services.AddSingleton<LlmService>();
+}
+
 // HTTP mode for OpenWebUI, OpenClaw, and other HTTP-capable clients
 static async Task RunHttpMode(string[] args)
 {
@@ -19,9 +82,17 @@ static async Task RunHttpMode(string[] args)
     // Add Aspire service defaults (OpenTelemetry, health checks, service discovery)
     builder.AddServiceDefaults();
 
-    // Register agent services
-    builder.Services.AddSingleton<MultiAgentService>();
-    builder.Services.AddSingleton<PersonalityService>();
+    // Register configuration and agent services
+    var config = CreateConfiguration(builder.Configuration);
+    builder.Services.AddSingleton(config);
+    builder.Services.AddSingleton(new PersonalityRepository(config.PersonalityDb));
+    RegisterLlmServices(builder.Services, config);
+    builder.Services.AddSingleton<EmbeddingService>();
+    builder.Services.AddSingleton<VectorService>();
+    builder.Services.AddSingleton<AgentService>();
+    builder.Services.AddSingleton<GroupAgentService>();
+    builder.Services.AddSingleton<Agents.PersonalityService>();
+    builder.Services.AddSingleton<NeuroService>();
 
     // Configure MCP server with HTTP transport
     builder.Services
@@ -31,20 +102,6 @@ static async Task RunHttpMode(string[] args)
             options.Stateless = true;  // If this option exists
         })
         .WithToolsFromAssembly();
-
-    // Add OpenClaw Gateway integration (optional - connects to OpenClaw for multi-channel access)
-    var enableOpenClaw = builder.Configuration.GetValue<bool>("OpenClaw:Enabled", false);
-    if (enableOpenClaw)
-    {
-        builder.Services.AddOpenClaw(options =>
-        {
-            options.GatewayUrl = builder.Configuration["OpenClaw:GatewayUrl"] ?? "ws://127.0.0.1:18789";
-            options.McpEndpoint = builder.Configuration["OpenClaw:McpEndpoint"] ?? "http://localhost:13370/mcp";
-            options.ReconnectDelaySeconds = builder.Configuration.GetValue("OpenClaw:ReconnectDelaySeconds", 5);
-            options.EnableVoice = builder.Configuration.GetValue("OpenClaw:EnableVoice", true);
-        });
-        Console.WriteLine("OpenClaw Gateway integration enabled");
-    }
 
     var app = builder.Build();
 
@@ -77,11 +134,19 @@ static async Task RunStdioMode(string[] args)
                 options.LogToStandardErrorThreshold = LogLevel.Trace;
             });
         })
-        .ConfigureServices(services =>
+        .ConfigureServices((hostContext, services) =>
         {
-            // Register agent services
-            services.AddSingleton<MultiAgentService>();
-            services.AddSingleton<PersonalityService>();
+            // Register configuration and agent services
+            var config = CreateConfiguration(hostContext.Configuration);
+            services.AddSingleton(config);
+            services.AddSingleton(new PersonalityRepository(config.PersonalityDb));
+            RegisterLlmServices(services, config);
+            services.AddSingleton<EmbeddingService>();
+            services.AddSingleton<VectorService>();
+            services.AddSingleton<AgentService>();
+            services.AddSingleton<GroupAgentService>();
+            services.AddSingleton<Agents.PersonalityService>();
+            services.AddSingleton<NeuroService>();
 
             // Configure MCP server with stdio transport
             services
