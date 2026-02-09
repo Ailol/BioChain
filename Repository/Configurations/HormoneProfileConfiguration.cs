@@ -25,6 +25,12 @@ public class HormoneProfileConfiguration : IEntityTypeConfiguration<HormoneProfi
             .HasForeignKey(e => e.HormoneId)
             .IsRequired();
 
+        builder.Property(e => e.ReasoningEmbedding)
+            .HasColumnType("vector(4096)");
+
+        builder.Property(e => e.IsClusterRepresentative)
+            .HasDefaultValue(false);
+
         builder.HasIndex(e => new { e.PersonalityId, e.HormoneId })
             .IsUnique();
 

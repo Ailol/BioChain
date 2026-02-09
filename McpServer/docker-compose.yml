@@ -1,9 +1,9 @@
 # MultiAgentAiMcp Docker Compose
 # Usage:
-#   docker-compose up -d                    # Start all services
-#   docker-compose up -d --build            # Rebuild and start
-#   docker-compose logs -f mcpserver        # View logs
-#   docker-compose down                     # Stop all
+#   Development (local postgres):  docker compose --profile dev up -d
+#   Production  (Supabase):        docker compose --profile prod up -d
+#   Rebuild:                       docker compose --profile dev up -d --build
+#   Logs:                          docker compose logs -f mcp
 
 services:
   # MCP Server - Multi-Agent AI
@@ -12,19 +12,23 @@ services:
       context: ..
       dockerfile: Dockerfile
     container_name: multiagent-mcp
+    profiles: ["dev", "prod"]
     ports:
       - "13370:13370"
     env_file:
       - ../.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ENVIRONMENT=${ENVIRONMENT:-Development}
+      - ASPNETCORE_ENVIRONMENT=${ENVIRONMENT:-Development}
       - ASPNETCORE_URLS=http://+:13370
       - Llm__ChatEndpoint=http://host.docker.internal:8000
       - Llm__EmbeddingEndpoint=http://host.docker.internal:11434
-      - PERSONALITY_DB=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      - DEVELOPMENT_DB=${DEVELOPMENT_DB}
+      - PRODUCTION_DB=${PRODUCTION_DB}
     depends_on:
       postgres:
         condition: service_healthy
+        required: false
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -35,10 +39,11 @@ services:
       retries: 3
       start_period: 10s
 
-  # PostgreSQL - Personality Storage
+  # PostgreSQL - Personality Storage (dev only)
   postgres:
     image: pgvector/pgvector:pg16
     container_name: multiagent-postgres
+    profiles: ["dev"]
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}

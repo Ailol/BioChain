@@ -17,5 +17,5 @@ public class Person
     // Navigation properties
     public ICollection<Personality> Personalities { get; set; } = [];
     public ICollection<AgentGroup> AgentGroups { get; set; } = [];
-    public ICollection<RelationshipProfile> RelationshipProfiles { get; set; } = [];
+    public ICollection<Pipeline> Pipelines { get; set; } = [];
 }

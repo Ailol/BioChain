@@ -23,6 +23,12 @@ public class AgentProfile
     [JsonPropertyName("layer")]
     public string? Layer { get; set; }
 
+    public AgentProfile WithStyle(string style) => new()
+    {
+        Role = Role, Responsibilities = Responsibilities, Style = style,
+        Conclusion = Conclusion, MaxWords = MaxWords, Layer = Layer
+    };
+
     public string ToSystemPrompt()
     {
         var sb = new StringBuilder();

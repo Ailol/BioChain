@@ -1,3 +1,5 @@
+using Pgvector;
+
 namespace Repository.Entities;
 
 public class NeurotransmitterProfile
@@ -6,6 +8,9 @@ public class NeurotransmitterProfile
     public int PersonalityId { get; set; }
     public int NeurotransmitterId { get; set; }
     public string? Reasoning { get; set; }
+    public Vector? ReasoningEmbedding { get; set; }
+    public int? ClusterId { get; set; }
+    public bool IsClusterRepresentative { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

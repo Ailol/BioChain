@@ -18,7 +18,9 @@ public class PersonalityDbContext : DbContext
     public DbSet<AgentGroup> AgentGroups => Set<AgentGroup>();
     public DbSet<Agent> Agents => Set<Agent>();
     public DbSet<RelationshipType> RelationshipTypes => Set<RelationshipType>();
-    public DbSet<RelationshipProfile> RelationshipProfiles => Set<RelationshipProfile>();
+    public DbSet<AgentTemplate> AgentTemplates => Set<AgentTemplate>();
+    public DbSet<Pipeline> Pipelines => Set<Pipeline>();
+    public DbSet<Layer> Layers => Set<Layer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

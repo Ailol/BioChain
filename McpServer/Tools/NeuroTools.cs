@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Text.Json;
 using ModelContextProtocol.Server;
 using Agents;
-using Models;
 
 namespace McpAgentServer.Tools;
 
@@ -10,8 +9,10 @@ namespace McpAgentServer.Tools;
 /// MCP tools for neuroresponse queries using vector similarity.
 /// </summary>
 [McpServerToolType]
-public class NeuroTools(NeuroService neuroService, GroupAgentService agentService, Agents.PersonalityService personalityService, EmbeddingService embeddingService)
+public class NeuroTools(AnalysisService analysisService, EmbeddingService embeddingService)
 {
+    private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
+
     [McpServerTool(Name = "neurorespond")]
     [Description("Analyze what someone (e.g., Karolina, Anja) wrote TO you. " +
                  "Does a full neuroscan: neurotransmitters, hormones, peptides. " +
@@ -26,13 +27,8 @@ public class NeuroTools(NeuroService neuroService, GroupAgentService agentServic
     {
         try
         {
-            var result = await neuroService.NeuroAnalyzeAsync(
-                person,
-                text,
-                relationship,
-                agentService,
-                personalityService);
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            var result = await analysisService.NeuroRespondAsync(person, text, relationship);
+            return JsonSerializer.Serialize(result, IndentedJson);
         }
         catch (Exception ex)
         {
@@ -48,8 +44,7 @@ public class NeuroTools(NeuroService neuroService, GroupAgentService agentServic
     {
         try
         {
-            var result = await embeddingService.BackfillEmbeddingsAsync(person);
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            return JsonSerializer.Serialize(await embeddingService.BackfillEmbeddingsAsync(person), IndentedJson);
         }
         catch (Exception ex)
         {
@@ -64,8 +59,7 @@ public class NeuroTools(NeuroService neuroService, GroupAgentService agentServic
     {
         try
         {
-            var result = await embeddingService.BackfillHormonePeptideEmbeddingsAsync();
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            return JsonSerializer.Serialize(await embeddingService.BackfillHormonePeptideEmbeddingsAsync(), IndentedJson);
         }
         catch (Exception ex)
         {

@@ -32,15 +32,6 @@ public record MatchingTrait(
 );
 
 /// <summary>
-/// A trait extracted from raw text analysis by the LLM, with optional neurotransmitter suggestion.
-/// </summary>
-public record AnalyzedTrait(
-    [property: JsonPropertyName("topic")] string Topic,
-    [property: JsonPropertyName("explanation")] string Explanation,
-    [property: JsonPropertyName("suggestedNeurotransmitter")] string? SuggestedNeurotransmitter = null
-);
-
-/// <summary>
 /// Structured neurorespond result for frontend consumption.
 /// Contains neuroprofile data, per-agent analysis, and always 4 crafted responses.
 /// </summary>
@@ -68,20 +59,14 @@ public record NeuroResponse(
 public record NeuroprofileData(
     [property: JsonPropertyName("neurotransmitterWeights")] List<NeurotransmitterWeight> NeurotransmitterWeights,
     [property: JsonPropertyName("topMatchingTraits")] List<MatchingTrait> TopMatchingTraits,
-    [property: JsonPropertyName("hormones")] List<HormoneScore> Hormones,
-    [property: JsonPropertyName("peptides")] List<PeptideScore> Peptides
+    [property: JsonPropertyName("hormones")] List<ChemicalScore> Hormones,
+    [property: JsonPropertyName("peptides")] List<ChemicalScore> Peptides
 );
 
-public record HormoneScore(
+public record ChemicalScore(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("traitCount")] int TraitCount
 );
-
-public record PeptideScore(
-    [property: JsonPropertyName("name")] string Name,
-    [property: JsonPropertyName("traitCount")] int TraitCount
-);
-
 
 /// <summary>
 /// Result of the backfill embeddings operation.

@@ -8,8 +8,10 @@ using Repository;
 namespace McpAgentServer.Tools;
 
 [McpServerToolType]
-public class PersonalityTools(Agents.PersonalityService svc, PersonRepository personRepo, PersonalityRepository personalityRepo)
+public class PersonalityTools(Agents.PersonalityService svc, AnalysisService analysisService, PersonRepository personRepo, PersonalityRepository personalityRepo)
 {
+    private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
+
     [McpServerTool(Name = "list_persons")]
     [Description("List all persons in the personality system.")]
     public async Task<string> ListPersons()
@@ -56,23 +58,7 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonRepository pe
         [Description("Topic/event name (e.g., Programming, Morning Routine)")] string topic,
         [Description("Context/description of the behavior or event")] string context,
         [Description("Generate embeddings for traits (default true). Set false to skip embeddings and backfill later.")] bool embeddings = true)
-        => JsonSerializer.Serialize(await svc.UpdatePersonalityAsync(person, topic, context, embeddings));
-
-    [McpServerTool(Name = "scan_chat_update_personality")]
-    [Description("Analyze chat for behavior patterns, optionally auto-add as traits.")]
-    public async Task<string> ScanChat(
-        [Description("Person name")] string person,
-        [Description("Chat JSON: [{\"role\":\"user\",\"content\":\"...\"}]")] string chatJson,
-        [Description("Auto-add traits")] bool autoAdd = false)
-    {
-        var inputs = JsonSerializer.Deserialize<List<ChatMessageInput>>(chatJson);
-        if (inputs is not { Count: > 0 })
-            return "{\"error\":\"Invalid chat\"}";
-
-        var msgs = inputs.Select(m => new Microsoft.Extensions.AI.ChatMessage(
-            new Microsoft.Extensions.AI.ChatRole(m.Role), m.Content)).ToList();
-        return JsonSerializer.Serialize(await svc.ScanChatAsync(person, msgs, autoAdd));
-    }
+        => JsonSerializer.Serialize(await svc.AddPersonalityEntryAsync(person, topic, context, embeddings));
 
     [McpServerTool(Name = "analyze_conversation_file")]
     [Description("Analyze a conversation file (txt, WhatsApp, Discord, CSV) to extract personality traits. " +
@@ -99,8 +85,8 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonRepository pe
                 format,
                 autoAdd);
 
-            var result = await svc.AnalyzeConversationAsync(request);
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            var result = await analysisService.AnalyzeConversationAsync(request);
+            return JsonSerializer.Serialize(result, IndentedJson);
         }
         catch (Exception ex)
         {
@@ -111,12 +97,14 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonRepository pe
     [McpServerTool(Name = "analyze_document_file")]
     [Description("Analyze a DOCX or PDF document to extract personality traits. " +
                  "Accepts base64-encoded file content. Extracts text, creates person if needed, " +
-                 "runs neuro analysis on each trait, and persists to personality profile.")]
+                 "runs neuro analysis on each trait, and persists to personality profile. " +
+                 "For CV/resume analysis, set useCVAgents=true to use specialized agents that read between the lines of professional language.")]
     public async Task<string> AnalyzeDocumentFile(
         [Description("Base64-encoded file content")] string base64Content,
         [Description("Document type: docx or pdf")] string documentType,
         [Description("Name of person being analyzed (the personality)")] string targetPersonalityName,
-        [Description("Generate embeddings for traits (default true). Set false to skip embeddings and backfill later.")] bool embeddings = true)
+        [Description("Generate embeddings for traits (default true). Set false to skip embeddings and backfill later.")] bool embeddings = true,
+        [Description("Use CV/resume specialized agents (default false)")] bool useCVAgents = false)
     {
         try
         {
@@ -133,8 +121,8 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonRepository pe
             if (string.IsNullOrWhiteSpace(text))
                 return JsonSerializer.Serialize(new { error = "No text could be extracted from the document" });
 
-            var result = await svc.AnalyzeDocumentAsync(text, targetPersonalityName, docType, embeddings);
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            var result = await analysisService.AnalyzeDataAsync(text, targetPersonalityName, docType, embeddings);
+            return JsonSerializer.Serialize(result, IndentedJson);
         }
         catch (FormatException)
         {
@@ -175,7 +163,7 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonRepository pe
                 normalizedLayer != "peptide" ? results[otherLayers.IndexOf("peptide")] : null
             );
 
-            return JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true });
+            return JsonSerializer.Serialize(profile, IndentedJson);
         }
         catch (Exception ex)
         {

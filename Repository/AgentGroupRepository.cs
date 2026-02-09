@@ -6,6 +6,7 @@ namespace Repository;
 
 /// <summary>
 /// Data access for agent_group and agent tables — custom agent ensemble CRUD.
+/// Supports both person-owned groups (person_id set) and shared/system groups (person_id NULL).
 /// </summary>
 public class AgentGroupRepository(IDbContextFactory<PersonalityDbContext> factory)
 {
@@ -13,7 +14,6 @@ public class AgentGroupRepository(IDbContextFactory<PersonalityDbContext> factor
     {
         await using var ctx = await factory.CreateDbContextAsync();
 
-        // Ensure person exists (preserves original casing, no ToLowerInvariant)
         var person = await ctx.Persons.FirstOrDefaultAsync(p => p.FirstName.ToLower() == personName.ToLower());
         if (person == null)
         {
@@ -22,19 +22,27 @@ public class AgentGroupRepository(IDbContextFactory<PersonalityDbContext> factor
             await ctx.SaveChangesAsync();
         }
 
-        // Upsert agent group (ON CONFLICT RETURNING id)
-        var groupIdList = await ctx.Database.SqlQueryRaw<Guid>("""
-            INSERT INTO agent_group (person_id, name) VALUES (@p0, @p1)
-            ON CONFLICT (person_id, name) DO UPDATE SET updated_at = NOW()
-            RETURNING id AS "Value"
-        """, person.Id, groupName).ToListAsync();
+        // Upsert agent group — use partial unique index on (person_id, name) WHERE person_id IS NOT NULL
+        var existing = await ctx.AgentGroups.FirstOrDefaultAsync(ag =>
+            ag.PersonId == person.Id && ag.Name.ToLower() == groupName.ToLower());
 
-        var groupId = groupIdList.First();
+        Guid groupId;
+        if (existing != null)
+        {
+            existing.UpdatedAt = DateTime.UtcNow;
+            groupId = existing.Id;
+        }
+        else
+        {
+            var newGroup = new Entities.AgentGroup { PersonId = person.Id, Name = groupName };
+            ctx.AgentGroups.Add(newGroup);
+            await ctx.SaveChangesAsync();
+            groupId = newGroup.Id;
+        }
 
         // Delete existing agents for this group (to allow regeneration)
         await ctx.Agents.Where(a => a.GroupId == groupId).ExecuteDeleteAsync();
 
-        // Insert agents
         for (int i = 0; i < agents.Count; i++)
         {
             var agent = agents[i];
@@ -66,7 +74,7 @@ public class AgentGroupRepository(IDbContextFactory<PersonalityDbContext> factor
 
         return groups.Select(ag => new CustomAgentGroup(
             ag.Id,
-            ag.Person.FirstName,
+            ag.Person?.FirstName,
             ag.Name,
             ag.CreatedAt,
             ag.Agents.Count,
@@ -79,11 +87,20 @@ public class AgentGroupRepository(IDbContextFactory<PersonalityDbContext> factor
         var effectiveGroupName = groupName ?? personName;
 
         await using var ctx = await factory.CreateDbContextAsync();
+
+        // First try person-owned group, then fall back to shared group
         var group = await ctx.AgentGroups
             .Include(ag => ag.Person)
             .Include(ag => ag.Agents.OrderBy(a => a.SortOrder))
             .FirstOrDefaultAsync(ag =>
+                ag.Person != null &&
                 ag.Person.FirstName.ToLower() == personName.ToLower() &&
+                ag.Name.ToLower() == effectiveGroupName.ToLower());
+
+        group ??= await ctx.AgentGroups
+            .Include(ag => ag.Agents.OrderBy(a => a.SortOrder))
+            .FirstOrDefaultAsync(ag =>
+                ag.PersonId == null &&
                 ag.Name.ToLower() == effectiveGroupName.ToLower());
 
         if (group == null) return null;
@@ -92,7 +109,7 @@ public class AgentGroupRepository(IDbContextFactory<PersonalityDbContext> factor
             a.Name, a.Role, a.Responsibilities, a.Style, a.MaxWords, a.IsSynthesizer
         )).ToList();
 
-        return new CustomAgentGroupDetail(group.Id, group.Person.FirstName, group.Name, group.CreatedAt, agents);
+        return new CustomAgentGroupDetail(group.Id, group.Person?.FirstName, group.Name, group.CreatedAt, agents);
     }
 
     public async Task<bool> DeleteAgentGroupAsync(string personName, string? groupName = null)
@@ -103,6 +120,7 @@ public class AgentGroupRepository(IDbContextFactory<PersonalityDbContext> factor
         var group = await ctx.AgentGroups
             .Include(ag => ag.Person)
             .FirstOrDefaultAsync(ag =>
+                ag.Person != null &&
                 ag.Person.FirstName.ToLower() == personName.ToLower() &&
                 ag.Name.ToLower() == effectiveGroupName.ToLower());
 

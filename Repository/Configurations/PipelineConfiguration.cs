@@ -4,34 +4,38 @@ using Repository.Entities;
 
 namespace Repository.Configurations;
 
-public class RelationshipProfileConfiguration : IEntityTypeConfiguration<RelationshipProfile>
+public class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
 {
-    public void Configure(EntityTypeBuilder<RelationshipProfile> builder)
+    public void Configure(EntityTypeBuilder<Pipeline> builder)
     {
-        builder.ToTable("relationship_profile");
+        builder.ToTable("pipeline");
 
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .UseIdentityByDefaultColumn();
 
-        // No cascade — don't lose profiles on person delete
         builder.HasOne(e => e.Person)
-            .WithMany(p => p.RelationshipProfiles)
+            .WithMany(p => p.Pipelines)
             .HasForeignKey(e => e.PersonId)
             .IsRequired()
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.RelationshipType)
-            .WithMany(rt => rt.RelationshipProfiles)
+            .WithMany(rt => rt.Pipelines)
             .HasForeignKey(e => e.RelationshipTypeId)
-            .IsRequired();
+            .IsRequired(false);
 
-        builder.Property(e => e.CompatibilityVector)
-            .HasColumnType("vector(4096)");
+        builder.Property(e => e.Name)
+            .IsRequired()
+            .HasMaxLength(100);
 
-        // Composite unique constraint
-        builder.HasIndex(e => new { e.PersonId, e.RelationshipTypeId })
+        builder.Property(e => e.IsActive)
+            .HasDefaultValue(true);
+
+        builder.HasIndex(e => new { e.PersonId, e.Name })
             .IsUnique();
+
+        builder.HasIndex(e => e.PersonId);
 
         builder.Property(e => e.CreatedAt)
             .HasDefaultValueSql("NOW()");

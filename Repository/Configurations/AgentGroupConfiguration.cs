@@ -17,18 +17,15 @@ public class AgentGroupConfiguration : IEntityTypeConfiguration<AgentGroup>
         builder.HasOne(e => e.Person)
             .WithMany(p => p.AgentGroups)
             .HasForeignKey(e => e.PersonId)
-            .IsRequired()
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Property(e => e.Name)
             .IsRequired()
             .HasMaxLength(100);
 
-        // Composite unique constraint
-        builder.HasIndex(e => new { e.PersonId, e.Name })
-            .IsUnique();
-
-        builder.HasIndex(e => e.PersonId);
+        // Partial unique indexes are defined in init.sql (WHERE person_id IS [NOT] NULL)
+        // EF can't express partial indexes natively, so we skip HasIndex here
 
         builder.Property(e => e.CreatedAt)
             .HasDefaultValueSql("NOW()");

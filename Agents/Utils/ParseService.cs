@@ -17,15 +17,26 @@ namespace Agents;
 /// </summary>
 public static class ParseService
 {
-    public static List<Trait> ParseTraits(string json)
+    private static readonly JsonSerializerOptions CaseInsensitiveJson = new() { PropertyNameCaseInsensitive = true };
+
+    /// <summary>
+    /// Extract and deserialize a JSON array from LLM response text.
+    /// Finds the first '[' and last ']' and deserializes the content between them.
+    /// </summary>
+    public static T? ParseJsonArray<T>(string responseText) where T : class
     {
         try
         {
-            var s = json.IndexOf('['); var e = json.LastIndexOf(']') + 1;
-            return s >= 0 && e > s ? JsonSerializer.Deserialize<List<Trait>>(json[s..e]) ?? [] : [];
+            var s = responseText.IndexOf('[');
+            var e = responseText.LastIndexOf(']') + 1;
+            if (s < 0 || e <= s) return null;
+            return JsonSerializer.Deserialize<T>(responseText[s..e], CaseInsensitiveJson);
         }
-        catch { return []; }
+        catch { return null; }
     }
+
+    public static List<Trait> ParseTraits(string json)
+        => ParseJsonArray<List<Trait>>(json) ?? [];
 
     public static ConversationFormat DetectConversationFormat(string content)
     {
@@ -296,30 +307,18 @@ public static class ParseService
 
     public static List<ImportantConversation> ParseImportantConversations(string json, List<ConversationMessage> allMessages)
     {
-        try
+        var parsed = ParseJsonArray<List<RawImportantConversation>>(json);
+        if (parsed == null || parsed.Count == 0) return [];
+
+        return parsed.Select(p =>
         {
-            var s = json.IndexOf('[');
-            var e = json.LastIndexOf(']') + 1;
-            if (s < 0 || e <= s) return [];
-
-            var parsed = JsonSerializer.Deserialize<List<RawImportantConversation>>(json[s..e]);
-            if (parsed == null) return [];
-
-            var result = new List<ImportantConversation>();
-            foreach (var p in parsed)
-            {
-                var start = Math.Max(0, p.StartIndex);
-                var end = Math.Min(allMessages.Count - 1, p.EndIndex);
-                var msgs = allMessages.Skip(start).Take(end - start + 1).ToList();
-
-                var traits = p.Traits?.Select(t =>
-                    new ExtractedTrait(t.Topic ?? "", t.Explanation ?? "", t.Speaker ?? "")).ToList() ?? [];
-
-                result.Add(new ImportantConversation(start, end, msgs, p.Reason ?? "", traits));
-            }
-            return result;
-        }
-        catch { return []; }
+            var start = Math.Max(0, p.StartIndex);
+            var end = Math.Min(allMessages.Count - 1, p.EndIndex);
+            var msgs = allMessages.Skip(start).Take(end - start + 1).ToList();
+            var traits = p.Traits?.Select(t =>
+                new ExtractedTrait(t.Topic ?? "", t.Explanation ?? "", t.Speaker ?? "")).ToList() ?? [];
+            return new ImportantConversation(start, end, msgs, p.Reason ?? "", traits);
+        }).ToList();
     }
 
     // ===== Document Extraction Methods =====
@@ -368,4 +367,27 @@ public static class ParseService
         [property: JsonPropertyName("explanation")] string? Explanation,
         [property: JsonPropertyName("speaker")] string? Speaker
     );
+
+    public static ResponderGroup ParseResponderGroup(string? relationship)
+        => !string.IsNullOrWhiteSpace(relationship) && Enum.TryParse<ResponderGroup>(relationship, true, out var g) ? g : ResponderGroup.Dating;
+
+    /// <summary>
+    /// Build the LLM prompt for extracting significant conversations from parsed messages.
+    /// </summary>
+    public static string BuildConversationAnalysisPrompt(
+        List<ConversationMessage> messages, string targetName, string userName, ConversationAnalysisConfig config)
+    {
+        var conversationText = string.Join("\n", messages.Select((m, i) =>
+            $"[{i}] {(m.IsTargetPersonality ? targetName : userName)}: {m.Content}"));
+
+        var jsonExample = JsonSerializer.Serialize(config.JsonExample,
+            new JsonSerializerOptions { WriteIndented = true })
+            .Replace("{targetName}", targetName);
+
+        return config.PromptTemplate
+            .Replace("{targetName}", targetName)
+            .Replace("{userName}", userName)
+            .Replace("{conversationText}", conversationText)
+            .Replace("{jsonExample}", jsonExample);
+    }
 }

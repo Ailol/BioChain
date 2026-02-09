@@ -7,7 +7,7 @@ using Repository;
 namespace McpAgentServer.Tools;
 
 [McpServerToolType]
-public class ChatTools(AgentService agentService, GroupAgentService groupAgentService, PersonalityRepository personalityRepo, AgentGroupRepository agentGroupRepo)
+public class ChatTools(AgentService agentService, PersonalityRepository personalityRepo, AgentGroupRepository agentGroupRepo)
 {
     // ===== Custom Agent Generation =====
 
@@ -29,7 +29,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
                 : JsonSerializer.Serialize(new { error = "Person not found" });
         }
 
-        var agents = await agentService.GenerateAgentsFromPersonalityAsync(personalityResult.Profile, agentCount);
+        var agents = await agentService.GenerateAgentsAsync(agentCount, profile: personalityResult.Profile);
 
         if (agents == null || agents.Count == 0)
             return JsonSerializer.Serialize(new { error = "Failed to generate agents from personality" });
@@ -60,7 +60,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
         if (agentCount < 6 || agentCount > 10)
             return JsonSerializer.Serialize(new { error = "Agent count must be between 6 and 10" });
 
-        var agents = await agentService.GenerateAgentsFromRoleAsync(role, agentCount);
+        var agents = await agentService.GenerateAgentsAsync(agentCount, role: role);
 
         if (agents == null || agents.Count == 0)
             return JsonSerializer.Serialize(new { error = "Failed to generate agents from role" });
@@ -116,7 +116,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
             return JsonSerializer.Serialize(new { error = $"No custom agent group found for '{person}'" });
 
         var profiles = PersonalityService.ToAgentProfiles(group.Agents);
-        var (output, _) = await groupAgentService.RunGroupChatAsync(profiles, topic, maxIterations: maxIterations);
+        var (output, _) = await agentService.RunGroupChatAsync(profiles, topic, maxIterations: maxIterations);
         return output;
     }
 

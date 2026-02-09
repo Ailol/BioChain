@@ -113,80 +113,40 @@ public class EmbeddingService
         return $"[{string.Join(",", embedding.Select(f => f.ToString("G9")))}]";
     }
 
-    /// <summary>
-    /// Parse a PostgreSQL vector string back to a float array.
-    /// </summary>
-    public static float[]? FromPostgresVector(string? vectorString)
-    {
-        if (string.IsNullOrWhiteSpace(vectorString))
-            return null;
-
-        // Remove brackets and split
-        var trimmed = vectorString.Trim('[', ']', '(', ')');
-        var parts = trimmed.Split(',');
-
-        try
-        {
-            return parts.Select(p => float.Parse(p.Trim())).ToArray();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Generate embeddings for all traits that don't have them yet.
-    /// </summary>
     public async Task<BackfillResult> BackfillEmbeddingsAsync(string? person = null)
     {
         var traits = await _embeddingRepo.GetTraitsWithoutEmbeddingsAsync(person);
-
-        int updated = 0, skipped = 0, errors = 0;
-
-        foreach (var (id, topic, explanation) in traits)
-        {
-            try
-            {
-                var embedding = await GenerateTraitEmbeddingAsync(topic, explanation);
-                if (embedding == null) { skipped++; continue; }
-
-                var embeddingValue = ToPostgresVector(embedding);
-                await _embeddingRepo.UpdateTraitEmbeddingAsync(id, embeddingValue);
-                updated++;
-            }
-            catch { errors++; }
-        }
-
-        return new BackfillResult(updated, skipped, errors,
-            $"Backfill complete: {updated} updated, {skipped} skipped, {errors} errors out of {traits.Count} traits.");
+        return await BackfillAsync(traits,
+            t => GenerateTraitEmbeddingAsync(t.Topic, t.Explanation),
+            (t, vec) => _embeddingRepo.UpdateTraitEmbeddingAsync(t.Id, vec),
+            "Backfill", traits.Count);
     }
 
-    /// <summary>
-    /// Generate embeddings for all hormones and peptides that don't have embeddings yet.
-    /// Uses the name directly for embedding generation (no description column in new schema).
-    /// </summary>
     public async Task<BackfillResult> BackfillHormonePeptideEmbeddingsAsync()
     {
         var items = await _embeddingRepo.GetItemsWithoutEmbeddingsAsync();
+        return await BackfillAsync(items,
+            i => GenerateNameEmbeddingAsync(i.Name),
+            (i, vec) => _embeddingRepo.UpdateItemEmbeddingAsync(i.Table, i.Id, vec),
+            "Hormone/peptide backfill", items.Count);
+    }
 
+    private async Task<BackfillResult> BackfillAsync<T>(
+        IList<T> items, Func<T, Task<float[]?>> embed, Func<T, string, Task> update, string label, int total)
+    {
         int updated = 0, skipped = 0, errors = 0;
-
-        foreach (var (table, id, name) in items)
+        foreach (var item in items)
         {
             try
             {
-                var embedding = await GenerateNameEmbeddingAsync(name);
+                var embedding = await embed(item);
                 if (embedding == null) { skipped++; continue; }
-
-                var embeddingValue = ToPostgresVector(embedding);
-                await _embeddingRepo.UpdateItemEmbeddingAsync(table, id, embeddingValue);
+                await update(item, ToPostgresVector(embedding));
                 updated++;
             }
             catch { errors++; }
         }
-
         return new BackfillResult(updated, skipped, errors,
-            $"Hormone/peptide backfill complete: {updated} updated, {skipped} skipped, {errors} errors out of {items.Count} items.");
+            $"{label} complete: {updated} updated, {skipped} skipped, {errors} errors out of {total} items.");
     }
 }

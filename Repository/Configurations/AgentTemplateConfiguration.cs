@@ -4,40 +4,38 @@ using Repository.Entities;
 
 namespace Repository.Configurations;
 
-public class AgentEntityConfiguration : IEntityTypeConfiguration<Agent>
+public class AgentTemplateConfiguration : IEntityTypeConfiguration<AgentTemplate>
 {
-    public void Configure(EntityTypeBuilder<Agent> builder)
+    public void Configure(EntityTypeBuilder<AgentTemplate> builder)
     {
-        builder.ToTable("agent");
+        builder.ToTable("agent_template");
 
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .UseIdentityByDefaultColumn();
 
-        builder.HasOne(e => e.Group)
-            .WithMany(g => g.Agents)
-            .HasForeignKey(e => e.GroupId)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.Property(e => e.Category)
+            .IsRequired()
+            .HasMaxLength(50);
 
-        builder.HasOne(e => e.Person)
-            .WithMany()
-            .HasForeignKey(e => e.PersonId)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.Property(e => e.GroupName)
+            .HasMaxLength(100);
 
         builder.Property(e => e.Name)
             .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(e => e.Layer)
             .HasMaxLength(50);
 
         builder.Property(e => e.Role)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(200);
 
         // TEXT[] mapped natively by Npgsql EF Core
-        builder.Property(e => e.Responsibilities)
-            .IsRequired();
+        builder.Property(e => e.Responsibilities);
 
+        // TEXT (no max length — PhD-level prompts are long)
         builder.Property(e => e.Style)
             .IsRequired();
 
@@ -50,12 +48,10 @@ public class AgentEntityConfiguration : IEntityTypeConfiguration<Agent>
         builder.Property(e => e.SortOrder)
             .HasDefaultValue(0);
 
-        // Composite unique constraint (group_id nullable — only enforced when both present)
-        builder.HasIndex(e => new { e.GroupId, e.Name })
+        builder.HasIndex(e => new { e.Category, e.GroupName, e.Name })
             .IsUnique();
 
-        builder.HasIndex(e => e.GroupId);
-        builder.HasIndex(e => e.PersonId);
+        builder.HasIndex(e => e.Category);
 
         builder.Property(e => e.CreatedAt)
             .HasDefaultValueSql("NOW()");

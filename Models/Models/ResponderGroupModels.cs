@@ -5,7 +5,6 @@ namespace Models;
 /// </summary>
 public class ResponderGroupConfig
 {
-    public string Context { get; set; } = "";
     public List<ResponderGroupAgent> Agents { get; set; } = [];
 }
 
@@ -15,8 +14,7 @@ public class ResponderGroupConfig
 public class ResponderGroupAgent
 {
     public string Name { get; set; } = "";
-    public string? Neurotransmitter { get; set; }
-    public string? Layer { get; set; }  // "neurotransmitter", "hormone", "peptide", or null (synthesizer)
+    public string? Layer { get; set; }
     public string Role { get; set; } = "";
     public string Style { get; set; } = "";
     public int MaxWords { get; set; } = 150;

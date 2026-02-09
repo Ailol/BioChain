@@ -4,7 +4,7 @@ namespace Models;
 
 public record CustomAgentGroup(
     Guid Id,
-    string PersonName,
+    string? PersonName,
     string GroupName,
     DateTime CreatedAt,
     int AgentCount,
@@ -22,7 +22,7 @@ public record CustomAgent(
 
 public record CustomAgentGroupDetail(
     Guid Id,
-    string PersonName,
+    string? PersonName,
     string GroupName,
     DateTime CreatedAt,
     List<CustomAgent> Agents

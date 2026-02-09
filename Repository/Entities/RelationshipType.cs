@@ -7,5 +7,5 @@ public class RelationshipType
     public string? Description { get; set; }
 
     // Navigation properties
-    public ICollection<RelationshipProfile> RelationshipProfiles { get; set; } = [];
+    public ICollection<Pipeline> Pipelines { get; set; } = [];
 }

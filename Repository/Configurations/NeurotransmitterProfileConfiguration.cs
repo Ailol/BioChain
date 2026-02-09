@@ -25,6 +25,12 @@ public class NeurotransmitterProfileConfiguration : IEntityTypeConfiguration<Neu
             .HasForeignKey(e => e.NeurotransmitterId)
             .IsRequired();
 
+        builder.Property(e => e.ReasoningEmbedding)
+            .HasColumnType("vector(4096)");
+
+        builder.Property(e => e.IsClusterRepresentative)
+            .HasDefaultValue(false);
+
         builder.HasIndex(e => new { e.PersonalityId, e.NeurotransmitterId })
             .IsUnique();
 
