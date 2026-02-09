@@ -1,668 +1,241 @@
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
 using Models;
 
 namespace Repository;
 
 /// <summary>
-/// Data access layer for all personality-related database operations.
-/// Pure SQL/Npgsql — no business logic, no LLM calls, no embedding generation.
+/// Data access for the personality table and its child profile tables.
+/// Handles trait CRUD and biochemical profile upserts/reads.
 /// </summary>
-public class PersonalityRepository
+public class PersonalityRepository(IDbContextFactory<PersonalityDbContext> factory, PersonRepository personRepo)
 {
-    private readonly string _connectionString;
+    // ===== Personality Trait Reads =====
 
-    public PersonalityRepository(string connectionString)
-    {
-        _connectionString = connectionString;
-    }
-
-    private async Task<NpgsqlConnection> OpenConnectionAsync()
-    {
-        var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-        return conn;
-    }
-
-    // ===== Person Methods =====
-
-    public async Task<List<string>> ListPersonsAsync()
-    {
-        const string sql = "SELECT name FROM person ORDER BY name";
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        var persons = new List<string>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            persons.Add(reader.GetString(0));
-        return persons;
-    }
-
-    public async Task<bool> CreatePersonAsync(string name)
-    {
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            "INSERT INTO person (name) VALUES (@name) ON CONFLICT DO NOTHING", conn);
-        cmd.Parameters.AddWithValue("name", name.ToLowerInvariant());
-        return await cmd.ExecuteNonQueryAsync() > 0;
-    }
-
-    public async Task EnsurePersonExistsAsync(string name)
-    {
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            "INSERT INTO person (name) VALUES (@name) ON CONFLICT DO NOTHING", conn);
-        cmd.Parameters.AddWithValue("name", name.ToLowerInvariant());
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task<bool> PersonExistsAsync(string name)
-    {
-        const string sql = "SELECT 1 FROM person WHERE LOWER(name) = LOWER(@name) LIMIT 1";
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("name", name);
-        return await cmd.ExecuteScalarAsync() != null;
-    }
-
-    public async Task<List<string>> FindSimilarPersonsAsync(string search)
-    {
-        const string sql = """
-            SELECT name, similarity(LOWER(name), LOWER(@search)) as sim
-            FROM person
-            WHERE similarity(LOWER(name), LOWER(@search)) > 0.3
-            ORDER BY sim DESC
-            LIMIT 5;
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("search", search);
-
-        var suggestions = new List<string>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            suggestions.Add(reader.GetString(0));
-
-        return suggestions;
-    }
-
-    // ===== Personality Trait Methods =====
-
+    /// <summary>
+    /// Get full personality for a person. Dominant NT per trait is the first linked NT
+    /// (presence-based — all linked NTs are equally relevant).
+    /// </summary>
     public async Task<PersonalityResult> GetPersonalityAsync(string person)
     {
-        const string sql = """
-            SELECT p.topic, p.explanation, nt.name, pr.name
-            FROM personality p
-            JOIN person pr ON pr.id = p.person_id
-            JOIN neurotransmitter nt ON nt.id = p.neurotransmitter_id
-            WHERE LOWER(pr.name) = LOWER(@name) ORDER BY p.topic;
-        """;
+        await using var ctx = await factory.CreateDbContextAsync();
+        var rows = await ctx.Personalities
+            .Include(p => p.Person)
+            .Include(p => p.NeurotransmitterProfiles)
+                .ThenInclude(np => np.Neurotransmitter)
+            .Where(p => p.Person.FirstName.ToLower() == person.ToLower())
+            .OrderBy(p => p.Topic)
+            .Select(p => new
+            {
+                p.Topic,
+                p.Explanation,
+                DominantNt = p.NeurotransmitterProfiles
+                    .OrderBy(np => np.NeurotransmitterId)
+                    .Select(np => np.Neurotransmitter.Name)
+                    .FirstOrDefault(),
+                p.Person.FirstName
+            })
+            .ToListAsync();
 
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("name", person);
-
-        var traits = new List<Trait>();
-        string? matchedName = null;
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        if (rows.Count > 0)
         {
-            traits.Add(new Trait(reader.GetString(0), reader.GetString(1), reader.GetString(2)));
-            matchedName ??= reader.GetString(3);
+            var traits = rows.Select(r => new Trait(r.Topic, r.Explanation ?? "", r.DominantNt)).ToList();
+            return new PersonalityResult(new PersonalityProfile(rows[0].FirstName, traits));
         }
 
-        if (traits.Count > 0)
-            return new PersonalityResult(new PersonalityProfile(matchedName!, traits));
-
-        var suggestions = await FindSimilarPersonsAsync(person);
+        var suggestions = await personRepo.FindSimilarPersonsAsync(person);
         return new PersonalityResult(null, suggestions.Count > 0 ? suggestions : null);
     }
 
-    /// <summary>
-    /// Get raw trait embedding vectors for a person (for computing hormone/peptide scores).
-    /// </summary>
-    public async Task<List<float[]>> GetTraitEmbeddingsAsync(string person)
-    {
-        const string sql = """
-            SELECT p.embedding::TEXT
-            FROM personality p
-            JOIN person pr ON pr.id = p.person_id
-            WHERE LOWER(pr.name) = LOWER(@name) AND p.embedding IS NOT NULL
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("name", person);
-
-        var embeddings = new List<float[]>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            var embedding = FromPostgresVector(reader.GetString(0));
-            if (embedding != null)
-                embeddings.Add(embedding);
-        }
-
-        return embeddings;
-    }
+    // ===== Personality Trait Writes =====
 
     /// <summary>
-    /// Get trait embeddings with full metadata (topic, explanation, NT, embedding) for vector analysis.
+    /// Upsert a personality row for (person, topic). Returns the personality.id via RETURNING.
+    /// No neurotransmitter_id — biochemical profiles are written separately.
     /// </summary>
-    public async Task<List<TraitWithEmbedding>> GetTraitEmbeddingsWithMetadataAsync(string person)
+    public async Task<int> UpsertPersonalityTraitAsync(
+        string person, string topic, string explanation, string? embeddingVector)
     {
-        const string sql = """
-            SELECT p.topic, p.explanation, nt.name as neurotransmitter, p.embedding::TEXT
-            FROM personality p
-            JOIN person pr ON pr.id = p.person_id
-            JOIN neurotransmitter nt ON nt.id = p.neurotransmitter_id
-            WHERE LOWER(pr.name) = LOWER(@name) AND p.embedding IS NOT NULL
-        """;
+        await using var ctx = await factory.CreateDbContextAsync();
 
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("name", person);
-
-        var results = new List<TraitWithEmbedding>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            var embedding = FromPostgresVector(reader.GetString(3));
-            if (embedding != null)
-                results.Add(new TraitWithEmbedding(reader.GetString(0), reader.GetString(1), reader.GetString(2), embedding));
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Get raw name + embedding pairs for hormone or peptide table (for heatmap analysis).
-    /// </summary>
-    public async Task<List<(string Name, float[] Embedding)>> GetTargetEmbeddingsAsync(string table)
-    {
-        if (table is not "hormone" and not "peptide")
-            throw new ArgumentException("Table must be 'hormone' or 'peptide'", nameof(table));
-
-        var targets = new List<(string Name, float[] Embedding)>();
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            $"SELECT name, embedding::TEXT FROM {table} WHERE embedding IS NOT NULL", conn);
-
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            var embedding = FromPostgresVector(reader.GetString(1));
-            if (embedding != null)
-                targets.Add((reader.GetString(0), embedding));
-        }
-
-        return targets;
-    }
-
-    /// <summary>
-    /// Search personality traits by vector similarity (pgvector cosine distance).
-    /// Returns raw trait data with similarity scores.
-    /// </summary>
-    public async Task<List<(string Topic, string Explanation, string Neurotransmitter, double Similarity)>> GetSimilarTraitsAsync(
-        string person, string embeddingVector, int limit = 20)
-    {
-        const string sql = """
-            SELECT p.topic, p.explanation, nt.name as neurotransmitter,
-                   1 - (p.embedding <=> @embedding::vector) as similarity
-            FROM personality p
-            JOIN person pr ON pr.id = p.person_id
-            JOIN neurotransmitter nt ON nt.id = p.neurotransmitter_id
-            WHERE LOWER(pr.name) = LOWER(@person) AND p.embedding IS NOT NULL
-            ORDER BY p.embedding <=> @embedding::vector
-            LIMIT @limit;
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("embedding", embeddingVector);
-        cmd.Parameters.AddWithValue("person", person);
-        cmd.Parameters.AddWithValue("limit", limit);
-
-        var results = new List<(string, string, string, double)>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            results.Add((
-                reader.GetString(0),
-                reader.GetString(1),
-                reader.GetString(2),
-                reader.GetDouble(3)
-            ));
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Match a person by name (exact) or by embedding similarity fallback.
-    /// Returns (matchedName, matchMethod) where matchMethod is "name", "embedding", "name_fallback", or "name_unverified".
-    /// </summary>
-    public async Task<(string Person, string MatchedBy)> MatchPersonAsync(string? personName, string? embeddingVector)
-    {
-        if (!string.IsNullOrWhiteSpace(personName))
-        {
-            var exists = await PersonExistsAsync(personName);
-            if (exists) return (personName, "name");
-        }
-
-        if (!string.IsNullOrWhiteSpace(embeddingVector))
-        {
-            var bestMatch = await FindBestPersonByEmbeddingAsync(embeddingVector);
-            if (bestMatch != null)
-                return (bestMatch, string.IsNullOrWhiteSpace(personName) ? "embedding" : "name_fallback");
-        }
-
-        if (!string.IsNullOrWhiteSpace(personName))
-            return (personName, "name_unverified");
-
-        throw new InvalidOperationException("Could not identify person. Please provide a name or ensure profiles exist.");
-    }
-
-    /// <summary>
-    /// Find best matching person by embedding similarity across all traits.
-    /// </summary>
-    public async Task<string?> FindBestPersonByEmbeddingAsync(string embeddingVector)
-    {
-        const string sql = """
-            SELECT pr.name, MIN(p.embedding <=> @embedding::vector) as min_dist
-            FROM personality p
-            JOIN person pr ON pr.id = p.person_id
-            WHERE p.embedding IS NOT NULL
-            GROUP BY pr.name
-            ORDER BY min_dist
-            LIMIT 1;
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("embedding", embeddingVector);
-
-        await using var reader = await cmd.ExecuteReaderAsync();
-        return await reader.ReadAsync() ? reader.GetString(0) : null;
-    }
-
-    public async Task UpsertPersonalityTraitAsync(
-        string person, string neurotransmitter, string topic, string explanation, string? embeddingVector)
-    {
-        var sql = embeddingVector != null
-            ? """
-                INSERT INTO personality (person_id, neurotransmitter_id, topic, explanation, embedding)
-                SELECT p.id, nt.id, @topic, @expl, @embedding::vector
-                FROM person p, neurotransmitter nt WHERE LOWER(p.name) = LOWER(@person) AND nt.name = @nt
-                ON CONFLICT (person_id, neurotransmitter_id, topic)
-                DO UPDATE SET explanation = EXCLUDED.explanation, embedding = EXCLUDED.embedding;
-              """
-            : """
-                INSERT INTO personality (person_id, neurotransmitter_id, topic, explanation)
-                SELECT p.id, nt.id, @topic, @expl
-                FROM person p, neurotransmitter nt WHERE LOWER(p.name) = LOWER(@person) AND nt.name = @nt
-                ON CONFLICT (person_id, neurotransmitter_id, topic)
-                DO UPDATE SET explanation = EXCLUDED.explanation;
-              """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("topic", topic);
-        cmd.Parameters.AddWithValue("expl", explanation);
-        cmd.Parameters.AddWithValue("person", person);
-        cmd.Parameters.AddWithValue("nt", neurotransmitter);
         if (embeddingVector != null)
-            cmd.Parameters.AddWithValue("embedding", embeddingVector);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task UpdateTraitEmbeddingByContentAsync(string person, string neurotransmitter, string topic, string embeddingVector)
-    {
-        const string sql = """
-            UPDATE personality SET embedding = @embedding::vector
-            WHERE person_id = (SELECT id FROM person WHERE LOWER(name) = LOWER(@person))
-              AND neurotransmitter_id = (SELECT id FROM neurotransmitter WHERE name = @nt)
-              AND topic = @topic;
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("embedding", embeddingVector);
-        cmd.Parameters.AddWithValue("person", person);
-        cmd.Parameters.AddWithValue("nt", neurotransmitter);
-        cmd.Parameters.AddWithValue("topic", topic);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    // ===== Embedding Backfill Methods =====
-
-    public async Task<List<(int Id, string Topic, string Explanation)>> GetTraitsWithoutEmbeddingsAsync(string? person = null)
-    {
-        var filter = person != null ? "AND LOWER(pr.name) = LOWER(@name)" : "";
-        var sql = $"""
-            SELECT p.id, p.topic, p.explanation, pr.name
-            FROM personality p
-            JOIN person pr ON pr.id = p.person_id
-            WHERE p.embedding IS NULL
-            {filter}
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        var traits = new List<(int Id, string Topic, string Explanation)>();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        if (person != null)
-            cmd.Parameters.AddWithValue("name", person);
-
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            traits.Add((reader.GetInt32(0), reader.GetString(1), reader.GetString(2)));
-
-        return traits;
-    }
-
-    public async Task UpdateTraitEmbeddingAsync(int id, string embeddingVector)
-    {
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            "UPDATE personality SET embedding = @embedding::vector WHERE id = @id", conn);
-        cmd.Parameters.AddWithValue("id", id);
-        cmd.Parameters.AddWithValue("embedding", embeddingVector);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task<List<(string Table, int Id, string Name, string Description)>> GetItemsWithoutEmbeddingsAsync()
-    {
-        var items = new List<(string Table, int Id, string Name, string Description)>();
-
-        await using var conn = await OpenConnectionAsync();
-        foreach (var table in new[] { "hormone", "peptide" })
         {
-            var sql = $"SELECT id, name, description FROM {table} WHERE description IS NOT NULL AND embedding IS NULL";
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-                items.Add((table, reader.GetInt32(0), reader.GetString(1), reader.GetString(2)));
+            var ids = await ctx.Database.SqlQueryRaw<int>("""
+                INSERT INTO personality (person_id, topic, explanation, embedding)
+                SELECT p.id, @p0, @p1, @p2::vector
+                FROM person p WHERE LOWER(p.first_name) = LOWER(@p3)
+                ON CONFLICT (person_id, topic)
+                DO UPDATE SET explanation = EXCLUDED.explanation, embedding = EXCLUDED.embedding, updated_at = NOW()
+                RETURNING id AS "Value"
+            """, topic, explanation, embeddingVector, person).ToListAsync();
+            return ids.FirstOrDefault();
         }
-
-        return items;
+        else
+        {
+            var ids = await ctx.Database.SqlQueryRaw<int>("""
+                INSERT INTO personality (person_id, topic, explanation)
+                SELECT p.id, @p0, @p1
+                FROM person p WHERE LOWER(p.first_name) = LOWER(@p2)
+                ON CONFLICT (person_id, topic)
+                DO UPDATE SET explanation = EXCLUDED.explanation, updated_at = NOW()
+                RETURNING id AS "Value"
+            """, topic, explanation, person).ToListAsync();
+            return ids.FirstOrDefault();
+        }
     }
 
-    public async Task UpdateItemEmbeddingAsync(string table, int id, string embeddingVector)
-    {
-        if (table is not "hormone" and not "peptide")
-            throw new ArgumentException("Table must be 'hormone' or 'peptide'", nameof(table));
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            $"UPDATE {table} SET embedding = @embedding::vector WHERE id = @id", conn);
-        cmd.Parameters.AddWithValue("id", id);
-        cmd.Parameters.AddWithValue("embedding", embeddingVector);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    // ===== Hormone/Peptide Vector Scoring =====
+    // ===== Biochemical Profile Upserts =====
 
     /// <summary>
-    /// Compute similarity scores between a person's trait embeddings and hormone/peptide embeddings.
-    /// Reads vectors from DB and computes cosine similarity in-memory.
+    /// Upsert a neurotransmitter profile row for a personality (presence-based, no strength).
     /// </summary>
-    public async Task<List<Interaction>> ComputeVectorScoresAsync(string table, List<float[]> traitEmbeddings)
+    public async Task UpsertNeurotransmitterProfileAsync(int personalityId, string ntName, string reasoning)
     {
-        if (table is not "hormone" and not "peptide")
-            throw new ArgumentException("Table must be 'hormone' or 'peptide'", nameof(table));
-
-        var targets = new List<(string Name, float[] Embedding)>();
-        await using var conn = await OpenConnectionAsync();
-        await using (var cmd = new NpgsqlCommand(
-            $"SELECT name, embedding::TEXT FROM {table} WHERE embedding IS NOT NULL", conn))
-        {
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                var embedding = FromPostgresVector(reader.GetString(1));
-                if (embedding != null)
-                    targets.Add((reader.GetString(0), embedding));
-            }
-        }
-
-        if (targets.Count == 0) return [];
-
-        var results = new List<Interaction>();
-        foreach (var (name, targetEmbedding) in targets)
-        {
-            var similarities = traitEmbeddings
-                .Select(te => CosineSimilarity(te, targetEmbedding))
-                .OrderByDescending(s => s)
-                .Take(5)
-                .ToList();
-
-            var score = (float)Math.Clamp(similarities.Average(), 0, 1);
-            results.Add(new Interaction(name, score));
-        }
-
-        return results.OrderByDescending(r => r.Strength).ToList();
+        await using var ctx = await factory.CreateDbContextAsync();
+        await ctx.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO neurotransmitter_profile (personality_id, neurotransmitter_id, reasoning)
+            SELECT {personalityId}, nt.id, {reasoning}
+            FROM neurotransmitter nt WHERE nt.name = {ntName}
+            ON CONFLICT (personality_id, neurotransmitter_id)
+            DO UPDATE SET reasoning = EXCLUDED.reasoning, updated_at = NOW()
+        """);
     }
 
-    // ===== Agent Group Methods =====
-
-    public async Task<Guid> CreateAgentGroupAsync(string personName, string groupName, List<CustomAgent> agents)
+    /// <summary>
+    /// Upsert a hormone profile row for a personality (presence-based, no strength).
+    /// </summary>
+    public async Task UpsertHormoneProfileAsync(int personalityId, string hormoneName, string reasoning)
     {
-        await using var conn = await OpenConnectionAsync();
-
-        // Ensure person exists
-        await using (var ensureCmd = new NpgsqlCommand(
-            "INSERT INTO person (name) VALUES (@name) ON CONFLICT DO NOTHING", conn))
-        {
-            ensureCmd.Parameters.AddWithValue("name", personName.ToLowerInvariant());
-            await ensureCmd.ExecuteNonQueryAsync();
-        }
-
-        // Get person ID
-        Guid personId;
-        await using (var getCmd = new NpgsqlCommand(
-            "SELECT id FROM person WHERE LOWER(name) = LOWER(@name)", conn))
-        {
-            getCmd.Parameters.AddWithValue("name", personName);
-            var result = await getCmd.ExecuteScalarAsync();
-            if (result == null) throw new InvalidOperationException($"Person '{personName}' not found");
-            personId = (Guid)result;
-        }
-
-        // Create or update agent group
-        Guid groupId;
-        const string groupSql = """
-            INSERT INTO agent_group (person_id, name) VALUES (@personId, @groupName)
-            ON CONFLICT (person_id, name) DO UPDATE SET created_at = NOW()
-            RETURNING id;
-        """;
-        await using (var groupCmd = new NpgsqlCommand(groupSql, conn))
-        {
-            groupCmd.Parameters.AddWithValue("personId", personId);
-            groupCmd.Parameters.AddWithValue("groupName", groupName);
-            groupId = (Guid)(await groupCmd.ExecuteScalarAsync())!;
-        }
-
-        // Delete existing agents for this group (to allow regeneration)
-        await using (var delCmd = new NpgsqlCommand("DELETE FROM agent WHERE group_id = @groupId", conn))
-        {
-            delCmd.Parameters.AddWithValue("groupId", groupId);
-            await delCmd.ExecuteNonQueryAsync();
-        }
-
-        // Insert agents
-        for (int i = 0; i < agents.Count; i++)
-        {
-            var agent = agents[i];
-            const string agentSql = """
-                INSERT INTO agent (group_id, name, role, responsibilities, style, max_words, is_synthesizer, sort_order)
-                VALUES (@groupId, @name, @role, @responsibilities, @style, @maxWords, @isSynthesizer, @sortOrder);
-            """;
-            await using var agentCmd = new NpgsqlCommand(agentSql, conn);
-            agentCmd.Parameters.AddWithValue("groupId", groupId);
-            agentCmd.Parameters.AddWithValue("name", agent.Name);
-            agentCmd.Parameters.AddWithValue("role", agent.Role);
-            agentCmd.Parameters.AddWithValue("responsibilities", agent.Responsibilities.ToArray());
-            agentCmd.Parameters.AddWithValue("style", agent.Style);
-            agentCmd.Parameters.AddWithValue("maxWords", agent.MaxWords);
-            agentCmd.Parameters.AddWithValue("isSynthesizer", agent.IsSynthesizer);
-            agentCmd.Parameters.AddWithValue("sortOrder", i);
-            await agentCmd.ExecuteNonQueryAsync();
-        }
-
-        return groupId;
+        await using var ctx = await factory.CreateDbContextAsync();
+        await ctx.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO hormone_profile (personality_id, hormone_id, reasoning)
+            SELECT {personalityId}, h.id, {reasoning}
+            FROM hormone h WHERE h.name = {hormoneName}
+            ON CONFLICT (personality_id, hormone_id)
+            DO UPDATE SET reasoning = EXCLUDED.reasoning, updated_at = NOW()
+        """);
     }
 
-    public async Task<List<CustomAgentGroup>> ListAgentGroupsAsync()
+    /// <summary>
+    /// Upsert a peptide profile row for a personality (presence-based, no strength).
+    /// </summary>
+    public async Task UpsertPeptideProfileAsync(int personalityId, string peptideName, string reasoning)
     {
-        const string sql = """
-            SELECT ag.id, p.name as person_name, ag.name as group_name, ag.created_at,
-                   COUNT(a.id) as agent_count,
-                   ARRAY_AGG(a.name ORDER BY a.sort_order) as agent_names
-            FROM agent_group ag
-            JOIN person p ON p.id = ag.person_id
-            LEFT JOIN agent a ON a.group_id = ag.id
-            GROUP BY ag.id, p.name, ag.name, ag.created_at
-            ORDER BY ag.created_at DESC;
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-
-        var groups = new List<CustomAgentGroup>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            var agentNames = reader.IsDBNull(5) ? [] : ((string[])reader.GetValue(5)).ToList();
-            groups.Add(new CustomAgentGroup(
-                reader.GetGuid(0),
-                reader.GetString(1),
-                reader.GetString(2),
-                reader.GetDateTime(3),
-                reader.GetInt32(4),
-                agentNames
-            ));
-        }
-
-        return groups;
+        await using var ctx = await factory.CreateDbContextAsync();
+        await ctx.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO peptide_profile (personality_id, peptide_id, reasoning)
+            SELECT {personalityId}, pe.id, {reasoning}
+            FROM peptide pe WHERE pe.name = {peptideName}
+            ON CONFLICT (personality_id, peptide_id)
+            DO UPDATE SET reasoning = EXCLUDED.reasoning, updated_at = NOW()
+        """);
     }
 
-    public async Task<CustomAgentGroupDetail?> GetAgentGroupAsync(string personName, string? groupName = null)
+    // ===== Biochemical Profile Reads (count-based) =====
+
+    /// <summary>
+    /// Get hormone trait counts for a person — GROUP BY hormone, COUNT entries.
+    /// </summary>
+    public async Task<List<Interaction>> GetHormoneScoresAsync(string person)
     {
-        var effectiveGroupName = groupName ?? personName;
+        await using var ctx = await factory.CreateDbContextAsync();
+        var rows = await ctx.Database.SqlQueryRaw<InteractionRow>("""
+            SELECT h.name AS name, COUNT(*)::INT AS trait_count
+            FROM hormone_profile hp
+            JOIN personality p ON p.id = hp.personality_id
+            JOIN person pr ON pr.id = p.person_id
+            JOIN hormone h ON h.id = hp.hormone_id
+            WHERE LOWER(pr.first_name) = LOWER(@p0)
+            GROUP BY h.name
+            ORDER BY COUNT(*) DESC
+        """, person).ToListAsync();
 
-        const string sql = """
-            SELECT ag.id, p.name as person_name, ag.name as group_name, ag.created_at
-            FROM agent_group ag
-            JOIN person p ON p.id = ag.person_id
-            WHERE LOWER(p.name) = LOWER(@personName) AND LOWER(ag.name) = LOWER(@groupName);
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-
-        Guid groupId;
-        string matchedPersonName, matchedGroupName;
-        DateTime createdAt;
-
-        await using (var cmd = new NpgsqlCommand(sql, conn))
-        {
-            cmd.Parameters.AddWithValue("personName", personName);
-            cmd.Parameters.AddWithValue("groupName", effectiveGroupName);
-            await using var reader = await cmd.ExecuteReaderAsync();
-            if (!await reader.ReadAsync()) return null;
-
-            groupId = reader.GetGuid(0);
-            matchedPersonName = reader.GetString(1);
-            matchedGroupName = reader.GetString(2);
-            createdAt = reader.GetDateTime(3);
-        }
-
-        // Get agents
-        const string agentsSql = """
-            SELECT name, role, responsibilities, style, max_words, is_synthesizer
-            FROM agent WHERE group_id = @groupId ORDER BY sort_order;
-        """;
-
-        var agents = new List<CustomAgent>();
-        await using (var agentsCmd = new NpgsqlCommand(agentsSql, conn))
-        {
-            agentsCmd.Parameters.AddWithValue("groupId", groupId);
-            await using var agentsReader = await agentsCmd.ExecuteReaderAsync();
-            while (await agentsReader.ReadAsync())
-            {
-                agents.Add(new CustomAgent(
-                    agentsReader.GetString(0),
-                    agentsReader.GetString(1),
-                    ((string[])agentsReader.GetValue(2)).ToList(),
-                    agentsReader.GetString(3),
-                    agentsReader.GetInt32(4),
-                    agentsReader.GetBoolean(5)
-                ));
-            }
-        }
-
-        return new CustomAgentGroupDetail(groupId, matchedPersonName, matchedGroupName, createdAt, agents);
+        return rows.Select(r => new Interaction(r.Name, r.TraitCount)).ToList();
     }
 
-    public async Task<bool> DeleteAgentGroupAsync(string personName, string? groupName = null)
+    /// <summary>
+    /// Get peptide trait counts for a person — GROUP BY peptide, COUNT entries.
+    /// </summary>
+    public async Task<List<Interaction>> GetPeptideScoresAsync(string person)
     {
-        var effectiveGroupName = groupName ?? personName;
+        await using var ctx = await factory.CreateDbContextAsync();
+        var rows = await ctx.Database.SqlQueryRaw<InteractionRow>("""
+            SELECT pe.name AS name, COUNT(*)::INT AS trait_count
+            FROM peptide_profile pp
+            JOIN personality p ON p.id = pp.personality_id
+            JOIN person pr ON pr.id = p.person_id
+            JOIN peptide pe ON pe.id = pp.peptide_id
+            WHERE LOWER(pr.first_name) = LOWER(@p0)
+            GROUP BY pe.name
+            ORDER BY COUNT(*) DESC
+        """, person).ToListAsync();
 
-        const string sql = """
-            DELETE FROM agent_group ag
-            USING person p
-            WHERE ag.person_id = p.id
-              AND LOWER(p.name) = LOWER(@personName)
-              AND LOWER(ag.name) = LOWER(@groupName);
-        """;
-
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("personName", personName);
-        cmd.Parameters.AddWithValue("groupName", effectiveGroupName);
-
-        return await cmd.ExecuteNonQueryAsync() > 0;
+        return rows.Select(r => new Interaction(r.Name, r.TraitCount)).ToList();
     }
 
-    // ===== Private Helpers =====
+    // ===== Co-Occurrence Queries =====
 
-    private static float[]? FromPostgresVector(string? vectorString)
+    /// <summary>
+    /// Get co-occurrences: given a source chemical from one layer, find which chemicals
+    /// from a target layer appear on the same personality traits.
+    /// sourceTable/targetTable must be "neurotransmitter", "hormone", or "peptide".
+    /// </summary>
+    public async Task<List<CoOccurrence>> GetCoOccurrencesAsync(
+        string person, string sourceTable, string sourceName, string targetTable)
     {
-        if (string.IsNullOrWhiteSpace(vectorString))
-            return null;
+        var validTables = new[] { "neurotransmitter", "hormone", "peptide" };
+        if (!validTables.Contains(sourceTable) || !validTables.Contains(targetTable))
+            throw new ArgumentException("Tables must be 'neurotransmitter', 'hormone', or 'peptide'");
+        if (sourceTable == targetTable)
+            throw new ArgumentException("Source and target layers must differ");
 
-        var trimmed = vectorString.Trim('[', ']', '(', ')');
-        var parts = trimmed.Split(',');
+        await using var ctx = await factory.CreateDbContextAsync();
 
-        try
-        {
-            return parts.Select(p => float.Parse(p.Trim())).ToArray();
-        }
-        catch
-        {
-            return null;
-        }
+        // Build SQL dynamically — table names are from a fixed whitelist, safe from injection
+        var sourceProfile = $"{sourceTable}_profile";
+        var targetProfile = $"{targetTable}_profile";
+        var sourceIdCol = $"{sourceTable}_id";
+        var targetIdCol = $"{targetTable}_id";
+
+#pragma warning disable EF1002 // Table names validated above
+        var rows = await ctx.Database.SqlQueryRaw<CoOccurrenceRow>($"""
+            SELECT t.name AS chemical, COUNT(*)::INT AS shared_trait_count,
+                   STRING_AGG(DISTINCT per.topic, '|' ORDER BY per.topic) AS example_traits
+            FROM {sourceProfile} sp
+            JOIN personality per ON per.id = sp.personality_id
+            JOIN person pr ON pr.id = per.person_id
+            JOIN {sourceTable} s ON s.id = sp.{sourceIdCol}
+            JOIN {targetProfile} tp ON tp.personality_id = sp.personality_id
+            JOIN {targetTable} t ON t.id = tp.{targetIdCol}
+            WHERE LOWER(pr.first_name) = LOWER(@p0)
+              AND s.name = @p1
+            GROUP BY t.name
+            ORDER BY COUNT(*) DESC
+        """, person, sourceName).ToListAsync();
+#pragma warning restore EF1002
+
+        return rows.Select(r => new CoOccurrence(
+            r.Chemical,
+            r.SharedTraitCount,
+            r.ExampleTraits?.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList() ?? []
+        )).ToList();
     }
+}
 
-    private static double CosineSimilarity(float[] a, float[] b)
-    {
-        if (a == null || b == null || a.Length != b.Length || a.Length == 0)
-            return 0;
+/// <summary>
+/// Internal DTO for SqlQueryRaw mapping of count-based interaction scores.
+/// </summary>
+internal class InteractionRow
+{
+    public string Name { get; set; } = "";
+    public int TraitCount { get; set; }
+}
 
-        double dotProduct = 0, magnitudeA = 0, magnitudeB = 0;
-
-        for (int i = 0; i < a.Length; i++)
-        {
-            dotProduct += a[i] * b[i];
-            magnitudeA += a[i] * a[i];
-            magnitudeB += b[i] * b[i];
-        }
-
-        magnitudeA = Math.Sqrt(magnitudeA);
-        magnitudeB = Math.Sqrt(magnitudeB);
-
-        if (magnitudeA == 0 || magnitudeB == 0)
-            return 0;
-
-        return dotProduct / (magnitudeA * magnitudeB);
-    }
+/// <summary>
+/// Internal DTO for SqlQueryRaw mapping of co-occurrence query results.
+/// </summary>
+internal class CoOccurrenceRow
+{
+    public string Chemical { get; set; } = "";
+    public int SharedTraitCount { get; set; }
+    public string? ExampleTraits { get; set; }
 }

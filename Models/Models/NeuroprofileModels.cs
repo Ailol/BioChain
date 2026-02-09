@@ -42,16 +42,24 @@ public record AnalyzedTrait(
 
 /// <summary>
 /// Structured neurorespond result for frontend consumption.
-/// Contains neuroprofile data, per-agent analysis, and synthesizer output with top suggestions.
+/// Contains neuroprofile data, per-agent analysis, and always 4 crafted responses.
 /// </summary>
 public record NeuroNarrativeResult(
     [property: JsonPropertyName("person")] string Person,
     [property: JsonPropertyName("theirMessage")] string TheirMessage,
-    [property: JsonPropertyName("responderGroup")] ResponderGroup ResponderGroup,
+    [property: JsonPropertyName("relationship")] string Relationship,
     [property: JsonPropertyName("neuroprofile")] NeuroprofileData Neuroprofile,
     [property: JsonPropertyName("agents")] Dictionary<string, string> Agents,
     [property: JsonPropertyName("analysis")] string Analysis,
-    [property: JsonPropertyName("suggestedResponses")] List<string> SuggestedResponses
+    [property: JsonPropertyName("responses")] List<NeuroResponse> Responses
+);
+
+/// <summary>
+/// A crafted response from a specific biochemical agent or the synthesizer.
+/// </summary>
+public record NeuroResponse(
+    [property: JsonPropertyName("source")] string Source,
+    [property: JsonPropertyName("message")] string Message
 );
 
 /// <summary>
@@ -66,12 +74,12 @@ public record NeuroprofileData(
 
 public record HormoneScore(
     [property: JsonPropertyName("name")] string Name,
-    [property: JsonPropertyName("strength")] float Strength
+    [property: JsonPropertyName("traitCount")] int TraitCount
 );
 
 public record PeptideScore(
     [property: JsonPropertyName("name")] string Name,
-    [property: JsonPropertyName("strength")] float Strength
+    [property: JsonPropertyName("traitCount")] int TraitCount
 );
 
 

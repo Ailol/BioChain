@@ -8,52 +8,49 @@ namespace Agents;
 public class PersonalityService
 {
     private readonly LlmService _llm;
-    private readonly PersonalityRepository _repo;
+    private readonly PersonRepository _personRepo;
+    private readonly PersonalityRepository _personalityRepo;
+    private readonly EmbeddingRepository _embeddingRepo;
     private readonly GroupAgentService _groupAgentService;
     private readonly EmbeddingService _embeddingService;
     private readonly VectorService _vectorService;
+    private readonly BackgroundEmbeddingQueue _embeddingQueue;
     private readonly ConversationAnalysisConfig _conversationConfig;
 
-    public PersonalityService(LlmService llm, GroupAgentService groupAgentService, EmbeddingService embeddingService, VectorService vectorService, PersonalityRepository repo)
+    public PersonalityService(LlmService llm, GroupAgentService groupAgentService, EmbeddingService embeddingService, VectorService vectorService,
+        PersonRepository personRepo, PersonalityRepository personalityRepo, EmbeddingRepository embeddingRepo, BackgroundEmbeddingQueue embeddingQueue)
     {
         _llm = llm;
-        _repo = repo;
+        _personRepo = personRepo;
+        _personalityRepo = personalityRepo;
+        _embeddingRepo = embeddingRepo;
         _groupAgentService = groupAgentService;
         _embeddingService = embeddingService;
         _vectorService = vectorService;
-        _conversationConfig = LoadConversationConfig();
-    }
-
-    private static ConversationAnalysisConfig LoadConversationConfig()
-    {
-        var configPath = Path.Combine(AppContext.BaseDirectory, "Config", "Prompts.json");
-        if (!File.Exists(configPath))
-            configPath = Path.Combine(Directory.GetCurrentDirectory(), "Config", "Prompts.json");
-
-        if (!File.Exists(configPath))
-            return new ConversationAnalysisConfig();
-
-        var json = File.ReadAllText(configPath);
-        var config = JsonSerializer.Deserialize<PromptConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        return config?.ConversationAnalysis ?? new ConversationAnalysisConfig();
+        _embeddingQueue = embeddingQueue;
+        _conversationConfig = ConfigLoader.LoadJson<PromptConfig>("Prompts.json").ConversationAnalysis ?? new ConversationAnalysisConfig();
     }
 
     public async Task<FullPersonalityScan?> GetFullPersonalityScanAsync(string person)
     {
-        var personalityResult = await _repo.GetPersonalityAsync(person);
+        var personalityResult = await _personalityRepo.GetPersonalityAsync(person);
         if (personalityResult.Profile == null) return null;
 
         var traits = personalityResult.Profile.Traits;
         var matchedName = personalityResult.Profile.Person;
 
-        var traitsWithEmbeddings = await _repo.GetTraitEmbeddingsWithMetadataAsync(person);
+        var traitsWithEmbeddings = await _embeddingRepo.GetTraitEmbeddingsWithMetadataAsync(person);
 
         if (traitsWithEmbeddings.Count == 0)
             return new FullPersonalityScan(matchedName, traits, [], []);
 
-        var rawEmbeddings = traitsWithEmbeddings.Select(t => t.Embedding).ToList();
-        var hormones = await _repo.ComputeVectorScoresAsync("hormone", rawEmbeddings);
-        var peptides = await _repo.ComputeVectorScoresAsync("peptide", rawEmbeddings);
+        // Get hormone/peptide trait counts from profile tables (presence-based)
+        var hormoneTask = _personalityRepo.GetHormoneScoresAsync(person);
+        var peptideTask = _personalityRepo.GetPeptideScoresAsync(person);
+        await Task.WhenAll(hormoneTask, peptideTask);
+
+        var hormones = hormoneTask.Result;
+        var peptides = peptideTask.Result;
 
         // Vector analysis
         var clusters = _vectorService.ClusterTraits(traitsWithEmbeddings);
@@ -64,52 +61,71 @@ public class PersonalityService
         return new FullPersonalityScan(matchedName, traits, hormones, peptides, clusters, neighbors, centroids, heatmap);
     }
 
-    public async Task<NeuroGroupResult> UpdatePersonalityAsync(string person, string topic, string context, bool embeddings = true, bool useCVAgents = false)
+    public async Task<NeuroGroupResult> UpdatePersonalityAsync(string person, string topic, string context, bool embeddings = true)
     {
-        var decisions = useCVAgents
-            ? await _groupAgentService.RunNeuroCVAnalysisAsync(person, topic, context)
-            : await _groupAgentService.RunNeuroAnalysisAsync(person, topic, context);
+        await _personRepo.EnsurePersonExistsAsync(person);
 
-        if (decisions.Count == 0)
-            return new NeuroGroupResult(person, topic, [], "No neurotransmitters found this relevant.");
+        // Run all 3 agent layers in parallel (independent)
+        var ntTask = _groupAgentService.RunNeuroAnalysisAsync(person, topic, context);
+        var hormoneTask = _groupAgentService.RunHormoneAnalysisAsync(person, topic, context);
+        var peptideTask = _groupAgentService.RunPeptideAnalysisAsync(person, topic, context);
 
-        await _repo.EnsurePersonExistsAsync(person);
+        await Task.WhenAll(ntTask, hormoneTask, peptideTask);
 
-        var added = new List<Trait>();
-        foreach (var decision in decisions)
+        var ntDecisions = ntTask.Result;
+        var hormoneDecisions = hormoneTask.Result;
+        var peptideDecisions = peptideTask.Result;
+
+        var totalDecisions = ntDecisions.Count + hormoneDecisions.Count + peptideDecisions.Count;
+        if (totalDecisions == 0)
+            return new NeuroGroupResult(person, topic, [], "No biochemical agents found this relevant.");
+
+        // Upsert personality row — one per topic, returns personality.id
+        var bestExplanation = ntDecisions.Count > 0
+            ? ntDecisions.First().Reasoning
+            : hormoneDecisions.Count > 0
+                ? hormoneDecisions.First().Reasoning
+                : peptideDecisions.First().Reasoning;
+
+        var personalityId = await _personalityRepo.UpsertPersonalityTraitAsync(person, topic, bestExplanation, null);
+
+        if (personalityId == 0)
+            return new NeuroGroupResult(person, topic, [], "Failed to upsert personality row.");
+
+        // Write NT profile rows
+        foreach (var d in ntDecisions)
         {
-            // Upsert trait immediately without embedding
-            await _repo.UpsertPersonalityTraitAsync(person, decision.Neurotransmitter, topic, decision.Explanation, null);
-            added.Add(new Trait(topic, decision.Explanation, decision.Neurotransmitter));
+            try { await _personalityRepo.UpsertNeurotransmitterProfileAsync(personalityId, d.Chemical, d.Reasoning); }
+            catch (Exception ex) { Console.Error.WriteLine($"NT profile upsert failed for {d.Chemical}: {ex.Message}"); }
         }
+
+        // Write hormone profile rows
+        foreach (var d in hormoneDecisions)
+        {
+            try { await _personalityRepo.UpsertHormoneProfileAsync(personalityId, d.Chemical, d.Reasoning); }
+            catch (Exception ex) { Console.Error.WriteLine($"Hormone profile upsert failed for {d.Chemical}: {ex.Message}"); }
+        }
+
+        // Write peptide profile rows
+        foreach (var d in peptideDecisions)
+        {
+            try { await _personalityRepo.UpsertPeptideProfileAsync(personalityId, d.Chemical, d.Reasoning); }
+            catch (Exception ex) { Console.Error.WriteLine($"Peptide profile upsert failed for {d.Chemical}: {ex.Message}"); }
+        }
+
+        // Build trait result — dominant NT comes from first NT decision (presence-based)
+        var dominantNt = ntDecisions.Count > 0
+            ? ntDecisions.First().Chemical
+            : null;
+        var added = new List<Trait> { new(topic, bestExplanation, dominantNt) };
 
         if (embeddings)
         {
-            // Fire-and-forget: generate embeddings in background
-            _ = Task.Run(async () =>
-            {
-                foreach (var decision in decisions)
-                {
-                    try
-                    {
-                        var embedding = await _embeddingService.GenerateTraitEmbeddingAsync(topic, decision.Explanation);
-                        if (embedding != null)
-                        {
-                            var embeddingValue = EmbeddingService.ToPostgresVector(embedding);
-                            await _repo.UpdateTraitEmbeddingByContentAsync(person, decision.Neurotransmitter, topic, embeddingValue);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine($"Background embedding failed for {person}/{decision.Neurotransmitter}: {ex.Message}");
-                    }
-                }
-            });
+            _embeddingQueue.Enqueue(new EmbeddingWorkItem(person, topic, bestExplanation));
         }
 
-        var msg = embeddings
-            ? $"{added.Count} neurotransmitter(s) added entries. Embeddings generating in background."
-            : $"{added.Count} neurotransmitter(s) added entries. Embeddings skipped.";
+        var msg = $"{ntDecisions.Count} NT + {hormoneDecisions.Count} hormone + {peptideDecisions.Count} peptide agents responded." +
+                  (embeddings ? " Embedding generating in background." : " Embeddings skipped.");
         return new NeuroGroupResult(person, topic, added, msg);
     }
 
@@ -135,7 +151,7 @@ public class PersonalityService
 
     // ===== Document Analysis Methods =====
 
-    public async Task<DocumentAnalysisResult> AnalyzeDocumentAsync(string text, string person, string documentType, bool embeddings = true, bool useCVAgents = false)
+    public async Task<DocumentAnalysisResult> AnalyzeDocumentAsync(string text, string person, string documentType, bool embeddings = true)
     {
         var prompt = "Analyze this document and extract personality and professional traits about the person. " +
                      "Return a JSON array of traits: [{\"topic\":\"...\",\"explanation\":\"...\"}]. " +
@@ -146,17 +162,17 @@ public class PersonalityService
         var resp = await _llm.ChatAsync(llmMessages, _llm.ThinkingModel);
         var extracted = ParseService.ParseTraits(resp);
 
-        await _repo.CreatePersonAsync(person);
+        await _personRepo.CreatePersonAsync(person);
 
         var added = new List<Trait>();
         var neuroDecisions = new List<NeuroAgentDecision>();
 
         foreach (var t in extracted)
         {
-            var result = await UpdatePersonalityAsync(person, t.Topic, t.Explanation, embeddings, useCVAgents);
+            var result = await UpdatePersonalityAsync(person, t.Topic, t.Explanation, embeddings);
             added.AddRange(result.Added);
             neuroDecisions.AddRange(result.Added.Select(a =>
-                new NeuroAgentDecision(a.Topic, a.Neurotransmitter!, a.Explanation)));
+                new NeuroAgentDecision(a.Topic, a.Neurotransmitter ?? "Unknown", a.Explanation)));
         }
 
         return new DocumentAnalysisResult(person, documentType, extracted, added, neuroDecisions);
@@ -181,7 +197,7 @@ public class PersonalityService
 
         if (request.AutoAdd)
         {
-            await _repo.CreatePersonAsync(request.TargetPersonalityName);
+            await _personRepo.CreatePersonAsync(request.TargetPersonalityName);
 
             foreach (var trait in allTraits.Where(t =>
                 ParseService.IsSpeakerMatch(t.Speaker, request.TargetPersonalityName)))
@@ -191,7 +207,7 @@ public class PersonalityService
 
                 addedTraits.AddRange(result.Added);
                 neuroDecisions.AddRange(result.Added.Select(a =>
-                    new NeuroAgentDecision(a.Topic, a.Neurotransmitter!, a.Explanation)));
+                    new NeuroAgentDecision(a.Topic, a.Neurotransmitter ?? "Unknown", a.Explanation)));
             }
         }
 
@@ -278,10 +294,10 @@ public class PersonalityService
             sb.AppendLine($"Active traits: {string.Join(", ", traits.Select(t => $"{t.Topic} ({t.Neurotransmitter}, {t.Similarity:P0})"))}");
 
         if (hormones?.Count > 0)
-            sb.AppendLine($"Hormones: {string.Join(", ", hormones.Take(3).Select(h => $"{h.Name} ({h.Strength:P0})"))}");
+            sb.AppendLine($"Hormones: {string.Join(", ", hormones.Take(3).Select(h => $"{h.Name} ({h.TraitCount} traits)"))}");
 
         if (peptides?.Count > 0)
-            sb.AppendLine($"Peptides: {string.Join(", ", peptides.Take(3).Select(p => $"{p.Name} ({p.Strength:P0})"))}");
+            sb.AppendLine($"Peptides: {string.Join(", ", peptides.Take(3).Select(p => $"{p.Name} ({p.TraitCount} traits)"))}");
 
         return sb.ToString().Trim();
     }
@@ -322,10 +338,10 @@ public class PersonalityService
         }
 
         if (hormones.Count > 0)
-            sb.AppendLine($"\nHORMONES: {string.Join(", ", hormones.Select(h => $"{h.Name} ({h.Strength:P0})"))}");
+            sb.AppendLine($"\nHORMONES: {string.Join(", ", hormones.Select(h => $"{h.Name} ({h.TraitCount} traits)"))}");
 
         if (peptides.Count > 0)
-            sb.AppendLine($"\nPEPTIDES: {string.Join(", ", peptides.Select(p => $"{p.Name} ({p.Strength:P0})"))}");
+            sb.AppendLine($"\nPEPTIDES: {string.Join(", ", peptides.Select(p => $"{p.Name} ({p.TraitCount} traits)"))}");
 
         return sb.ToString().Trim();
     }

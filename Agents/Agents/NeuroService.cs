@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Models;
 using Repository;
@@ -10,28 +9,22 @@ namespace Agents;
 /// </summary>
 public class NeuroService
 {
-    private readonly PersonalityRepository _repo;
+    private readonly PersonRepository _personRepo;
+    private readonly EmbeddingRepository _embeddingRepo;
+    private readonly RelationshipRepository _relationshipRepo;
     private readonly EmbeddingService _embeddingService;
     private readonly LlmService _llm;
     private readonly SuggestionConfig _prompts;
 
-    public NeuroService(EmbeddingService embeddingService, LlmService llm, PersonalityRepository repo)
+    public NeuroService(EmbeddingService embeddingService, LlmService llm, PersonRepository personRepo,
+        EmbeddingRepository embeddingRepo, RelationshipRepository relationshipRepo)
     {
-        _repo = repo;
+        _personRepo = personRepo;
+        _embeddingRepo = embeddingRepo;
+        _relationshipRepo = relationshipRepo;
         _embeddingService = embeddingService;
         _llm = llm;
-        _prompts = LoadPrompts();
-    }
-
-    private static SuggestionConfig LoadPrompts()
-    {
-        var configPath = Path.Combine(AppContext.BaseDirectory, "Config", "Prompts.json");
-        if (!File.Exists(configPath))
-            configPath = Path.Combine(Directory.GetCurrentDirectory(), "Config", "Prompts.json");
-
-        var json = File.ReadAllText(configPath);
-        var config = JsonSerializer.Deserialize<PromptConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        return config?.Suggestions ?? new SuggestionConfig();
+        _prompts = ConfigLoader.LoadJson<PromptConfig>("Prompts.json").Suggestions ?? new SuggestionConfig();
     }
 
     /// <summary>
@@ -44,7 +37,7 @@ public class NeuroService
             throw new InvalidOperationException("Failed to generate embedding for input text");
 
         var embeddingVector = EmbeddingService.ToPostgresVector(inputEmbedding);
-        var rawTraits = await _repo.GetSimilarTraitsAsync(person, embeddingVector);
+        var rawTraits = await _embeddingRepo.GetSimilarTraitsAsync(person, embeddingVector);
 
         var traitsByNeuro = new Dictionary<string, List<double>>();
         var topTraits = new List<MatchingTrait>();
@@ -83,43 +76,45 @@ public class NeuroService
     }
 
     /// <summary>
-    /// Neurorespond: full neuroprofile + SKIP/ADD analysis + synthesizer narrative + response suggestions.
+    /// Neurorespond: full neuroprofile + SKIP/ADD analysis + narrative + 4 biochemical responses (NT, hormone, peptide, synthesizer).
     /// </summary>
     public async Task<NeuroNarrativeResult> NeuroAnalyzeAsync(
         string person,
         string theirMessage,
         string? relationship,
         GroupAgentService groupAgentService,
-        PersonalityService personalityService,
-        int suggestionCount = 3)
+        PersonalityService personalityService)
     {
         var (matchedPerson, _) = await MatchPersonAsync(person, theirMessage);
         var neuroResult = await GetNeuroresponseAsync(matchedPerson, theirMessage);
 
         var fullScan = await personalityService.GetFullPersonalityScanAsync(matchedPerson);
-        var hormones = fullScan?.Hormones.Take(5).Select(h => new HormoneScore(h.Name, h.Strength)).ToList()
+        var hormones = fullScan?.Hormones.Take(5).Select(h => new HormoneScore(h.Name, h.TraitCount)).ToList()
             ?? new List<HormoneScore>();
-        var peptides = fullScan?.Peptides.Take(5).Select(p => new PeptideScore(p.Name, p.Strength)).ToList()
+        var peptides = fullScan?.Peptides.Take(5).Select(p => new PeptideScore(p.Name, p.TraitCount)).ToList()
             ?? new List<PeptideScore>();
 
+        // Resolve relationship: auto-create if not in DB, map to closest ResponderGroup
+        var resolvedRelationship = await _relationshipRepo.EnsureRelationshipTypeAsync(relationship ?? "dating");
         var group = PersonalityService.ParseResponderGroup(relationship);
+
         var enhancedProfile = PersonalityService.BuildEnhancedPersonProfile(
             matchedPerson, neuroResult, fullScan, hormones, peptides);
 
         var context = $"""
             Message from {matchedPerson}: "{theirMessage}"
-            Relationship: {group}
+            Relationship: {resolvedRelationship}
 
             {enhancedProfile}
             """;
 
-        // 1. Run SKIP/ADD analyzing agents
+        // 1. Run SKIP/ADD analyzing agents (all 3 layers)
         var decisions = await groupAgentService.RunNeuroAnalysisAsync(matchedPerson, theirMessage, context);
-        var agents = decisions.ToDictionary(d => d.Neurotransmitter, d => d.Explanation);
+        var agents = decisions.ToDictionary(d => d.Chemical, d => d.Reasoning);
 
         // 2. Synthesize the analysis into a narrative
         var agentOutputs = string.Join("\n", decisions.Select(d =>
-            $"[{d.Neurotransmitter}]: {d.Explanation}"));
+            $"[{d.Chemical}]: {d.Reasoning}"));
 
         var analysis = "";
         if (decisions.Count > 0)
@@ -127,7 +122,7 @@ public class NeuroService
             var synthPrompt = $"""
                 Person: {matchedPerson}
                 Message: "{theirMessage}"
-                Relationship: {group}
+                Relationship: {resolvedRelationship}
 
                 Neurotransmitter agent analyses:
                 {agentOutputs}
@@ -142,38 +137,34 @@ public class NeuroService
             analysis = ResponseService.ExtractConclusion(synthResponse) ?? synthResponse;
         }
 
-        // 3. Generate response suggestions via NeuroChatAgents (if requested)
-        var suggestions = new List<string>();
-        if (suggestionCount > 0)
-        {
-            var personProfile = PersonalityService.BuildPersonProfile(matchedPerson, neuroResult, hormones, peptides);
-            var profileSection = string.IsNullOrWhiteSpace(personProfile)
-                ? $"{matchedPerson}'s neuroprofile: {string.Join(", ", neuroResult.NeurotransmitterWeights.Take(3).Select(w => $"{w.Neurotransmitter}: {w.Weight:P0}"))}"
-                : $"WHO IS {matchedPerson.ToUpper()}:\n{personProfile}";
+        // 3. Generate 4 responses via RunNeuroRespondAsync (1 NT + 1 hormone + 1 peptide + 1 synthesizer)
+        // Pass full chemical profiles per layer so agents synthesize across ALL chemicals, not just top-1
+        var ntProfile = neuroResult.NeurotransmitterWeights.Count > 0
+            ? string.Join(", ", neuroResult.NeurotransmitterWeights.Select(w => $"{w.Neurotransmitter} {w.Weight:P0}"))
+            : "Dopamine (default)";
+        var hormoneProfile = hormones.Count > 0
+            ? string.Join(", ", hormones.Select(h => $"{h.Name} ({h.TraitCount} traits)"))
+            : "Cortisol (default)";
+        var peptideProfile = peptides.Count > 0
+            ? string.Join(", ", peptides.Select(p => $"{p.Name} ({p.TraitCount} traits)"))
+            : "Oxytocin (default)";
 
-            var topic = _prompts.TopicTemplate
-                .Replace("{person}", matchedPerson)
-                .Replace("{text}", theirMessage)
-                .Replace("{group}", group.ToString())
-                .Replace("{profileSection}", profileSection)
-                .Replace("{analysis}", analysis);
+        var personProfile = PersonalityService.BuildPersonProfile(matchedPerson, neuroResult, hormones, peptides);
+        var profileSection = string.IsNullOrWhiteSpace(personProfile)
+            ? $"{matchedPerson}'s neuroprofile: {string.Join(", ", neuroResult.NeurotransmitterWeights.Take(3).Select(w => $"{w.Neurotransmitter}: {w.Weight:P0}"))}"
+            : $"WHO IS {matchedPerson.ToUpper()}:\n{personProfile}";
 
-            var synthInstruction = _prompts.SynthesizerTemplate
-                .Replace("{count}", suggestionCount.ToString())
-                .Replace("{person}", matchedPerson);
+        var topic = _prompts.TopicTemplate
+            .Replace("{person}", matchedPerson)
+            .Replace("{text}", theirMessage)
+            .Replace("{group}", resolvedRelationship)
+            .Replace("{profileSection}", profileSection)
+            .Replace("{analysis}", analysis);
 
-            var chatProfiles = groupAgentService.GetNeuroChatProfiles(group);
-            var (fullOutput, _) = chatProfiles != null
-                ? await groupAgentService.RunGroupChatAsync(chatProfiles, topic, synthInstruction)
-                : ("No agent configuration found for group", null);
-            suggestions = ResponseService.ExtractAllSuggestions(fullOutput, suggestionCount);
-
-            if (suggestions.Count == 0)
-            {
-                var fallback = ResponseService.ExtractCraftedResponse(fullOutput);
-                if (fallback != null) suggestions.Add(fallback);
-            }
-        }
+        var chatProfiles = groupAgentService.GetNeuroChatProfiles(group);
+        var responses = chatProfiles != null
+            ? await groupAgentService.RunNeuroRespondAsync(chatProfiles, topic, ntProfile, hormoneProfile, peptideProfile)
+            : new List<NeuroResponse> { new("Fallback", "No agent configuration found for this relationship group.") };
 
         var neuroprofile = new NeuroprofileData(
             neuroResult.NeurotransmitterWeights,
@@ -181,14 +172,14 @@ public class NeuroService
             hormones,
             peptides);
 
-        return new NeuroNarrativeResult(matchedPerson, theirMessage, group,
-            neuroprofile, agents, analysis, suggestions);
+        return new NeuroNarrativeResult(matchedPerson, theirMessage, resolvedRelationship,
+            neuroprofile, agents, analysis, responses);
     }
 
     private async Task<(string person, string matchedBy)> MatchPersonAsync(string personName, string message)
     {
         var embedding = await _embeddingService.GenerateEmbeddingAsync(message);
         var embeddingVector = embedding != null ? EmbeddingService.ToPostgresVector(embedding) : null;
-        return await _repo.MatchPersonAsync(personName, embeddingVector);
+        return await _personRepo.MatchPersonAsync(personName, embeddingVector);
     }
 }

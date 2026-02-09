@@ -10,11 +10,11 @@ namespace Agents;
 /// </summary>
 public class VectorService
 {
-    private readonly PersonalityRepository _repo;
+    private readonly EmbeddingRepository _embeddingRepo;
 
-    public VectorService(PersonalityRepository repo)
+    public VectorService(EmbeddingRepository embeddingRepo)
     {
-        _repo = repo;
+        _embeddingRepo = embeddingRepo;
     }
 
     /// <summary>
@@ -114,7 +114,7 @@ public class VectorService
     public async Task<List<HormoneTraitHeatmap>> ComputeHeatmapAsync(
         List<TraitWithEmbedding> traits, string table)
     {
-        var targets = await _repo.GetTargetEmbeddingsAsync(table);
+        var targets = await _embeddingRepo.GetTargetEmbeddingsAsync(table);
         if (targets.Count == 0) return [];
 
         var results = new List<HormoneTraitHeatmap>();

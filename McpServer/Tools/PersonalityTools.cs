@@ -8,13 +8,13 @@ using Repository;
 namespace McpAgentServer.Tools;
 
 [McpServerToolType]
-public class PersonalityTools(Agents.PersonalityService svc, PersonalityRepository repo)
+public class PersonalityTools(Agents.PersonalityService svc, PersonRepository personRepo, PersonalityRepository personalityRepo)
 {
     [McpServerTool(Name = "list_persons")]
     [Description("List all persons in the personality system.")]
     public async Task<string> ListPersons()
     {
-        var persons = await repo.ListPersonsAsync();
+        var persons = await personRepo.ListPersonsAsync();
         return JsonSerializer.Serialize(new { persons });
     }
 
@@ -22,7 +22,7 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonalityReposito
     [Description("Create a new person in the personality system.")]
     public async Task<string> CreatePersonality([Description("Person name")] string name)
     {
-        var created = await repo.CreatePersonAsync(name);
+        var created = await personRepo.CreatePersonAsync(name);
         return created ? $"{{\"created\":\"{name}\"}}" : $"{{\"exists\":\"{name}\"}}";
     }
 
@@ -30,7 +30,7 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonalityReposito
     [Description("Get personality profile with behavior traits and neurotransmitter mappings.")]
     public async Task<string> GetPersonality([Description("Person name")] string person)
     {
-        var result = await repo.GetPersonalityAsync(person);
+        var result = await personalityRepo.GetPersonalityAsync(person);
         if (result.Profile is not null)
             return JsonSerializer.Serialize(result.Profile);
 
@@ -111,14 +111,12 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonalityReposito
     [McpServerTool(Name = "analyze_document_file")]
     [Description("Analyze a DOCX or PDF document to extract personality traits. " +
                  "Accepts base64-encoded file content. Extracts text, creates person if needed, " +
-                 "runs neuro analysis on each trait, and persists to personality profile. " +
-                 "For CV/resume analysis, set useCVAgents=true to use specialized agents that read between the lines of professional language.")]
+                 "runs neuro analysis on each trait, and persists to personality profile.")]
     public async Task<string> AnalyzeDocumentFile(
         [Description("Base64-encoded file content")] string base64Content,
         [Description("Document type: docx or pdf")] string documentType,
         [Description("Name of person being analyzed (the personality)")] string targetPersonalityName,
-        [Description("Generate embeddings for traits (default true). Set false to skip embeddings and backfill later.")] bool embeddings = true,
-        [Description("Use CV-specialized neuro agents that analyze candidates for recruiter insights (default false).")] bool useCVAgents = false)
+        [Description("Generate embeddings for traits (default true). Set false to skip embeddings and backfill later.")] bool embeddings = true)
     {
         try
         {
@@ -135,12 +133,49 @@ public class PersonalityTools(Agents.PersonalityService svc, PersonalityReposito
             if (string.IsNullOrWhiteSpace(text))
                 return JsonSerializer.Serialize(new { error = "No text could be extracted from the document" });
 
-            var result = await svc.AnalyzeDocumentAsync(text, targetPersonalityName, docType, embeddings, useCVAgents);
+            var result = await svc.AnalyzeDocumentAsync(text, targetPersonalityName, docType, embeddings);
             return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
         }
         catch (FormatException)
         {
             return JsonSerializer.Serialize(new { error = "Invalid base64 content" });
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(new { error = ex.Message });
+        }
+    }
+
+    [McpServerTool(Name = "get_co_occurrences")]
+    [Description("Get co-occurrence relationships for a biochemical. Shows which chemicals from other layers appear on the same traits. " +
+                 "For example, query Dopamine (neurotransmitter) to see which hormones and peptides co-occur most frequently.")]
+    public async Task<string> GetCoOccurrences(
+        [Description("Person name")] string person,
+        [Description("Chemical name (e.g., Dopamine, Cortisol, Oxytocin)")] string chemical,
+        [Description("Layer of the chemical: neurotransmitter, hormone, or peptide")] string layer)
+    {
+        try
+        {
+            var normalizedLayer = layer.ToLowerInvariant();
+            var validLayers = new[] { "neurotransmitter", "hormone", "peptide" };
+            if (!validLayers.Contains(normalizedLayer))
+                return JsonSerializer.Serialize(new { error = "Layer must be 'neurotransmitter', 'hormone', or 'peptide'" });
+
+            var otherLayers = validLayers.Where(l => l != normalizedLayer).ToList();
+
+            var tasks = otherLayers.Select(target =>
+                personalityRepo.GetCoOccurrencesAsync(person, normalizedLayer, chemical, target));
+            var results = await Task.WhenAll(tasks);
+
+            var profile = new CoOccurrenceProfile(
+                chemical,
+                normalizedLayer,
+                normalizedLayer != "neurotransmitter" ? results[otherLayers.IndexOf("neurotransmitter")] : null,
+                normalizedLayer != "hormone" ? results[otherLayers.IndexOf("hormone")] : null,
+                normalizedLayer != "peptide" ? results[otherLayers.IndexOf("peptide")] : null
+            );
+
+            return JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true });
         }
         catch (Exception ex)
         {

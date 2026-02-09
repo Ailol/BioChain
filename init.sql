@@ -1,86 +1,131 @@
 -- init.sql
+-- Full schema for MultiAgentAiMcp personality database
+-- Replaces all previous versions — single source of truth
+
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+-- ─────────────────────────────────────
+-- Core
+-- ─────────────────────────────────────
+
+CREATE TABLE person (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    ssn VARCHAR(20),                          -- encrypt at application layer
+    birthdate DATE,
+    address VARCHAR(200),
+    postcode VARCHAR(10),
+    city VARCHAR(100),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ─────────────────────────────────────
+-- Biochemistry
+-- neurotransmitter, hormone, peptide are reference tables.
+-- Profiles link them to personality (observed behavior).
+-- ─────────────────────────────────────
+
+CREATE TABLE neurotransmitter (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+
 CREATE TABLE hormone (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
-    description TEXT,
     embedding vector(4096)
 );
 
 CREATE TABLE peptide (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
-    description TEXT,
     embedding vector(4096)
 );
 
-CREATE TABLE neurotransmitter (id SERIAL PRIMARY KEY, name VARCHAR(50) UNIQUE NOT NULL);
-
-CREATE TABLE person (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL
-);
-CREATE UNIQUE INDEX idx_person_name_lower ON person (LOWER(name));
+-- ─────────────────────────────────────
+-- Personality
+-- The parent row: one per (person, topic).
+-- "Personality is what you observe."
+-- source_type + source_uri = what created this row
+-- ─────────────────────────────────────
 
 CREATE TABLE personality (
     id SERIAL PRIMARY KEY,
-    person_id UUID REFERENCES person(id) ON DELETE CASCADE,
-    neurotransmitter_id INT REFERENCES neurotransmitter(id),
+    person_id UUID NOT NULL REFERENCES person(id) ON DELETE CASCADE,
     topic VARCHAR(100) NOT NULL,
-    explanation VARCHAR(1000),
+    explanation TEXT,
+    explanatory_context TEXT,
     embedding vector(4096),
-    UNIQUE (person_id, neurotransmitter_id, topic)
+    source_type VARCHAR,                       -- document | chat | manual
+    source_uri VARCHAR,                        -- URL, file path, chat ID
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (person_id, topic)
 );
-
 CREATE INDEX idx_personality_person ON personality(person_id);
--- Note: HNSW index removed - Supabase limits HNSW to 2000 dimensions, but qwen3-embedding uses 4096
--- For production with high query volume, consider using IVFFlat index instead:
--- CREATE INDEX idx_personality_embedding ON personality USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
--- Seed neurotransmitters
-INSERT INTO neurotransmitter (name) VALUES ('Dopamine'),('Serotonin'),('Norepinephrine'),('GABA'),('Glutamate'),('Acetylcholine');
+-- ─────────────────────────────────────
+-- Biochemical Profiles (children of personality)
+-- "Profiles are how it expresses biochemically."
+-- Each agent layer writes its own profile rows.
+-- ─────────────────────────────────────
 
--- Seed hormones with descriptions for vector embedding
-INSERT INTO hormone (name, description) VALUES
-('Testosterone', 'Drive, dominance, competitiveness, risk-taking behavior, assertiveness, physical confidence, ambition, territorial instincts, desire for status and achievement, impulsive decision-making under challenge, leadership drive, boldness in social situations'),
-('Estrogen', 'Emotional sensitivity, social bonding, empathy, verbal fluency, nurturing behavior, mood regulation, relationship orientation, emotional memory formation, aesthetic appreciation, cooperative social strategies, intuitive understanding of others'),
-('Progesterone', 'Calming influence, anxiety reduction, nesting behavior, routine-seeking, protective instincts, maternal care patterns, sleep regulation, emotional stability during transitions, patience and tolerance, preference for safety and predictability'),
-('Cortisol', 'Stress response, hypervigilance, worry patterns, threat detection, energy mobilization under pressure, rumination, perfectionism driven by anxiety, avoidance behavior, chronic tension and overthinking, heightened awareness of potential problems'),
-('Adrenaline', 'Fight-or-flight activation, thrill-seeking, acute stress performance, excitement under danger, physical readiness, panic responses, urgency-driven action, peak performance under pressure, rapid decision-making, love of intense experiences'),
-('Melatonin', 'Sleep-wake regulation, circadian rhythm sensitivity, seasonal mood changes, introspective tendencies during evening hours, dream vividness, sensitivity to light and environment, restorative withdrawal patterns, preference for quiet contemplation'),
-('Thyroid', 'Metabolic energy regulation, mental processing speed, temperature sensitivity, weight and energy fluctuations, cognitive sharpness, mood stability tied to energy levels, motivation tied to physical vitality, sustained mental focus and alertness');
+CREATE TABLE neurotransmitter_profile (
+    id SERIAL PRIMARY KEY,
+    personality_id INT NOT NULL REFERENCES personality(id) ON DELETE CASCADE,
+    neurotransmitter_id INT NOT NULL REFERENCES neurotransmitter(id),
+    reasoning TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (personality_id, neurotransmitter_id)
+);
+CREATE INDEX idx_nt_profile_personality ON neurotransmitter_profile(personality_id);
 
--- Seed peptides with descriptions for vector embedding
-INSERT INTO peptide (name, description) VALUES
-('Oxytocin', 'Social bonding, trust formation, attachment behavior, physical touch affinity, generosity, in-group loyalty, empathy in close relationships, reduced social anxiety, pair bonding, parental attachment, warmth in intimate connections'),
-('Vasopressin', 'Territorial behavior, mate guarding, social memory, aggression in defense of bonds, pair-bond maintenance, stress-mediated social behavior, vigilance toward social threats, loyalty and protectiveness, jealousy and possessiveness'),
-('Endorphins', 'Pain modulation, euphoria from physical exertion, reward from laughter and social connection, stress-buffering, resilience through physical activity, pleasure from music and creativity, natural high from achievement and exercise'),
-('Enkephalins', 'Pain suppression, comfort-seeking behavior, emotional numbing under trauma, soothing response to familiar environments, preference for routine over novelty as coping mechanism, withdrawal into safe spaces when overwhelmed'),
-('Substance P', 'Pain signaling and sensitivity, emotional distress amplification, inflammatory stress responses, sensitivity to physical discomfort, heightened pain awareness, stress-related somatic complaints, emotional pain manifesting physically'),
-('NPY', 'Appetite regulation, stress resilience, anxiety reduction, energy homeostasis, calm under pressure, feeding behavior patterns, emotional eating, ability to stay composed during high-stress situations, mental toughness'),
-('CRH', 'Stress axis activation, anxiety initiation, fear responses, HPA axis triggering, depression-related patterns, appetite suppression under stress, sleep disruption from worry, anticipatory anxiety, catastrophic thinking patterns');
+CREATE TABLE hormone_profile (
+    id SERIAL PRIMARY KEY,
+    personality_id INT NOT NULL REFERENCES personality(id) ON DELETE CASCADE,
+    hormone_id INT NOT NULL REFERENCES hormone(id),
+    reasoning TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (personality_id, hormone_id)
+);
+CREATE INDEX idx_hormone_profile_personality ON hormone_profile(personality_id);
 
--- Seed default person
-INSERT INTO person (name) VALUES ('ailo');
-INSERT INTO personality (person_id, neurotransmitter_id, topic, explanation)
-SELECT id, 1, 'Programming', 'Flow states and problem-solving trigger dopamine reward loops.' FROM person WHERE name = 'ailo';
+CREATE TABLE peptide_profile (
+    id SERIAL PRIMARY KEY,
+    personality_id INT NOT NULL REFERENCES personality(id) ON DELETE CASCADE,
+    peptide_id INT NOT NULL REFERENCES peptide(id),
+    reasoning TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (personality_id, peptide_id)
+);
+CREATE INDEX idx_peptide_profile_personality ON peptide_profile(personality_id);
 
--- Custom agent groups generated from personalities
+-- ─────────────────────────────────────
+-- Agent Groups
+-- Custom agent ensembles generated from personalities
+-- ─────────────────────────────────────
+
 CREATE TABLE agent_group (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    person_id UUID REFERENCES person(id) ON DELETE CASCADE,
+    person_id UUID NOT NULL REFERENCES person(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (person_id, name)
 );
+CREATE INDEX idx_agent_group_person ON agent_group(person_id);
 
--- Individual agents within a group
 CREATE TABLE agent (
     id SERIAL PRIMARY KEY,
-    group_id UUID REFERENCES agent_group(id) ON DELETE CASCADE,
+    group_id UUID NOT NULL REFERENCES agent_group(id) ON DELETE CASCADE,
     name VARCHAR(50) NOT NULL,
     role VARCHAR(100) NOT NULL,
     responsibilities TEXT[] NOT NULL,
@@ -88,8 +133,63 @@ CREATE TABLE agent (
     max_words INT DEFAULT 200,
     is_synthesizer BOOLEAN DEFAULT FALSE,
     sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (group_id, name)
 );
-
-CREATE INDEX idx_agent_group_person ON agent_group(person_id);
 CREATE INDEX idx_agent_group_id ON agent(group_id);
+
+-- ─────────────────────────────────────
+-- Relationship Matching
+-- compatibility_vector is derived from personality + biochemical profiles
+-- ─────────────────────────────────────
+
+CREATE TABLE relationship_type (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR UNIQUE NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE relationship_profile (
+    id SERIAL PRIMARY KEY,
+    person_id UUID NOT NULL REFERENCES person(id),
+    relationship_type_id INT NOT NULL REFERENCES relationship_type(id),
+    compatibility_vector vector(4096),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (person_id, relationship_type_id)
+);
+
+-- ─────────────────────────────────────
+-- Seed data
+-- ─────────────────────────────────────
+
+INSERT INTO neurotransmitter (name) VALUES
+    ('Dopamine'),('Serotonin'),('Norepinephrine'),('GABA'),('Glutamate'),('Acetylcholine');
+
+INSERT INTO hormone (name) VALUES
+    ('Testosterone'),('Estrogen'),('Progesterone'),('Cortisol'),('Adrenaline'),('Melatonin'),('Thyroid');
+
+INSERT INTO peptide (name) VALUES
+    ('Oxytocin'),('Vasopressin'),('Endorphins'),('Enkephalins'),('Substance P'),('NPY'),('CRH');
+
+INSERT INTO relationship_type (name, description) VALUES
+    ('dating',       'Romantic or dating relationship context'),
+    ('friend',       'Friendship and close social bonds'),
+    ('coworker',     'Professional workplace relationship'),
+    ('mentor',       'Mentoring or coaching relationship'),
+    ('family',       'Family and kinship bonds'),
+    ('collaborator', 'Creative or project collaboration');
+
+-- Default person with example personality + NT profile
+INSERT INTO person (first_name) VALUES ('Ailo');
+
+INSERT INTO personality (person_id, topic, explanation, source_type)
+    SELECT p.id, 'Programming', 'Flow states and problem-solving trigger dopamine reward loops.', 'manual'
+    FROM person p WHERE p.first_name = 'Ailo';
+
+INSERT INTO neurotransmitter_profile (personality_id, neurotransmitter_id, reasoning)
+    SELECT per.id, nt.id, 'Dopamine reinforces flow states through sustained mesolimbic activation during problem-solving cycles.'
+    FROM personality per, neurotransmitter nt
+    WHERE per.topic = 'Programming' AND nt.name = 'Dopamine'
+      AND per.person_id = (SELECT id FROM person WHERE first_name = 'Ailo');

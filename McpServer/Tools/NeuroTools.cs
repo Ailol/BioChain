@@ -20,10 +20,9 @@ public class NeuroTools(NeuroService neuroService, GroupAgentService agentServic
     public async Task<string> Neurorespond(
         [Description("Person name who SENT the message (e.g., Karolina, Anja). Their personality will be scanned.")] string person,
         [Description("What they wrote to you — the message you received")] string text,
-        [Description("Relationship context: Dating, Relationship, Friend, MindHat, ExWife, Family, Colleague, Acquaintance. " +
-                     "Defaults to Dating if not specified.")]
-        string? relationship = null,
-        [Description("Number of suggested responses to generate (0-5, default: 3)")] int suggestionCount = 3)
+        [Description("Relationship context keyword (e.g., Dating, Friend, Colleague). " +
+                     "Auto-created in DB if not present. Maps to closest group for response generation.")]
+        string? relationship = null)
     {
         try
         {
@@ -32,8 +31,7 @@ public class NeuroTools(NeuroService neuroService, GroupAgentService agentServic
                 text,
                 relationship,
                 agentService,
-                personalityService,
-                suggestionCount);
+                personalityService);
             return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
         }
         catch (Exception ex)

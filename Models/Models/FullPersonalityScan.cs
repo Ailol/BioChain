@@ -12,4 +12,4 @@ public record FullPersonalityScan(
     List<HormoneTraitHeatmap>? HormoneHeatmap = null
 );
 
-public record Interaction(string Name, float Strength);
+public record Interaction(string Name, int TraitCount);

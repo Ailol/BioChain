@@ -20,6 +20,9 @@ public class AgentProfile
     [JsonPropertyName("maxWords")]
     public int MaxWords { get; set; }
 
+    [JsonPropertyName("layer")]
+    public string? Layer { get; set; }
+
     public string ToSystemPrompt()
     {
         var sb = new StringBuilder();

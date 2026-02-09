@@ -37,7 +37,14 @@ public static class ResponseService
         if (idx < 0)
             return null;
 
-        return text[(idx + 8)..].Trim();
+        var result = text[(idx + 8)..].Trim();
+
+        // Strip any trailing CONCLUSION: block the LLM may have appended
+        var conclusionIdx = result.IndexOf("CONCLUSION:", StringComparison.OrdinalIgnoreCase);
+        if (conclusionIdx > 0)
+            result = result[..conclusionIdx].Trim();
+
+        return result;
     }
 
     /// <summary>

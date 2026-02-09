@@ -16,6 +16,7 @@ public class ResponderGroupAgent
 {
     public string Name { get; set; } = "";
     public string? Neurotransmitter { get; set; }
+    public string? Layer { get; set; }  // "neurotransmitter", "hormone", "peptide", or null (synthesizer)
     public string Role { get; set; } = "";
     public string Style { get; set; } = "";
     public int MaxWords { get; set; } = 150;

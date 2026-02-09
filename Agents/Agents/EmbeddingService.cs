@@ -9,12 +9,12 @@ namespace Agents;
 public class EmbeddingService
 {
     private readonly LlmService _llm;
-    private readonly PersonalityRepository _repo;
+    private readonly EmbeddingRepository _embeddingRepo;
 
-    public EmbeddingService(LlmService llm, PersonalityRepository repo)
+    public EmbeddingService(LlmService llm, EmbeddingRepository embeddingRepo)
     {
         _llm = llm;
-        _repo = repo;
+        _embeddingRepo = embeddingRepo;
     }
 
     /// <summary>
@@ -35,12 +35,11 @@ public class EmbeddingService
     }
 
     /// <summary>
-    /// Generate an embedding for a hormone or peptide by combining name and description.
+    /// Generate an embedding for a hormone or peptide name.
     /// </summary>
-    public async Task<float[]?> GenerateDescriptionEmbeddingAsync(string name, string description)
+    public async Task<float[]?> GenerateNameEmbeddingAsync(string name)
     {
-        var text = $"{name}: {description}";
-        return await _llm.EmbedAsync(text);
+        return await _llm.EmbedAsync(name);
     }
 
     /// <summary>
@@ -141,7 +140,7 @@ public class EmbeddingService
     /// </summary>
     public async Task<BackfillResult> BackfillEmbeddingsAsync(string? person = null)
     {
-        var traits = await _repo.GetTraitsWithoutEmbeddingsAsync(person);
+        var traits = await _embeddingRepo.GetTraitsWithoutEmbeddingsAsync(person);
 
         int updated = 0, skipped = 0, errors = 0;
 
@@ -153,7 +152,7 @@ public class EmbeddingService
                 if (embedding == null) { skipped++; continue; }
 
                 var embeddingValue = ToPostgresVector(embedding);
-                await _repo.UpdateTraitEmbeddingAsync(id, embeddingValue);
+                await _embeddingRepo.UpdateTraitEmbeddingAsync(id, embeddingValue);
                 updated++;
             }
             catch { errors++; }
@@ -164,23 +163,24 @@ public class EmbeddingService
     }
 
     /// <summary>
-    /// Generate embeddings for all hormones and peptides that have descriptions but no embeddings yet.
+    /// Generate embeddings for all hormones and peptides that don't have embeddings yet.
+    /// Uses the name directly for embedding generation (no description column in new schema).
     /// </summary>
     public async Task<BackfillResult> BackfillHormonePeptideEmbeddingsAsync()
     {
-        var items = await _repo.GetItemsWithoutEmbeddingsAsync();
+        var items = await _embeddingRepo.GetItemsWithoutEmbeddingsAsync();
 
         int updated = 0, skipped = 0, errors = 0;
 
-        foreach (var (table, id, name, description) in items)
+        foreach (var (table, id, name) in items)
         {
             try
             {
-                var embedding = await GenerateDescriptionEmbeddingAsync(name, description);
+                var embedding = await GenerateNameEmbeddingAsync(name);
                 if (embedding == null) { skipped++; continue; }
 
                 var embeddingValue = ToPostgresVector(embedding);
-                await _repo.UpdateItemEmbeddingAsync(table, id, embeddingValue);
+                await _embeddingRepo.UpdateItemEmbeddingAsync(table, id, embeddingValue);
                 updated++;
             }
             catch { errors++; }

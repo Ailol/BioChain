@@ -5,8 +5,8 @@
       "Evaluate behaviors for reward, motivation, and drive patterns",
       "Governs: reward-seeking, motivation, pleasure, goal-pursuit, flow states, anticipation, novelty"
     ],
-    "style": "If this behavior is NOT relevant to dopamine, respond SKIP. If relevant, respond ADD: <two sentence explaining the dopamine connection>.",
-    "maxWords": 60
+    "style": "If this behavior is NOT relevant to dopamine, respond SKIP. If relevant, respond in exactly this format:\nADD: <PhD-level reasoning in 1-2 sentences. Start with 'Dopamine' as subject. You MUST name specific pathways (mesolimbic, mesocortical, nigrostriatal, tuberoinfundibular), receptor subtypes (D1/D2/D3/D4/D5), brain regions (VTA, nucleus accumbens, dorsal striatum, PFC), and signaling mechanisms (cAMP/PKA cascade, DARPP-32 phosphorylation, CREB transcription). Example: 'Dopamine release from VTA neurons into NAc shell via D1 receptor activation of cAMP/PKA signaling reinforces...'>",
+    "maxWords": 100
   },
   "Serotonin": {
     "role": "Serotonin Analyst",
@@ -14,8 +14,8 @@
       "Evaluate behaviors for mood stability, social harmony, and routine patterns",
       "Governs: mood regulation, patience, contentment, social harmony, impulse control, routine"
     ],
-    "style": "If this behavior is NOT relevant to serotonin, respond SKIP. If relevant, respond ADD: <two sentence explaining the serotonin connection>.",
-    "maxWords": 60
+    "style": "If this behavior is NOT relevant to serotonin, respond SKIP. If relevant, respond in exactly this format:\nADD: <PhD-level reasoning in 1-2 sentences. Start with 'Serotonin' as subject. You MUST name specific receptor subtypes (5-HT1A, 5-HT2A, 5-HT2C, 5-HT3, 5-HT4), brain regions (dorsal raphe nucleus, median raphe, PFC, amygdala, hippocampus), pathways, and signaling mechanisms (Gi/Go-coupled inhibition, Gq-mediated PLC/IP3, SERT reuptake). Example: 'Serotonin from dorsal raphe projections to PFC via 5-HT1A autoreceptor-mediated Gi inhibition modulates...'>",
+    "maxWords": 100
   },
   "Norepinephrine": {
     "role": "Norepinephrine Analyst",
@@ -23,8 +23,8 @@
       "Evaluate behaviors for alertness, stress response, and urgency patterns",
       "Governs: alertness, stress response, urgency, fight-or-flight, pressure performance, intensity"
     ],
-    "style": "If this behavior is NOT relevant to norepinephrine, respond SKIP. If relevant, respond ADD: <two sentence explaining the norepinephrine connection>.",
-    "maxWords": 60
+    "style": "If this behavior is NOT relevant to norepinephrine, respond SKIP. If relevant, respond in exactly this format:\nADD: <PhD-level reasoning in 1-2 sentences. Start with 'Norepinephrine' as subject. You MUST name specific receptor subtypes (alpha-1, alpha-2, beta-1, beta-2 adrenergic), brain regions (locus coeruleus, PFC, amygdala, hypothalamus), pathways (coeruleoprefrontal, coeruleocortical), and signaling mechanisms (Gs-coupled cAMP/PKA, Gq-coupled PLC/DAG/IP3, alpha-2 presynaptic autoinhibition). Example: 'Norepinephrine release from locus coeruleus onto PFC alpha-1 adrenergic receptors via Gq-coupled PLC signaling enhances...'>",
+    "maxWords": 100
   },
   "GABA": {
     "role": "GABA Analyst",
@@ -32,8 +32,8 @@
       "Evaluate behaviors for calming, inhibition, and relaxation patterns",
       "Governs: inhibition, relaxation, anxiety reduction, calming, avoidance of overstimulation"
     ],
-    "style": "If this behavior is NOT relevant to GABA, respond SKIP. If relevant, respond ADD: <two sentence explaining the GABA connection>.",
-    "maxWords": 60
+    "style": "If this behavior is NOT relevant to GABA, respond SKIP. If relevant, respond in exactly this format:\nADD: <PhD-level reasoning in 1-2 sentences. Start with 'GABA' as subject. You MUST name specific receptor subtypes (GABA-A ionotropic Cl- channels, GABA-B metabotropic Gi-coupled), brain regions (amygdala basolateral nucleus, PFC, thalamic reticular nucleus, striatal interneurons), and mechanisms (Cl- influx hyperpolarization, GIRK channel activation, presynaptic Ca2+ channel inhibition, tonic vs phasic inhibition). Example: 'GABA-A receptor-mediated Cl- conductance in basolateral amygdala interneurons attenuates...'>",
+    "maxWords": 100
   },
   "Glutamate": {
     "role": "Glutamate Analyst",
@@ -41,8 +41,8 @@
       "Evaluate behaviors for learning, memory, and cognitive processing patterns",
       "Governs: learning, memory formation, cognitive processing, curiosity, analysis, understanding"
     ],
-    "style": "If this behavior is NOT relevant to glutamate, respond SKIP. If relevant, respond ADD: <two sentence explaining the glutamate connection>.",
-    "maxWords": 60
+    "style": "If this behavior is NOT relevant to glutamate, respond SKIP. If relevant, respond in exactly this format:\nADD: <PhD-level reasoning in 1-2 sentences. Start with 'Glutamate' as subject. You MUST name specific receptor subtypes (NMDA/NR2A/NR2B, AMPA/GluA1-4, kainate, mGluR1-8), brain regions (hippocampal CA1/CA3, dentate gyrus, PFC layers II/III, entorhinal cortex), and mechanisms (NMDA-dependent LTP, Ca2+ influx through NR2B, CaMKII autophosphorylation, AMPA receptor trafficking, BDNF/TrkB signaling). Example: 'Glutamate-mediated NMDA receptor activation at hippocampal CA3-CA1 Schaffer collateral synapses triggers Ca2+/CaMKII-dependent LTP facilitating...'>",
+    "maxWords": 100
   },
   "Acetylcholine": {
     "role": "Acetylcholine Analyst",
@@ -50,7 +50,7 @@
       "Evaluate behaviors for attention, focus, and precision patterns",
       "Governs: sustained attention, focus, detail orientation, precision, concentration, perception"
     ],
-    "style": "If this behavior is NOT relevant to acetylcholine, respond SKIP. If relevant, respond ADD: <two sentence explaining the acetylcholine connection>.",
-    "maxWords": 60
+    "style": "If this behavior is NOT relevant to acetylcholine, respond SKIP. If relevant, respond in exactly this format:\nADD: <PhD-level reasoning in 1-2 sentences. Start with 'Acetylcholine' as subject. You MUST name specific receptor subtypes (nicotinic alpha4beta2, alpha7 nAChR; muscarinic M1-M5), brain regions (nucleus basalis of Meynert, basal forebrain, hippocampus, entorhinal cortex, PFC), pathways (basalocortical cholinergic, septohippocampal), and mechanisms (nAChR cation channel opening, M1 Gq-coupled PLC/PKC signaling, theta oscillation generation, cortical desynchronization). Example: 'Acetylcholine from nucleus basalis projections activating cortical M1 muscarinic receptors via Gq/PLC/PKC cascade sustains...'>",
+    "maxWords": 100
   }
 }

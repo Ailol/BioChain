@@ -1,5 +1,6 @@
 using System.ClientModel;
 using Agents;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Models;
 using OllamaSharp;
@@ -85,12 +86,22 @@ static async Task RunHttpMode(string[] args)
     // Register configuration and agent services
     var config = CreateConfiguration(builder.Configuration);
     builder.Services.AddSingleton(config);
-    builder.Services.AddSingleton(new PersonalityRepository(config.PersonalityDb));
+    var connStr = config.PersonalityDb;
+    builder.Services.AddPooledDbContextFactory<PersonalityDbContext>(options =>
+        options.UseNpgsql(connStr, npgsql => npgsql.UseVector())
+               .UseSnakeCaseNamingConvention());
+    builder.Services.AddSingleton<PersonRepository>();
+    builder.Services.AddSingleton<PersonalityRepository>();
+    builder.Services.AddSingleton<EmbeddingRepository>();
+    builder.Services.AddSingleton<AgentGroupRepository>();
+    builder.Services.AddSingleton<RelationshipRepository>();
     RegisterLlmServices(builder.Services, config);
     builder.Services.AddSingleton<EmbeddingService>();
     builder.Services.AddSingleton<VectorService>();
     builder.Services.AddSingleton<AgentService>();
     builder.Services.AddSingleton<GroupAgentService>();
+    builder.Services.AddSingleton<BackgroundEmbeddingQueue>();
+    builder.Services.AddHostedService<McpAgentServer.EmbeddingQueueProcessor>();
     builder.Services.AddSingleton<Agents.PersonalityService>();
     builder.Services.AddSingleton<NeuroService>();
 
@@ -139,12 +150,22 @@ static async Task RunStdioMode(string[] args)
             // Register configuration and agent services
             var config = CreateConfiguration(hostContext.Configuration);
             services.AddSingleton(config);
-            services.AddSingleton(new PersonalityRepository(config.PersonalityDb));
+            var connStr = config.PersonalityDb;
+            services.AddPooledDbContextFactory<PersonalityDbContext>(options =>
+                options.UseNpgsql(connStr, npgsql => npgsql.UseVector())
+                       .UseSnakeCaseNamingConvention());
+            services.AddSingleton<PersonRepository>();
+            services.AddSingleton<PersonalityRepository>();
+            services.AddSingleton<EmbeddingRepository>();
+            services.AddSingleton<AgentGroupRepository>();
+            services.AddSingleton<RelationshipRepository>();
             RegisterLlmServices(services, config);
             services.AddSingleton<EmbeddingService>();
             services.AddSingleton<VectorService>();
             services.AddSingleton<AgentService>();
             services.AddSingleton<GroupAgentService>();
+            services.AddSingleton<BackgroundEmbeddingQueue>();
+            services.AddHostedService<McpAgentServer.EmbeddingQueueProcessor>();
             services.AddSingleton<Agents.PersonalityService>();
             services.AddSingleton<NeuroService>();
 

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Models;
 
@@ -18,29 +17,10 @@ public class AgentService
     public AgentService(LlmService llm)
     {
         _llm = llm;
-        _prompts = LoadPrompts();
-        _personalityAgentPrompt = LoadPromptTemplate("PersonalityAgentGeneration.txt");
-        _roleAgentPrompt = LoadPromptTemplate("RoleAgentGeneration.txt");
-        _traitAnalysisPrompt = LoadPromptTemplate("TraitAnalysis.txt");
-    }
-
-    private static PromptConfig LoadPrompts()
-    {
-        var configPath = Path.Combine(AppContext.BaseDirectory, "Config", "Prompts.json");
-        if (!File.Exists(configPath))
-            configPath = Path.Combine(Directory.GetCurrentDirectory(), "Config", "Prompts.json");
-
-        var json = File.ReadAllText(configPath);
-        return JsonSerializer.Deserialize<PromptConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException("Failed to load Prompts.json");
-    }
-
-    private static string LoadPromptTemplate(string filename)
-    {
-        var path = Path.Combine(AppContext.BaseDirectory, "Prompts", filename);
-        if (!File.Exists(path))
-            path = Path.Combine(Directory.GetCurrentDirectory(), "Prompts", filename);
-        return File.ReadAllText(path);
+        _prompts = ConfigLoader.LoadJson<PromptConfig>("Prompts.json");
+        _personalityAgentPrompt = ConfigLoader.LoadPromptText("PersonalityAgentGeneration.txt");
+        _roleAgentPrompt = ConfigLoader.LoadPromptText("RoleAgentGeneration.txt");
+        _traitAnalysisPrompt = ConfigLoader.LoadPromptText("TraitAnalysis.txt");
     }
 
     /// <summary>

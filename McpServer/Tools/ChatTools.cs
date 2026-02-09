@@ -7,7 +7,7 @@ using Repository;
 namespace McpAgentServer.Tools;
 
 [McpServerToolType]
-public class ChatTools(AgentService agentService, GroupAgentService groupAgentService, PersonalityRepository repo)
+public class ChatTools(AgentService agentService, GroupAgentService groupAgentService, PersonalityRepository personalityRepo, AgentGroupRepository agentGroupRepo)
 {
     // ===== Custom Agent Generation =====
 
@@ -21,7 +21,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
         if (agentCount < 6 || agentCount > 10)
             return JsonSerializer.Serialize(new { error = "Agent count must be between 6 and 10" });
 
-        var personalityResult = await repo.GetPersonalityAsync(person);
+        var personalityResult = await personalityRepo.GetPersonalityAsync(person);
         if (personalityResult.Profile == null)
         {
             return personalityResult.Suggestions?.Count > 0
@@ -35,7 +35,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
             return JsonSerializer.Serialize(new { error = "Failed to generate agents from personality" });
 
         var effectiveGroupName = groupName ?? person;
-        var groupId = await repo.CreateAgentGroupAsync(person, effectiveGroupName, agents);
+        var groupId = await agentGroupRepo.CreateAgentGroupAsync(person, effectiveGroupName, agents);
 
         return JsonSerializer.Serialize(new
         {
@@ -66,7 +66,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
             return JsonSerializer.Serialize(new { error = "Failed to generate agents from role" });
 
         var effectiveGroupName = groupName ?? role;
-        var groupId = await repo.CreateAgentGroupAsync(person, effectiveGroupName, agents);
+        var groupId = await agentGroupRepo.CreateAgentGroupAsync(person, effectiveGroupName, agents);
 
         return JsonSerializer.Serialize(new
         {
@@ -87,7 +87,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
     [Description("List all available custom agent groups.")]
     public async Task<string> ListCustomAgentGroups()
     {
-        var groups = await repo.ListAgentGroupsAsync();
+        var groups = await agentGroupRepo.ListAgentGroupsAsync();
         return JsonSerializer.Serialize(new { groups });
     }
 
@@ -97,7 +97,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
         [Description("Person name")] string person,
         [Description("Optional group name (defaults to person name)")] string? groupName = null)
     {
-        var group = await repo.GetAgentGroupAsync(person, groupName);
+        var group = await agentGroupRepo.GetAgentGroupAsync(person, groupName);
         return group != null
             ? JsonSerializer.Serialize(group)
             : JsonSerializer.Serialize(new { error = "Agent group not found" });
@@ -111,7 +111,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
         [Description("Optional group name (defaults to person name)")] string? groupName = null,
         [Description("Maximum number of conversation turns (default: 8)")] int maxIterations = 8)
     {
-        var group = await repo.GetAgentGroupAsync(person, groupName);
+        var group = await agentGroupRepo.GetAgentGroupAsync(person, groupName);
         if (group == null)
             return JsonSerializer.Serialize(new { error = $"No custom agent group found for '{person}'" });
 
@@ -126,7 +126,7 @@ public class ChatTools(AgentService agentService, GroupAgentService groupAgentSe
         [Description("Person name")] string person,
         [Description("Optional group name (defaults to person name)")] string? groupName = null)
     {
-        var deleted = await repo.DeleteAgentGroupAsync(person, groupName);
+        var deleted = await agentGroupRepo.DeleteAgentGroupAsync(person, groupName);
         return deleted
             ? JsonSerializer.Serialize(new { success = true, deleted = person })
             : JsonSerializer.Serialize(new { success = false, error = "Agent group not found" });
