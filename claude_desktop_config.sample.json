@@ -5,17 +5,19 @@
 			"args": [
 				"run",
 				"--project",
-				"C:/Users/ailon/repo/MultiAgentAiMcp/McpServer/McpServer.csproj",
+				"C:/Users/ailon/repo/MultiAgentAiMcp/NeuroGateway.Server/NeuroGateway.Server.csproj",
 				"--",
 				"--stdio"
 			],
 			"env": {
-				"Llm__Backend": "Vllm",
-				"Llm__ChatEndpoint": "http://localhost:8000",
-				"Llm__ThinkingModel": "cyankiwi/Qwen3-30B-A3B-Instruct-2507-AWQ-4bit",
-				"Llm__InstructModel": "cyankiwi/Qwen3-30B-A3B-Instruct-2507-AWQ-4bit",
-				"Llm__EmbeddingModel": "qwen3-embedding",
-				"PERSONALITY_DB": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres"
+				"Llm__Orchestrator__Endpoint": "http://localhost:11434",
+				"Llm__Orchestrator__Model": "qwen-3-vl-fast",
+				"Llm__AgentFramework__Endpoint": "https://api.runpod.ai/v2/{endpoint_id}/openai/v1",
+				"Llm__AgentFramework__ApiKey": "rpa_XXXXXXXXXXXX",
+				"Llm__AgentFramework__Model": "Qwen/Qwen3-Next-80B-A3B-Instruct-FP8",
+				"Llm__Embedding__Endpoint": "http://localhost:8000",
+				"Llm__Embedding__Model": "Qwen/Qwen3-Embedding-8B",
+				"DEVELOPMENT_DB": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres"
 			}
 		}
 	}

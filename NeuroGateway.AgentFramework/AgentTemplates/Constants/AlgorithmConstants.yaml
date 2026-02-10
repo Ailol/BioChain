@@ -1,0 +1,861 @@
+﻿# ============================================================
+# ALGORITHM CONFIG — Global tuning surface
+# ============================================================
+# Single file. All algorithm behavior lives here.
+# Agent YAMLs define WHAT agents say.
+# This file defines HOW vectors are scored, pooled, drifted,
+# clustered, and interpreted.
+#
+# Three sections:
+#   modes    → per relationship mode (scoring, coherence, drift, attractors)
+#   layers   → per biochemical layer (temporal dynamics, pooling, clustering)
+#   chemicals → per chemical (subspace weights, interactions, relationship signals)
+#
+# Resolution order: chemical → layer → mode → defaults
+# More specific overrides less specific.
+# ============================================================
+
+
+# ════════════════════════════════════════════════════════════
+# DEFAULTS — Applied when no specific config exists
+# ════════════════════════════════════════════════════════════
+
+defaults:
+  scoring:
+    message_weight: 0.55
+    freshness_boost: 1.3
+    min_similarity: 0.15
+    top_per_chemical: 1
+
+  pooling:
+    strategy: attentive              # mean | temporal_decay | attentive | attentive_temporal_decay | max | confidence_weighted
+    attention_temperature: 0.8
+    temporal_half_life: 15
+    min_entries_for_strategy: 5
+
+  drift:
+    shift_threshold: 0.12
+    std_dev_multiplier: 1.5
+    velocity_window: 5
+    noise_floor: 0.04
+    subspace_drift_weight: 0.5
+
+  coherence:
+    low_threshold: 0.45
+    interpretation: neutral          # opportunity | alarm | expected | neutral | boundary
+    layer_pair_weights:
+      nt_hormone: 0.33
+      nt_peptide: 0.33
+      hormone_peptide: 0.34
+
+  attractors:
+    threshold: 0.82
+    min_visits: 2
+    max_attractors: 8
+    track_transitions: false
+
+  clustering:
+    threshold: 0.78
+    k_neighbors: 3
+    min_cluster_size: 2
+
+  subspace:
+    num_bands: 16                    # 16 × 256 = 4096
+    band_dim: 256
+    divergence_threshold: 0.40
+
+
+# ════════════════════════════════════════════════════════════
+# MODES — Per relationship mode overrides
+# ════════════════════════════════════════════════════════════
+# Only specify what DIFFERS from defaults.
+# Omitted fields inherit from defaults.
+
+modes:
+  dating:
+    scoring:
+      message_weight: 0.65
+      freshness_boost: 1.8
+    pooling:
+      attention_temperature: 0.3      # laser focus on current signal
+    drift:
+      shift_threshold: 0.05           # hypersensitive — every signal matters
+      std_dev_multiplier: 1.2
+    coherence:
+      interpretation: opportunity      # tension creates attraction
+      low_threshold: 0.45
+      layer_pair_weights:
+        nt_hormone: 0.25
+        nt_peptide: 0.45              # desire vs emotional readiness
+        hormone_peptide: 0.30
+    attractors:
+      threshold: 0.75                  # shallow forming basins
+      max_attractors: 10
+      track_transitions: true
+
+  partner:
+    scoring:
+      message_weight: 0.50
+      freshness_boost: 1.4
+    pooling:
+      attention_temperature: 0.8
+    drift:
+      shift_threshold: 0.10
+    coherence:
+      interpretation: alarm            # misalignment needs attention
+      low_threshold: 0.48
+      layer_pair_weights:
+        nt_hormone: 0.30
+        nt_peptide: 0.35
+        hormone_peptide: 0.35
+    attractors:
+      threshold: 0.85
+      min_visits: 3
+      track_transitions: true
+
+  relationship:
+    scoring:
+      message_weight: 0.55
+      freshness_boost: 1.5
+    pooling:
+      attention_temperature: 0.6
+    drift:
+      shift_threshold: 0.10
+    coherence:
+      interpretation: alarm
+      low_threshold: 0.48
+      layer_pair_weights:
+        nt_hormone: 0.30
+        nt_peptide: 0.40
+        hormone_peptide: 0.30
+    attractors:
+      threshold: 0.82
+      track_transitions: true
+
+  family:
+    scoring:
+      message_weight: 0.35            # deep pattern dominates
+      freshness_boost: 1.1
+      min_similarity: 0.20
+    pooling:
+      attention_temperature: 1.5       # broad context
+    drift:
+      shift_threshold: 0.25           # tolerant — only ruptures
+      std_dev_multiplier: 2.0
+    coherence:
+      interpretation: alarm            # internal conflict = repair needed
+      low_threshold: 0.50
+      layer_pair_weights:
+        nt_hormone: 0.20
+        nt_peptide: 0.25
+        hormone_peptide: 0.55         # deep alignment matters most
+    attractors:
+      threshold: 0.90                  # deep stable basins
+      min_visits: 3
+      max_attractors: 5
+
+  conflict:
+    scoring:
+      message_weight: 0.80            # current state is everything
+      freshness_boost: 2.0
+      min_similarity: 0.10
+    pooling:
+      attention_temperature: 0.2       # sharpest focus
+    drift:
+      shift_threshold: 0.08           # catch escalation early
+      std_dev_multiplier: 1.0
+    coherence:
+      interpretation: expected         # dysregulation is the norm here
+      low_threshold: 0.35
+      layer_pair_weights:
+        nt_hormone: 0.50              # fast vs slow mismatch = escalation
+        nt_peptide: 0.30
+        hormone_peptide: 0.20
+    attractors:
+      threshold: 0.80
+      track_transitions: true          # oscillation patterns matter
+
+  friend:
+    scoring:
+      message_weight: 0.55
+      freshness_boost: 1.3
+    pooling:
+      attention_temperature: 1.0
+    drift:
+      shift_threshold: 0.12
+    coherence:
+      interpretation: neutral
+      low_threshold: 0.40
+
+  mindhat:
+    scoring:
+      message_weight: 0.60
+      freshness_boost: 1.4
+    pooling:
+      attention_temperature: 0.5
+    drift:
+      shift_threshold: 0.10
+    coherence:
+      interpretation: neutral
+
+  colleague:
+    scoring:
+      message_weight: 0.55
+      freshness_boost: 1.3
+      min_similarity: 0.20
+    pooling:
+      attention_temperature: 1.2
+    drift:
+      shift_threshold: 0.15
+      std_dev_multiplier: 1.8
+    coherence:
+      interpretation: neutral
+    attractors:
+      threshold: 0.85
+      min_visits: 3
+      max_attractors: 5
+
+  exwife:
+    scoring:
+      message_weight: 0.75            # read their boundary precisely
+      freshness_boost: 1.6
+      min_similarity: 0.20
+    pooling:
+      attention_temperature: 0.4
+    drift:
+      shift_threshold: 0.10
+    coherence:
+      interpretation: boundary         # low coherence = don't push
+      low_threshold: 0.40
+      layer_pair_weights:
+        nt_hormone: 0.30
+        nt_peptide: 0.40
+        hormone_peptide: 0.30
+    attractors:
+      threshold: 0.85
+      track_transitions: true          # track manipulation patterns
+
+  acquaintance:
+    scoring:
+      message_weight: 0.50
+      freshness_boost: 1.2
+      min_similarity: 0.25
+    pooling:
+      attention_temperature: 1.5
+    drift:
+      shift_threshold: 0.20
+      std_dev_multiplier: 2.0
+    coherence:
+      interpretation: neutral
+      low_threshold: 0.35
+    attractors:
+      threshold: 0.88
+      min_visits: 3
+      max_attractors: 3
+
+
+# ════════════════════════════════════════════════════════════
+# LAYERS — Per biochemical layer overrides
+# ════════════════════════════════════════════════════════════
+# Defines temporal dynamics — how fast each layer moves.
+# These override defaults but are overridden by mode-specific values.
+
+layers:
+  neurotransmitter:
+    # Fast signals — milliseconds to seconds
+    pooling:
+      strategy: attentive_temporal_decay
+      temporal_half_life: 5            # aggressive decay
+    drift:
+      velocity_window: 3               # fast measurement
+      noise_floor: 0.03
+      subspace_drift_weight: 0.4
+    scoring:
+      top_per_chemical: 2              # more rows — noisy layer needs redundancy
+      freshness_boost: 1.6
+    clustering:
+      threshold: 0.70                  # more clusters — diverse signals
+      min_cluster_size: 2
+
+    # How much each NT chemical contributes to relationship estimation
+    estimation_weights:
+      dopamine: 1.2
+      serotonin: 0.9
+      norepinephrine: 1.0
+      gaba: 0.6
+      glutamate: 0.7
+      acetylcholine: 0.8
+      endocannabinoid: 0.7
+
+  hormone:
+    # Slow signals — hours to days
+    pooling:
+      strategy: confidence_weighted
+      temporal_half_life: 20
+      min_entries_for_strategy: 8
+    drift:
+      velocity_window: 8               # slow tide
+      noise_floor: 0.05
+      subspace_drift_weight: 0.6       # hormonal shifts are meaningful
+    scoring:
+      top_per_chemical: 1
+      freshness_boost: 1.2
+    clustering:
+      threshold: 0.80                  # fewer broader clusters
+      min_cluster_size: 3
+
+    estimation_weights:
+      oxytocin: 1.5
+      cortisol: 1.3
+      testosterone: 0.7
+      estrogen: 0.8
+      progesterone: 0.6
+      vasopressin: 1.2
+      melatonin: 0.4
+      allopregnanolone: 0.5
+
+  peptide:
+    # Structural signals — weeks to lifetime
+    pooling:
+      strategy: confidence_weighted
+      temporal_half_life: 50
+      min_entries_for_strategy: 10
+    drift:
+      velocity_window: 15              # structural measurement
+      noise_floor: 0.08
+      subspace_drift_weight: 0.8       # peptide subspace shifts = significant
+    scoring:
+      top_per_chemical: 1
+      freshness_boost: 1.1
+    clustering:
+      threshold: 0.85                  # tight clusters — structural patterns
+      min_cluster_size: 3
+
+    estimation_weights:
+      oxytocin: 1.4
+      vasopressin: 1.3
+      endorphins: 1.0
+      enkephalins: 0.8
+      substance_p: 1.2
+      npy: 1.1
+      crh: 1.2
+      dynorphin: 1.1
+      bdnf: 0.7
+
+
+# ════════════════════════════════════════════════════════════
+# CHEMICALS — Per chemical configuration
+# ════════════════════════════════════════════════════════════
+# Subspace weights, interaction maps, and relationship signals.
+# subspace_weights: array of 16 floats — how strongly each of
+# the 16 × 256-dim bands correlates with this chemical.
+# These should be CALIBRATED from real embedding data.
+# Placeholder values below based on neurochemical domain knowledge.
+
+chemicals:
+
+  # ── PEPTIDE LAYER ──
+
+  oxytocin:
+    layer: peptide
+    subspace_weights: [1.4, 1.3, 1.2, 1.0, 0.5, 0.4, 0.3, 0.3, 0.2, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 1.1]
+    #                  bonding (0-3) ^^^^                                         social reward (12-15) ^^^^
+    potentiates: [vasopressin, endorphins, dopamine]
+    antagonizes: [crh, cortisol, substance_p]
+    modulates: [serotonin, gaba]
+    relationship_signals:
+      partner: 1.5
+      family: 1.4
+      dating: 1.2
+      relationship: 1.3
+      friend: 0.9
+      conflict: 0.5
+      exwife: 0.3
+      colleague: 0.6
+      acquaintance: 0.4
+      mindhat: 0.5
+
+  vasopressin:
+    layer: peptide
+    subspace_weights: [1.2, 1.3, 1.1, 0.9, 0.6, 0.5, 0.4, 0.5, 0.7, 0.9, 1.0, 1.1, 0.8, 0.6, 0.5, 0.4]
+    #                  bonding (0-3) ^^^^                     vigilance (8-11) ^^^^
+    potentiates: [oxytocin, cortisol, norepinephrine]
+    antagonizes: [enkephalins]
+    modulates: [crh, testosterone]
+    relationship_signals:
+      partner: 1.4
+      family: 1.5
+      relationship: 1.3
+      exwife: 1.0
+      dating: 0.8
+      conflict: 0.9
+      friend: 0.5
+      colleague: 0.4
+      acquaintance: 0.2
+      mindhat: 0.3
+
+  endorphins:
+    layer: peptide
+    subspace_weights: [0.6, 0.7, 0.8, 0.9, 0.5, 0.4, 0.3, 0.3, 0.4, 0.5, 0.6, 0.7, 1.2, 1.4, 1.3, 1.1]
+    #                                                                              reward (12-15) ^^^^
+    potentiates: [dopamine, enkephalins, oxytocin]
+    antagonizes: [substance_p, crh]
+    modulates: [gaba, serotonin]
+    relationship_signals:
+      partner: 1.2
+      dating: 1.3
+      relationship: 1.1
+      family: 1.0
+      friend: 1.1
+      conflict: 0.4
+      exwife: 0.3
+      colleague: 0.5
+      acquaintance: 0.4
+      mindhat: 0.8
+
+  enkephalins:
+    layer: peptide
+    subspace_weights: [0.5, 0.6, 0.7, 0.8, 0.4, 0.3, 0.3, 0.4, 0.3, 0.4, 0.5, 0.6, 1.0, 1.2, 1.1, 0.9]
+    potentiates: [gaba, endorphins]
+    antagonizes: [substance_p, norepinephrine]
+    modulates: [dopamine]
+    relationship_signals:
+      family: 1.3
+      partner: 1.1
+      relationship: 1.0
+      friend: 0.9
+      exwife: 0.5
+      dating: 0.6
+      conflict: 0.4
+      colleague: 0.5
+      acquaintance: 0.5
+      mindhat: 0.4
+
+  substance_p:
+    layer: peptide
+    subspace_weights: [0.2, 0.3, 0.3, 0.4, 0.8, 1.0, 1.2, 1.3, 1.4, 1.3, 1.1, 0.9, 0.4, 0.3, 0.2, 0.2]
+    #                                       pain/distress (4-7) ^^^^  threat (8-11) ^^^^
+    potentiates: [crh, cortisol, norepinephrine]
+    antagonizes: [endorphins, enkephalins, oxytocin]
+    modulates: [glutamate]
+    relationship_signals:
+      conflict: 1.5
+      exwife: 1.2
+      family: 0.9
+      dating: 0.6
+      partner: 0.7
+      relationship: 0.6
+      friend: 0.4
+      colleague: 0.5
+      acquaintance: 0.3
+      mindhat: 0.3
+
+  npy:
+    layer: peptide
+    subspace_weights: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 0.8, 0.7, 0.6, 0.5, 0.7, 0.8, 0.9, 1.0]
+    #                                       resilience (4-7) ^^^^                  homeostasis (12-15) ^^^^
+    potentiates: [gaba, enkephalins]
+    antagonizes: [crh, cortisol]
+    modulates: [norepinephrine, serotonin]
+    relationship_signals:
+      family: 1.3
+      partner: 1.1
+      friend: 1.0
+      relationship: 1.0
+      colleague: 0.9
+      mindhat: 0.7
+      dating: 0.6
+      conflict: 0.8
+      exwife: 0.7
+      acquaintance: 0.5
+
+  crh:
+    layer: peptide
+    subspace_weights: [0.2, 0.3, 0.3, 0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 1.4, 1.3, 1.1, 0.5, 0.3, 0.2, 0.2]
+    #                                                              threat/stress (8-11) ^^^^
+    potentiates: [cortisol, substance_p, norepinephrine]
+    antagonizes: [npy, oxytocin, gaba]
+    modulates: [vasopressin, serotonin]
+    relationship_signals:
+      conflict: 1.5
+      exwife: 1.3
+      dating: 0.8
+      family: 1.0
+      partner: 0.6
+      relationship: 0.5
+      friend: 0.4
+      colleague: 0.7
+      acquaintance: 0.3
+      mindhat: 0.4
+
+  dynorphin:
+    layer: peptide
+    subspace_weights: [0.3, 0.3, 0.4, 0.5, 0.7, 0.9, 1.1, 1.3, 1.2, 1.0, 0.8, 0.7, 0.4, 0.3, 0.3, 0.3]
+    #                                       aversion (4-7) ^^^^    withdrawal (8-10) ^^^^
+    potentiates: [crh, cortisol]
+    antagonizes: [dopamine, endorphins, oxytocin]
+    modulates: [serotonin]
+    relationship_signals:
+      conflict: 1.3
+      exwife: 1.4
+      family: 0.7
+      partner: 0.8
+      relationship: 0.6
+      dating: 0.5
+      friend: 0.4
+      colleague: 0.4
+      acquaintance: 0.3
+      mindhat: 0.3
+
+  bdnf:
+    layer: peptide
+    subspace_weights: [0.8, 0.9, 1.0, 1.1, 0.7, 0.6, 0.5, 0.5, 0.4, 0.5, 0.6, 0.7, 0.9, 1.0, 1.1, 1.2]
+    #                  growth (0-3) ^^^^                                         plasticity (12-15) ^^^^
+    potentiates: [serotonin, oxytocin]
+    antagonizes: [cortisol, crh]
+    modulates: [dopamine, glutamate]
+    relationship_signals:
+      family: 1.3
+      partner: 1.2
+      relationship: 1.1
+      friend: 0.9
+      mindhat: 1.0
+      dating: 0.7
+      conflict: 0.4
+      exwife: 0.3
+      colleague: 0.6
+      acquaintance: 0.4
+
+  # ── NEUROTRANSMITTER LAYER ──
+
+  dopamine:
+    layer: neurotransmitter
+    subspace_weights: [0.7, 0.8, 0.9, 1.0, 0.6, 0.5, 0.4, 0.4, 0.3, 0.4, 0.5, 0.6, 1.3, 1.5, 1.4, 1.2]
+    #                                                                              reward (12-15) ^^^^
+    potentiates: [endorphins, glutamate]
+    antagonizes: [serotonin_high, gaba]
+    modulates: [norepinephrine, acetylcholine]
+    relationship_signals:
+      dating: 1.5
+      relationship: 1.2
+      partner: 1.0
+      friend: 1.1
+      mindhat: 1.3
+      family: 0.8
+      conflict: 0.6
+      exwife: 0.4
+      colleague: 0.9
+      acquaintance: 0.5
+
+  serotonin:
+    layer: neurotransmitter
+    subspace_weights: [0.9, 1.0, 1.1, 1.2, 1.0, 0.9, 0.8, 0.7, 0.6, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.0]
+    #                  regulation (0-3) ^^^^  mood (4-7) ^^^^
+    potentiates: [gaba, oxytocin, bdnf]
+    antagonizes: [dopamine_excess, norepinephrine]
+    modulates: [endorphins, melatonin]
+    relationship_signals:
+      partner: 1.3
+      family: 1.2
+      relationship: 1.2
+      friend: 1.0
+      colleague: 1.0
+      mindhat: 0.8
+      dating: 0.7
+      conflict: 0.9
+      exwife: 0.8
+      acquaintance: 0.7
+
+  norepinephrine:
+    layer: neurotransmitter
+    subspace_weights: [0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.2, 1.3, 1.4, 1.2, 1.0, 0.8, 0.5, 0.4, 0.3, 0.3]
+    #                                       arousal (4-7) ^^^^    alertness (8-10) ^^^^
+    potentiates: [crh, cortisol, dopamine]
+    antagonizes: [gaba, melatonin]
+    modulates: [serotonin, acetylcholine]
+    relationship_signals:
+      conflict: 1.4
+      dating: 1.2
+      exwife: 1.0
+      colleague: 0.9
+      partner: 0.6
+      relationship: 0.7
+      family: 0.7
+      friend: 0.6
+      mindhat: 1.0
+      acquaintance: 0.5
+
+  gaba:
+    layer: neurotransmitter
+    subspace_weights: [1.0, 1.1, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.5, 0.4, 0.5, 0.6, 0.8, 0.9, 1.0, 1.0]
+    #                  safety (0-3) ^^^^    calm (4-6) ^^^^
+    potentiates: [serotonin, enkephalins, oxytocin]
+    antagonizes: [glutamate, norepinephrine, crh]
+    modulates: [dopamine]
+    relationship_signals:
+      family: 1.4
+      partner: 1.3
+      relationship: 1.1
+      friend: 1.0
+      acquaintance: 0.9
+      colleague: 0.8
+      mindhat: 0.6
+      dating: 0.5
+      conflict: 0.7
+      exwife: 0.6
+
+  glutamate:
+    layer: neurotransmitter
+    subspace_weights: [0.5, 0.6, 0.7, 0.8, 1.0, 1.2, 1.3, 1.2, 1.0, 0.9, 0.8, 0.7, 0.8, 0.9, 1.0, 0.9]
+    #                                       excitation (4-7) ^^^^
+    potentiates: [dopamine, norepinephrine, substance_p]
+    antagonizes: [gaba]
+    modulates: [serotonin, bdnf]
+    relationship_signals:
+      conflict: 1.2
+      mindhat: 1.3
+      dating: 1.0
+      colleague: 0.9
+      friend: 0.8
+      relationship: 0.7
+      partner: 0.6
+      family: 0.6
+      exwife: 0.8
+      acquaintance: 0.5
+
+  acetylcholine:
+    layer: neurotransmitter
+    subspace_weights: [0.6, 0.7, 0.8, 0.9, 0.8, 0.9, 1.0, 1.1, 0.8, 0.7, 0.8, 0.9, 1.0, 1.1, 1.0, 0.9]
+    #                                       attention (4-7) ^^^^                   learning (12-15) ^^^^
+    potentiates: [dopamine, glutamate]
+    antagonizes: []
+    modulates: [serotonin, norepinephrine]
+    relationship_signals:
+      mindhat: 1.4
+      colleague: 1.1
+      dating: 0.9
+      friend: 0.8
+      relationship: 0.7
+      partner: 0.7
+      family: 0.6
+      conflict: 0.6
+      exwife: 0.5
+      acquaintance: 0.5
+
+  endocannabinoid:
+    layer: neurotransmitter
+    subspace_weights: [0.8, 0.9, 1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.4, 0.4, 0.5, 0.6, 0.9, 1.0, 1.1, 1.0]
+    #                  homeostasis (0-3) ^^^^                                      hedonic (12-15) ^^^^
+    potentiates: [gaba, dopamine, oxytocin]
+    antagonizes: [crh, cortisol]
+    modulates: [serotonin, glutamate]
+    relationship_signals:
+      partner: 1.2
+      family: 1.1
+      relationship: 1.0
+      friend: 1.1
+      dating: 0.8
+      mindhat: 0.6
+      conflict: 0.5
+      exwife: 0.4
+      colleague: 0.6
+      acquaintance: 0.5
+
+  # ── HORMONE LAYER ──
+
+  oxytocin_h:
+    layer: hormone
+    # Same chemical, different role in hormone layer (tonic vs peptide pulsatile)
+    subspace_weights: [1.3, 1.4, 1.3, 1.1, 0.6, 0.5, 0.4, 0.3, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1.0, 1.1]
+    potentiates: [vasopressin_h, progesterone, allopregnanolone]
+    antagonizes: [cortisol, testosterone]
+    modulates: [estrogen]
+    relationship_signals:
+      partner: 1.5
+      family: 1.5
+      relationship: 1.3
+      dating: 1.1
+      friend: 0.9
+      conflict: 0.4
+      exwife: 0.3
+      colleague: 0.5
+      acquaintance: 0.3
+      mindhat: 0.4
+
+  cortisol:
+    layer: hormone
+    subspace_weights: [0.3, 0.3, 0.4, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.4, 1.2, 1.0, 0.5, 0.4, 0.3, 0.2]
+    #                                                              stress (8-11) ^^^^
+    potentiates: [crh, norepinephrine, glutamate]
+    antagonizes: [oxytocin_h, testosterone, bdnf]
+    modulates: [serotonin, dopamine]
+    relationship_signals:
+      conflict: 1.5
+      exwife: 1.3
+      dating: 0.9
+      colleague: 1.0
+      family: 0.8
+      partner: 0.7
+      relationship: 0.6
+      friend: 0.5
+      mindhat: 0.6
+      acquaintance: 0.4
+
+  testosterone:
+    layer: hormone
+    subspace_weights: [0.4, 0.5, 0.6, 0.7, 0.9, 1.1, 1.3, 1.2, 1.0, 0.9, 0.8, 0.7, 0.8, 0.9, 1.0, 0.8]
+    #                                       drive (4-7) ^^^^
+    potentiates: [dopamine, vasopressin_h, norepinephrine]
+    antagonizes: [oxytocin_h, cortisol_chronic]
+    modulates: [serotonin]
+    relationship_signals:
+      dating: 1.3
+      conflict: 1.1
+      colleague: 1.0
+      exwife: 0.9
+      mindhat: 0.8
+      relationship: 0.7
+      partner: 0.6
+      friend: 0.7
+      family: 0.5
+      acquaintance: 0.5
+
+  estrogen:
+    layer: hormone
+    subspace_weights: [0.9, 1.0, 1.1, 1.2, 0.8, 0.7, 0.6, 0.6, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.0]
+    potentiates: [serotonin, oxytocin_h, bdnf]
+    antagonizes: []
+    modulates: [dopamine, gaba]
+    relationship_signals:
+      partner: 1.2
+      family: 1.1
+      relationship: 1.1
+      friend: 0.9
+      dating: 1.0
+      mindhat: 0.7
+      conflict: 0.5
+      exwife: 0.4
+      colleague: 0.6
+      acquaintance: 0.5
+
+  progesterone:
+    layer: hormone
+    subspace_weights: [0.8, 0.9, 1.0, 1.1, 0.9, 0.8, 0.7, 0.6, 0.4, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8]
+    potentiates: [gaba, allopregnanolone, oxytocin_h]
+    antagonizes: [glutamate, norepinephrine]
+    modulates: [serotonin]
+    relationship_signals:
+      family: 1.4
+      partner: 1.2
+      relationship: 1.0
+      friend: 0.7
+      dating: 0.5
+      conflict: 0.6
+      exwife: 0.4
+      colleague: 0.5
+      acquaintance: 0.4
+      mindhat: 0.3
+
+  vasopressin_h:
+    layer: hormone
+    subspace_weights: [1.1, 1.2, 1.1, 0.9, 0.6, 0.5, 0.5, 0.6, 0.8, 1.0, 1.1, 1.2, 0.7, 0.5, 0.4, 0.4]
+    potentiates: [oxytocin_h, cortisol]
+    antagonizes: []
+    modulates: [testosterone, crh]
+    relationship_signals:
+      family: 1.5
+      partner: 1.4
+      relationship: 1.2
+      exwife: 0.9
+      conflict: 0.8
+      dating: 0.7
+      friend: 0.5
+      colleague: 0.4
+      acquaintance: 0.2
+      mindhat: 0.3
+
+  melatonin:
+    layer: hormone
+    subspace_weights: [0.7, 0.8, 0.9, 0.8, 0.6, 0.5, 0.4, 0.3, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8]
+    potentiates: [gaba]
+    antagonizes: [cortisol, norepinephrine]
+    modulates: [serotonin]
+    relationship_signals:
+      partner: 0.8
+      family: 0.7
+      relationship: 0.7
+      friend: 0.5
+      dating: 0.6
+      conflict: 0.3
+      exwife: 0.2
+      colleague: 0.3
+      acquaintance: 0.2
+      mindhat: 0.3
+
+  allopregnanolone:
+    layer: hormone
+    subspace_weights: [0.8, 0.9, 1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.4, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8]
+    potentiates: [gaba, progesterone, oxytocin_h]
+    antagonizes: [crh, glutamate]
+    modulates: [serotonin]
+    relationship_signals:
+      family: 1.3
+      partner: 1.2
+      relationship: 1.0
+      friend: 0.7
+      dating: 0.5
+      conflict: 0.5
+      exwife: 0.4
+      colleague: 0.5
+      acquaintance: 0.4
+      mindhat: 0.3
+
+
+# ════════════════════════════════════════════════════════════
+# SUBSPACE BAND LABELS — Human-readable names for debugging
+# ════════════════════════════════════════════════════════════
+# These are hypothesized based on neurochemical domain knowledge.
+# Should be validated through calibration (Phase 4).
+
+subspace_band_labels:
+  0: bonding_attachment
+  1: pair_security
+  2: social_approach
+  3: trust_familiarity
+  4: arousal_drive
+  5: motivation_seeking
+  6: excitement_anticipation
+  7: energy_activation
+  8: threat_detection
+  9: stress_response
+  10: vigilance_alertness
+  11: defensive_withdrawal
+  12: reward_pleasure
+  13: hedonic_satisfaction
+  14: social_reward
+  15: homeostatic_balance
+
+
+# ════════════════════════════════════════════════════════════
+# CONFIG RESOLUTION — How to merge
+# ════════════════════════════════════════════════════════════
+# Runtime resolver should merge in this order:
+#
+#   resolved = defaults
+#              .deep_merge(layers[current_layer])
+#              .deep_merge(modes[current_mode])
+#
+# Chemical subspace_weights are looked up directly, not merged.
+# Estimation weights come from layers[layer].estimation_weights.
+# Interaction maps come from chemicals[chemical].potentiates/antagonizes.
+# Relationship signals come from chemicals[chemical].relationship_signals.
+#
+# Example for NTAgent in dating mode:
+#   pooling.strategy = attentive_temporal_decay  (from layers.neurotransmitter)
+#   pooling.attention_temperature = 0.3          (from modes.dating, overrides layer)
+#   pooling.temporal_half_life = 5               (from layers.neurotransmitter)
+#   scoring.message_weight = 0.65                (from modes.dating)
+#   scoring.top_per_chemical = 2                 (from layers.neurotransmitter)
+#   scoring.freshness_boost = 1.8                (from modes.dating, overrides layer's 1.6)
+#   drift.shift_threshold = 0.05                 (from modes.dating)
+#   drift.velocity_window = 3                    (from layers.neurotransmitter)

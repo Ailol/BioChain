@@ -1,33 +1,28 @@
 # NeuroGateway Docker Compose
 # Usage:
-#   docker-compose up -d                    # Start all services
-#   docker-compose up -d --build            # Rebuild and start
-#   docker-compose logs -f mcp              # View logs
-#   docker-compose down                     # Stop all
+#   Development (local postgres):  docker compose --profile dev up -d
+#   Production  (Supabase):        docker compose --profile prod up -d
+#   Rebuild:                       docker compose --profile dev up -d --build
+#   Logs:                          docker compose logs -f mcp
 
 services:
   # MCP Server - Multi-Agent AI
   mcp:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     container_name: neurogateway-server
+    profiles: ["dev", "prod"]
     ports:
       - "13370:13370"
     env_file:
-      - .env
+      - ../.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:13370
-      - PERSONALITY_DB=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
-      # Per-purpose endpoints (override appsettings.json for Docker networking)
-      - Llm__Orchestrator__Endpoint=http://host.docker.internal:11434
-      - Llm__AgentFramework__Endpoint=http://host.docker.internal:8000
-      - Llm__Embedding__Endpoint=http://host.docker.internal:8000
-      # API keys come from .env via env_file above
     depends_on:
       postgres:
         condition: service_healthy
+        required: false
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -38,10 +33,11 @@ services:
       retries: 3
       start_period: 10s
 
-  # PostgreSQL - Personality Storage
+  # PostgreSQL - Personality Storage (dev only)
   postgres:
     image: pgvector/pgvector:pg16
     container_name: neurogateway-postgres
+    profiles: ["dev"]
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
