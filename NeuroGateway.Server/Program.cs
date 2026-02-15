@@ -6,6 +6,7 @@ using Microsoft.Extensions.AI;
 using NeuroGateway.AgentFramework;
 using NeuroGateway.Models;
 using NeuroGateway.Repository;
+using NeuroGateway.Server.Api;
 using NeuroGateway.Service;
 using OllamaSharp;
 using OpenAI;
@@ -116,7 +117,11 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     // Embedding generator (optional — null if not configured)
     var embedGen = CreateEmbeddingGenerator(llm.Embedding);
     if (embedGen is not null)
+    {
         services.AddSingleton(embedGen);
+        services.AddSingleton<EmbeddingService>();
+        services.AddSingleton<DimensionService>();
+    }
 
     // Services
     services.AddSingleton<PersonService>();
@@ -155,13 +160,31 @@ static async Task RunHttpMode(string[] args)
     var (llm, db) = LoadConfig(builder.Configuration);
     RegisterAll(builder.Services, llm, db);
 
+    builder.Services.AddCors(options =>
+        options.AddDefaultPolicy(policy =>
+            policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()));
+
     builder.Services
         .AddMcpServer()
         .WithHttpTransport(options => { options.Stateless = true; })
         .WithToolsFromAssembly();
 
     var app = builder.Build();
+    app.UseCors();
     app.MapDefaultEndpoints();
+
+    // REST API
+    var personGroup = app.MapPersonApi();
+    app.MapAnalyzeApi();
+    app.MapRelationshipApi();
+    if (app.Services.GetService<EmbeddingService>() is not null)
+        app.MapEmbeddingApi();
+    if (app.Services.GetService<DimensionService>() is not null)
+        personGroup.MapDimensionApi();
+
+    // MCP protocol
     app.MapMcp("/mcp");
 
     // Verify DB connectivity at startup

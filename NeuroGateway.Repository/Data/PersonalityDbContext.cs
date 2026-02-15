@@ -43,7 +43,7 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
         {
             e.ToTable("analyzed_data");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Embedding).HasColumnType("vector(4096)");
+            e.Property(x => x.Embedding).HasColumnType("vector(2560)");
         });
 
         // BiochemicalProfile
@@ -51,7 +51,7 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
         {
             e.ToTable("biochemical_profile");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Embedding).HasColumnType("vector(4096)");
+            e.Property(x => x.Embedding).HasColumnType("vector(2560)");
             e.HasIndex(x => new { x.PersonalityId, x.AnalyzedDataId, x.Chemical }).IsUnique();
         });
 

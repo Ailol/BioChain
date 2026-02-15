@@ -100,6 +100,80 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
         return results;
     }
 
+    public async Task<List<(string Chemical, string Reasoning, float Similarity, DateTime CreatedAt)>>
+        GetSimilarReasoningsAsync(string person, string vectorLiteral, int topK)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT bp.chemical, bp.reasoning,
+                   1 - (bp.embedding <=> @dimVec::vector) AS similarity,
+                   bp.created_at
+            FROM biochemical_profile bp
+            JOIN personality p ON p.id = bp.personality_id
+            JOIN person per ON per.id = p.person_id
+            WHERE lower(per.first_name) = lower(@person)
+              AND bp.embedding IS NOT NULL
+            ORDER BY bp.embedding <=> @dimVec::vector
+            LIMIT @topK
+            """;
+        AddParam(cmd, "dimVec", vectorLiteral);
+        AddParam(cmd, "person", person);
+        AddParam(cmd, "topK", topK);
+
+        var results = new List<(string, string, float, DateTime)>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            results.Add((
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetFloat(2),
+                reader.GetDateTime(3)));
+        return results;
+    }
+
+    public async Task<List<(string Chemical, float[] Embedding, DateTime CreatedAt)>>
+        GetAllEmbeddingsAsync(string person)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT bp.chemical, bp.embedding::text, bp.created_at
+            FROM biochemical_profile bp
+            JOIN personality p ON p.id = bp.personality_id
+            JOIN person per ON per.id = p.person_id
+            WHERE lower(per.first_name) = lower(@person)
+              AND bp.embedding IS NOT NULL
+            """;
+        AddParam(cmd, "person", person);
+
+        var results = new List<(string, float[], DateTime)>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var chemical = reader.GetString(0);
+            var embeddingStr = reader.GetString(1);
+            var embedding = ParseVector(embeddingStr);
+            var createdAt = reader.GetDateTime(2);
+            results.Add((chemical, embedding, createdAt));
+        }
+        return results;
+    }
+
+    private static float[] ParseVector(string vectorStr)
+    {
+        var trimmed = vectorStr.Trim('[', ']');
+        var parts = trimmed.Split(',');
+        var result = new float[parts.Length];
+        for (var i = 0; i < parts.Length; i++)
+            result[i] = float.Parse(parts[i], System.Globalization.CultureInfo.InvariantCulture);
+        return result;
+    }
+
     private static void AddParam(System.Data.Common.DbCommand cmd, string name, object value)
     {
         var p = cmd.CreateParameter();

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj" />
+    <ProjectReference Include="..\NeuroGateway.AnalysisFramework\NeuroGateway.AnalysisFramework.csproj" />
     <ProjectReference Include="..\NeuroGateway.Repository\NeuroGateway.Repository.csproj" />
     <ProjectReference Include="..\NeuroGateway.Models\NeuroGateway.Models.csproj" />
     <ProjectReference Include="..\NeuroGateway.Utils\NeuroGateway.Utils.csproj" />

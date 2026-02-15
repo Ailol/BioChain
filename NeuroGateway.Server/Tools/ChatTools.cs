@@ -6,24 +6,26 @@ using NeuroGateway.Service;
 namespace NeuroGateway.Server.Tools;
 
 [McpServerToolType]
-public class NeuroTools(NeuroService neuroService)
+public class ChatTools(NeuroService neuroService)
 {
     private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
 
-    [McpServerTool(Name = "neurorespond")]
-    [Description("Analyze what someone wrote TO you. Runs a full neuroscan (27 biochemical agents), " +
+    [McpServerTool(Name = "chat_respond")]
+    [Description("Analyze a chat message someone sent TO you. Runs 27 biochemical agents, " +
                  "synthesizes reasoning, generates layer responses, and produces a suggested response. " +
-                 "Example: neurorespond to karolina, relationship: Dating, text: I had a great time yesterday")]
-    public async Task<string> Neurorespond(
+                 "Example: chat_respond to karolina, relationship: Dating, text: I had a great time yesterday")]
+    public async Task<string> ChatRespond(
         [Description("Person name who SENT the message")] string person,
         [Description("What they wrote to you")] string text,
         [Description("Relationship context (e.g., Dating, Friend, Colleague)")] string? relationship = null,
-        [Description("Projected relationship direction (e.g., if currently Colleague but moving toward Dating)")] string? projected_relationship = null)
+        [Description("Projected relationship direction (e.g., if currently Colleague but moving toward Dating)")] string? projected_relationship = null,
+        [Description("Save analysis to personality profile (default: true). Set false for quick analysis without updating the profile.")] bool save = true)
     {
-        var result = await neuroService.NeuroRespondAsync(person, text, relationship, projected_relationship);
+        var result = await neuroService.ChatRespondAsync(person, text, relationship, projected_relationship, save);
         return JsonSerializer.Serialize(new
         {
             person,
+            source_type = "chat",
             decisions = result.Decisions.Select(d => new { d.Chemical, d.Reasoning }),
             synthesis = result.Synthesis,
             layer_responses = result.LayerResponses,

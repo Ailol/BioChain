@@ -6,7 +6,7 @@ using NeuroGateway.Service;
 namespace NeuroGateway.Server.Tools;
 
 [McpServerToolType]
-public class PersonalityTools(PersonService personService, AnalyzeService analyzeService, ProfileService profileService)
+public class PersonalityTools(PersonService personService, ProfileService profileService)
 {
     private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
 
@@ -42,19 +42,4 @@ public class PersonalityTools(PersonService personService, AnalyzeService analyz
         }, IndentedJson);
     }
 
-    [McpServerTool(Name = "update_personality")]
-    [Description("Submit a behavior/event for biochemical analysis. Each neurotransmitter/hormone/peptide agent decides if it's relevant. You do NOT decide - the agents do.")]
-    public async Task<string> UpdatePersonality(
-        [Description("Person name")] string person,
-        [Description("Context/description of the behavior or event")] string context,
-        [Description("Relationship context (e.g., Dating, Friend, Colleague)")] string? relationship = null)
-    {
-        var decisions = await analyzeService.AnalyzeAsync(person, context, relationship);
-        return JsonSerializer.Serialize(new
-        {
-            person,
-            decisionsCount = decisions.Count,
-            decisions = decisions.Select(d => new { d.Chemical, d.Reasoning })
-        }, IndentedJson);
-    }
 }

@@ -67,7 +67,12 @@
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
       "Bash(DEVELOPMENT_DB=\"Host=localhost;Port=5433;Database=personality;Username=postgres;Password=postgres\" dotnet run:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build)",
+      "Bash(npm i:*)",
+      "Bash(npm run build:*)",
+      "Bash(tasklist:*)"
     ]
   }
 }

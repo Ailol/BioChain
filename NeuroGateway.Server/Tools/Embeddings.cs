@@ -1,27 +1,26 @@
 using System.ComponentModel;
 using System.Text.Json;
 using ModelContextProtocol.Server;
-using NeuroGateway.Repository;
+using NeuroGateway.Service;
 
 namespace NeuroGateway.Server.Tools;
 
 [McpServerToolType]
-public class EmbeddingTools(AnalyzedDataRepository analyzedDataRepo)
+public class EmbeddingTools(EmbeddingService embeddingService)
 {
     private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
 
     [McpServerTool(Name = "backfill_embeddings")]
     [Description("Generate vector embeddings for analyzed data entries that don't have them yet. " +
-                 "Required before neurorespond will work with vector scoring.")]
+                 "Required before vector scoring and similarity search will work.")]
     public async Task<string> BackfillEmbeddings(
         [Description("Optional: limit to specific person")] string? person = null)
     {
-        var entries = await analyzedDataRepo.GetWithoutEmbeddingsAsync(person);
-        // TODO: wire embedding generation when EmbeddingService is rebuilt
+        var count = await embeddingService.BackfillAsync(person);
         return JsonSerializer.Serialize(new
         {
-            pendingEntries = entries.Count,
-            note = "Embedding generation not yet wired — entries listed only"
+            embeddingsGenerated = count,
+            message = count > 0 ? $"Generated {count} embedding(s)" : "No entries pending embeddings"
         }, IndentedJson);
     }
 }

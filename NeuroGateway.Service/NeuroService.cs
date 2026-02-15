@@ -1,5 +1,6 @@
 using System.Text;
 using NeuroGateway.AgentFramework;
+using NeuroGateway.AnalysisFramework;
 using NeuroGateway.Models;
 using NeuroGateway.Repository;
 
@@ -11,39 +12,68 @@ public class NeuroService(
     AgentTemplateRepository templateRepo,
     AnalyzeService analyzeService)
 {
-    // 7 neurotransmitters, 10 hormones, 10 peptides = 27 total
-    private static readonly Dictionary<string, string> ChemicalLayers = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // neurotransmitter (7)
-        ["dopamine"] = "neurotransmitter", ["serotonin"] = "neurotransmitter",
-        ["norepinephrine"] = "neurotransmitter", ["gaba"] = "neurotransmitter",
-        ["acetylcholine"] = "neurotransmitter", ["endocannabinoid"] = "neurotransmitter",
-        ["glutamate"] = "neurotransmitter",
-        // hormone (10)
-        ["cortisol"] = "hormone", ["testosterone"] = "hormone", ["estradiol"] = "hormone",
-        ["progesterone"] = "hormone", ["thyroid"] = "hormone", ["adrenaline"] = "hormone",
-        ["melatonin"] = "hormone", ["dhea"] = "hormone", ["prolactin"] = "hormone",
-        ["oxytocin_h"] = "hormone",
-        // peptide (10)
-        ["oxytocin"] = "peptide", ["vasopressin"] = "peptide", ["endorphins"] = "peptide",
-        ["enkephalins"] = "peptide", ["dynorphin"] = "peptide", ["substance_p"] = "peptide",
-        ["crh"] = "peptide", ["npy"] = "peptide", ["bdnf"] = "peptide", ["orexin"] = "peptide",
-    };
-
+    private static readonly IReadOnlyDictionary<string, string> ChemicalLayers = DimensionDefinitions.ChemicalToLayer;
     private static readonly HashSet<string> AllChemicals = new(ChemicalLayers.Keys, StringComparer.OrdinalIgnoreCase);
 
-    public async Task<NeuroRespondResult> NeuroRespondAsync(
+    // ── Chat: full 4-step pipeline with suggested response ───────────────────
+
+    public async Task<ChatRespondResult> ChatRespondAsync(
         string person,
         string text,
         string? relationship = null,
-        string? projectedRelationship = null)
+        string? projectedRelationship = null,
+        bool save = true)
     {
         relationship ??= "unknown";
 
-        // ── Step 1: Analyze (neuro LoRA via AnalyzeService) ──────────────────
-        var decisions = await analyzeService.AnalyzeAsync(person, text, relationship);
+        var (decisions, layerDecisions, skipped) = await AnalyzeAndGroupAsync(person, text, relationship, "chat", save);
+        var synthesis = await RunReasoningSynthesizerAsync(person, relationship, "chat", layerDecisions, skipped);
 
-        // Group ADD decisions by layer
+        var layerResponses = await RunLayerAgentsAsync(
+            person, text, relationship, projectedRelationship ?? relationship,
+            layerDecisions, synthesis);
+
+        var suggestedResponse = await RunSynthesizerAsync(person, relationship, layerResponses);
+
+        return new ChatRespondResult(decisions, synthesis, layerResponses, suggestedResponse);
+    }
+
+    // ── Work: 27 agents + reasoning synthesis (no layer agents) ──────────────
+
+    public async Task<AnalysisResult> WorkAnalyzeAsync(
+        string person,
+        string text,
+        string? relationship = null,
+        bool save = true)
+    {
+        relationship ??= "unknown";
+
+        var (decisions, layerDecisions, skipped) = await AnalyzeAndGroupAsync(person, text, relationship, "work", save);
+        var synthesis = await RunReasoningSynthesizerAsync(person, relationship, "work", layerDecisions, skipped);
+
+        return new AnalysisResult(decisions, synthesis);
+    }
+
+    // ── Journal: 27 agents + reasoning synthesis (no relationship) ───────────
+
+    public async Task<AnalysisResult> JournalAnalyzeAsync(
+        string person,
+        string text,
+        bool save = true)
+    {
+        var (decisions, layerDecisions, skipped) = await AnalyzeAndGroupAsync(person, text, "self", "journal", save);
+        var synthesis = await RunReasoningSynthesizerAsync(person, "self", "journal", layerDecisions, skipped);
+
+        return new AnalysisResult(decisions, synthesis);
+    }
+
+    // ── Shared: analyze + group by layer ─────────────────────────────────────
+
+    private async Task<(List<AnalysisDecision> Decisions, Dictionary<string, List<AnalysisDecision>> LayerDecisions, List<string> Skipped)>
+        AnalyzeAndGroupAsync(string person, string text, string relationship, string sourceType, bool save)
+    {
+        var decisions = await analyzeService.AnalyzeAsync(person, text, relationship, sourceType: sourceType, save: save);
+
         var layerDecisions = new Dictionary<string, List<AnalysisDecision>>
         {
             ["neurotransmitter"] = [],
@@ -57,28 +87,18 @@ public class NeuroService(
                 layerDecisions[layer].Add(d);
         }
 
-        // Compute skipped chemicals
         var addedChemicals = new HashSet<string>(decisions.Select(d => d.Chemical), StringComparer.OrdinalIgnoreCase);
         var skipped = AllChemicals.Where(c => !addedChemicals.Contains(c)).Order().ToList();
 
-        // ── Step 2: ReasoningSynthesizer (AgentReasoning) ────────────────────
-        var synthesis = await RunReasoningSynthesizerAsync(person, relationship, layerDecisions, skipped);
-
-        // ── Step 3: Layer agents (AgentLayer, parallel) ──────────────────────
-        var layerResponses = await RunLayerAgentsAsync(
-            person, text, relationship, projectedRelationship ?? relationship,
-            layerDecisions, synthesis);
-
-        // ── Step 4: Synthesizer (AgentLayer) ──────────────────────────────────
-        var suggestedResponse = await RunSynthesizerAsync(
-            person, relationship, layerResponses);
-
-        return new NeuroRespondResult(decisions, synthesis, layerResponses, suggestedResponse);
+        return (decisions, layerDecisions, skipped);
     }
+
+    // ── Step 2: ReasoningSynthesizer ─────────────────────────────────────────
 
     private async Task<string> RunReasoningSynthesizerAsync(
         string person,
         string relationship,
+        string sourceType,
         Dictionary<string, List<AnalysisDecision>> layerDecisions,
         List<string> skipped)
     {
@@ -91,6 +111,7 @@ public class NeuroService(
         var sb = new StringBuilder();
         sb.AppendLine($"person: {person}");
         sb.AppendLine($"relationship: {relationship}");
+        sb.AppendLine($"source_type: {sourceType}");
         sb.AppendLine("layer_summary:");
 
         foreach (var (layer, layerDecisionList) in layerDecisions)
@@ -119,6 +140,8 @@ public class NeuroService(
         }
     }
 
+    // ── Step 3: Layer agents (chat mode only) ────────────────────────────────
+
     private async Task<Dictionary<string, string>> RunLayerAgentsAsync(
         string person,
         string text,
@@ -129,10 +152,7 @@ public class NeuroService(
     {
         var templates = await templateRepo.GetByGroupAsync(relationship);
         if (templates.Count == 0)
-        {
-            // Fallback: try "relationship" as a default group
             templates = await templateRepo.GetByGroupAsync("relationship");
-        }
 
         if (templates.Count == 0)
             return new Dictionary<string, string>
@@ -140,21 +160,15 @@ public class NeuroService(
                 ["error"] = $"No neurochat templates found for relationship '{relationship}'"
             };
 
-        // Separate layer agents from synthesizer
         var layerAgents = templates.Where(t => !t.IsSynthesizer).ToList();
 
-        // Build agent definitions with per-layer user messages
         var agentDefs = new List<AgentDefinition>();
         foreach (var agent in layerAgents)
         {
             var layer = agent.Layer ?? "default";
-            var chemicalProfile = BuildChemicalProfile(layer, layerDecisions);
-
-            // The system prompt is the template's Role field (contains full prompt)
             agentDefs.Add(new AgentDefinition(agent.Name, agent.Role, layer));
         }
 
-        // Build common user message parts
         var userMessage = BuildLayerUserMessage(
             person, text, relationship, projectedRelationship,
             layerDecisions, synthesis);
@@ -174,6 +188,8 @@ public class NeuroService(
             };
         }
     }
+
+    // ── Step 4: Synthesizer (chat mode only) ─────────────────────────────────
 
     private async Task<string> RunSynthesizerAsync(
         string person,
@@ -235,15 +251,5 @@ public class NeuroService(
 
         sb.AppendLine($"analysis: {synthesis}");
         return sb.ToString();
-    }
-
-    private static string BuildChemicalProfile(
-        string layer,
-        Dictionary<string, List<AnalysisDecision>> layerDecisions)
-    {
-        if (!layerDecisions.TryGetValue(layer, out var decs) || decs.Count == 0)
-            return "(none active)";
-
-        return string.Join("\n", decs.Select(d => $"- {d.Chemical}: {d.Reasoning}"));
     }
 }

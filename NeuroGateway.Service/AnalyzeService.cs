@@ -22,10 +22,10 @@ public class AnalyzeService(
         string? relationship = null,
         string sourceType = "manual",
         string? sourceUri = null,
-        int? maxConcurrency = null)
+        int? maxConcurrency = null,
+        bool save = true)
     {
         var (personId, personalityId) = await personService.EnsureAsync(person);
-        var analyzedDataId = await analyzedDataRepo.InsertAsync(personId, text, sourceType, sourceUri);
 
         var agents = await LoadAgentsAsync();
         var userMessage = $"person: {person}\ncurrent_relationship: {relationship ?? "unknown"}\ndata: {text}";
@@ -33,8 +33,12 @@ public class AnalyzeService(
         var results = await Orchestrator.RunAllAsync(chatClient, agents, userMessage, maxConcurrency ?? config.MaxParallelAgents);
         var decisions = AgentAnalyzer.Parse(results);
 
-        foreach (var d in decisions)
-            await profileRepo.InsertAsync(personalityId, analyzedDataId, d.Chemical, d.Reasoning, 1.0f, null);
+        if (save)
+        {
+            var analyzedDataId = await analyzedDataRepo.InsertAsync(personId, text, sourceType, sourceUri);
+            foreach (var d in decisions)
+                await profileRepo.InsertAsync(personalityId, analyzedDataId, d.Chemical, d.Reasoning, 1.0f, null);
+        }
 
         return decisions;
     }

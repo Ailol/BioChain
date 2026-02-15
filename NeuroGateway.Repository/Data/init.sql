@@ -44,7 +44,7 @@
             content TEXT NOT NULL,
             source_type VARCHAR(30),                   -- document | chat | manual
             source_uri VARCHAR,
-            embedding vector(4096),
+            embedding vector(2560),
             created_at TIMESTAMP DEFAULT NOW()
         );
         CREATE INDEX idx_analyzed_data_person ON analyzed_data(person_id);
@@ -62,7 +62,7 @@
             analyzed_data_id INT REFERENCES analyzed_data(id) ON DELETE SET NULL,
             chemical VARCHAR(30) NOT NULL,              -- dopamine, oxytocin, estradiol, etc.
             reasoning TEXT NOT NULL,
-            embedding vector(4096),
+            embedding vector(2560),
             modulation_factor FLOAT NOT NULL,          -- -1.0 (inhibitory) → +1.0 (excitatory)
             created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE (personality_id, analyzed_data_id, chemical)
