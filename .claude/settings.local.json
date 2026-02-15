@@ -57,7 +57,17 @@
       "Bash(.env \")",
       "mcp__multi-agent__list_relationship_types",
       "mcp__multi-agent__list_custom_agent_groups",
-      "mcp__multi-agent__list_persons"
+      "mcp__multi-agent__list_persons",
+      "mcp__multi-agent__analyze_conversation_file",
+      "mcp__multi-agent__neurorespond",
+      "Bash(Start-Sleep -Seconds 10)",
+      "Bash(dotnet new:*)",
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(DEVELOPMENT_DB=\"Host=localhost;Port=5433;Database=personality;Username=postgres;Password=postgres\" dotnet run:*)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

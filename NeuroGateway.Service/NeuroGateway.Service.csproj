@@ -7,10 +7,6 @@
     <RootNamespace>NeuroGateway.Service</RootNamespace>
   </PropertyGroup>
 
-<ItemGroup>
-    <PackageReference Include="YamlDotNet" Version="16.3.0" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj" />
     <ProjectReference Include="..\NeuroGateway.Repository\NeuroGateway.Repository.csproj" />

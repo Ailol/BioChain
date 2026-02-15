@@ -22,7 +22,7 @@ services:
       - PERSONALITY_DB=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
       # Per-purpose endpoints (override appsettings.json for Docker networking)
       - Llm__Orchestrator__Endpoint=http://host.docker.internal:11434
-      - Llm__AgentFramework__Endpoint=http://host.docker.internal:8000
+      - Llm__AgentAnalyzing__Endpoint=http://host.docker.internal:8000
       - Llm__Embedding__Endpoint=http://host.docker.internal:8000
       # API keys come from .env via env_file above
     depends_on:
@@ -48,9 +48,10 @@ services:
       - POSTGRES_DB=personality
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./NeuroGateway.Repository/Data/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./NeuroGateway.Repository/Data/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     ports:
-      - "5433:5432"
+      - "5434:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s

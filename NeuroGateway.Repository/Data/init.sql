@@ -65,7 +65,7 @@
             embedding vector(4096),
             modulation_factor FLOAT NOT NULL,          -- -1.0 (inhibitory) → +1.0 (excitatory)
             created_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE (personality_id, analyzed_data_id)
+            UNIQUE (personality_id, analyzed_data_id, chemical)
         );
         CREATE INDEX idx_bp_personality ON biochemical_profile(personality_id);
         CREATE INDEX idx_bp_analyzed ON biochemical_profile(analyzed_data_id);
@@ -90,7 +90,7 @@
             group_name VARCHAR(100),
             name VARCHAR(100) NOT NULL,
             layer VARCHAR(50),
-            role VARCHAR(200) NOT NULL,
+            role TEXT NOT NULL,
             responsibilities TEXT[],
             style TEXT NOT NULL,
             max_words INT DEFAULT 200,
@@ -160,53 +160,3 @@
         );
         CREATE INDEX idx_layer_pipeline ON layer(pipeline_id);
 
-        -- ─────────────────────────────────────
-        -- Utility
-        -- ─────────────────────────────────────
-
-        CREATE OR REPLACE FUNCTION render_template(template TEXT, vars JSONB)
-        RETURNS TEXT AS $$
-        DECLARE
-            k TEXT;
-            result TEXT := template;
-        BEGIN
-            FOR k IN SELECT jsonb_object_keys(vars) LOOP
-                result := replace(result, '{' || k || '}', vars->>k);
-            END LOOP;
-            RETURN result;
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE;
-
-        -- ─────────────────────────────────────
-        -- Seed data
-        -- ─────────────────────────────────────
-
-        INSERT INTO relationship_type (name, description) VALUES
-            ('partner',           'Committed romantic partner'),
-            ('dating',            'Early or casual romantic connection'),
-            ('ex',                'Former romantic partner or spouse'),
-            ('family',            'Family and kinship bonds'),
-            ('friend',            'Friendship and close social bonds'),
-            ('coworker',          'Professional workplace relationship'),
-            ('mentor',            'Mentoring or coaching relationship'),
-            ('acquaintance',      'Casual or distant social connection'),
-            ('coparent',          'Shared parenting after separation'),
-            ('therapist',         'Therapeutic or counseling relationship');
-
-        INSERT INTO person (first_name) VALUES ('Ailo');
-
-        INSERT INTO personality (person_id)
-            SELECT p.id FROM person p WHERE p.first_name = 'Ailo';
-
-        INSERT INTO analyzed_data (person_id, content, source_type)
-            SELECT p.id, 'Programming: Flow states and problem-solving trigger dopamine reward loops.', 'manual'
-            FROM person p WHERE p.first_name = 'Ailo';
-
-        INSERT INTO biochemical_profile (personality_id, analyzed_data_id, reasoning, modulation_factor)
-            SELECT per.id, ad.id,
-                   'Dopamine at +0.16. Reward anticipation activated through sustained mesolimbic drive during problem-solving flow states. Novelty in debugging triggers phasic VTA firing.',
-                   0.16
-            FROM personality per
-            JOIN person p ON p.id = per.person_id
-            JOIN analyzed_data ad ON ad.person_id = p.id AND ad.content LIKE 'Programming:%'
-            WHERE p.first_name = 'Ailo';

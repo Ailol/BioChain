@@ -3,7 +3,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 // PostgreSQL with pgvector for personality storage
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume("pgdata")
-    .WithBindMount("../init.sql", "/docker-entrypoint-initdb.d/init.sql")
+    .WithBindMount("../NeuroGateway.Repository/Data/init.sql", "/docker-entrypoint-initdb.d/init.sql")
     .WithImageRegistry("docker.io")
     .WithImage("pgvector/pgvector")
     .WithImageTag("pg16");
@@ -16,7 +16,7 @@ var personalityDb = postgres.AddDatabase("personality");
 var mcpServer = builder.AddProject<Projects.NeuroGateway_Server>("mcp-server", launchProfileName: null)
     .WithReference(personalityDb)
     .WithEnvironment("Llm__Orchestrator__Endpoint", "http://localhost:11434")
-    .WithEnvironment("Llm__AgentFramework__Endpoint", "http://localhost:8000")
+    .WithEnvironment("Llm__AgentAnalyzing__Endpoint", "http://localhost:8000")
     .WithEnvironment("Llm__Embedding__Endpoint", "http://localhost:8000")
     .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:13370");
 
