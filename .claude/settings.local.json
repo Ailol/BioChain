@@ -72,7 +72,15 @@
       "Bash(npx vite build)",
       "Bash(npm i:*)",
       "Bash(npm run build:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(curl.exe:*)",
+      "Bash(dotnet list:*)",
+      "WebFetch(domain:openpsychometrics.org)",
+      "Bash(unzip:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(cygpath:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

@@ -1,0 +1,35 @@
+```yaml
+Sensitivity:
+  1:
+    crh: >
+      Emotional awareness remains superficial, triggered only by obvious external cues rather than sustained internal monitoring. Family tensions or friendship conflicts register briefly but don't penetrate deeply enough to shift behavior patterns. Creative expression and emotional vulnerability feel like foreign concepts, accessed only when circumstances force a reaction. Social cues are processed mechanically, without the resonance that would build genuine empathic connection.
+  2:
+    crh: >
+      Begins noticing emotional undercurrents in close relationships, though interpretation remains inconsistent and self-focused. Art, music, or intimate conversations occasionally break through the protective layer, creating momentary vulnerability that feels surprising. Criticism stings more than expected, lingering beyond the immediate moment but not yet integrating into self-understanding. Empathic responses emerge sporadically—present with certain people or in specific contexts, absent in others.
+  3:
+    crh: >
+      Emotional attunement operates as a reliable but manageable system, picking up on family members' unspoken distress and friends' subtle mood shifts without becoming overwhelmed. Creative works and intimate storytelling generate genuine emotional resonance, enriching personal growth while maintaining healthy boundaries. Rejection and criticism activate noticeable internal responses that require conscious processing but don't derail emotional stability. Mirror-like responsiveness to others' feelings functions as an asset in deepening connections without losing sense of self.
+  4:
+    crh: >
+      Operates as a finely-tuned emotional radar, continuously scanning intimate spaces for relational nuances and unspoken needs. Others' pain registers viscerally in the body, driving spontaneous caregiving responses in romantic partnerships and parenting that sometimes eclipse personal boundaries. Artistic experiences and vulnerable conversations penetrate deeply, creating lasting emotional imprints that shape identity expression and creative pursuits. Criticism feels like a physical wound, requiring extended recovery time and deliberate self-care practices to metabolize the impact.
+  5:
+    crh: >
+      Functions as a perpetual emotional antenna, absorbing ambient emotional states from family systems, community spaces, and intimate bonds even when not actively engaged. The line between personal feelings and others' experiences blurs into a continuous empathic stream that drives behavior patterns around domestic harmony and social belonging. Emotional overwhelm becomes a regular companion requiring sophisticated self-regulation strategies—retreat into creative expression, rigid boundary enforcement, or cyclical withdrawal from connection. Sensitivity itself becomes an organizing principle of identity, shaping everything from hobby selection to relationship dynamics to the fundamental experience of being in the world.
+
+Stress_Response:
+  1:
+    crh: >
+      Crisis activation follows an immediate, undifferentiated pattern—react first, process later, with minimal physiological sophistication. Personal losses and relationship conflicts trigger basic defense postures (shutdown or outburst) without strategic modulation. Return to baseline happens passively through time and distraction rather than active recovery practices. Emotional distress from betrayal or grief remains unprocessed, stored in the body as tension without pathways for integration.
+  2:
+    crh: >
+      Beginning to recognize personal stress patterns—noticing whether freeze, fight, or flight tends to dominate in family conflicts or romantic ruptures. Acute crises still hijack the system, but recovery shows early signs of intentionality through sporadic self-care attempts. Grief and betrayal activate stronger-than-expected physiological responses that linger in surprising ways. Baseline restoration remains inconsistent, dependent on external circumstances and support rather than internal regulation capacity.
+  3:
+    crh: >
+      Stress activation follows a recognizable personal pattern with emerging capacity for mid-stream course correction during relationship conflicts or personal crises. The body's distress signals are noticed and partially heeded—implementing boundary-setting, reaching for friendship bonds, or engaging creative outlets as stabilizing practices. Recovery from acute stress (loss, betrayal, loneliness) takes predictable time and benefits from deliberate approaches to emotional processing. Physiological return to baseline happens with moderate reliability, though intense stressors can still overwhelm the system's regulatory capacity.
+  4:
+    crh: >
+      Crisis response operates as a well-mapped internal landscape, with clear awareness of personal triggers and sophisticated modulation strategies deployed during relational storms or grief. The body processes emotional distress through established pathways—structured self-care routines, therapeutic processing, intentional community engagement—that prevent chronic dysregulation. Recovery from betrayal or profound loss follows a deliberate arc, integrating the experience into evolving identity rather than compartmentalizing it. Return to baseline happens with consistent reliability, supported by robust practices around emotional vulnerability and personal boundaries.
+  5:
+    crh: >
+      Stress response has evolved into a highly sensitized, autonomous system that activates preemptively, reading threat signals in intimate relationships and family dynamics before conscious awareness catches up. The body maintains a baseline vigilance that never fully relaxes, perpetually scanning for potential abandonment, conflict, or loss. Recovery protocols are deeply entrenched—elaborate self-care rituals, protective relationship patterns, identity structures built around managing emotional reactivity—yet baseline restoration remains elusive, always hovering slightly above true calm. Crisis response dominates the internal landscape so completely that it shapes parenting approach, romantic partnership selection, and fundamental capacity for domestic harmony and social belonging.
+```

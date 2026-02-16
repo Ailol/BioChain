@@ -10,11 +10,16 @@ public static class EmbeddingApi
 
         group.MapPost("/backfill", async (BackfillRequest? req, EmbeddingService svc) =>
         {
-            var count = await svc.BackfillAsync(req?.Person);
+            var (adCount, profileCount) = await svc.BackfillAsync(req?.Person);
+            var total = adCount + profileCount;
             return Results.Ok(new
             {
-                embeddingsGenerated = count,
-                message = count > 0 ? $"Generated {count} embedding(s)" : "No entries pending embeddings"
+                analyzed_data_embeddings = adCount,
+                profile_embeddings = profileCount,
+                total,
+                message = total > 0
+                    ? $"Generated {adCount} analyzed_data + {profileCount} profile embedding(s)"
+                    : "No entries pending embeddings"
             });
         });
 

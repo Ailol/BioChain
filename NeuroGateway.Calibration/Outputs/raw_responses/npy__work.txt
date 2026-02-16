@@ -1,0 +1,103 @@
+```yaml
+Ambition:
+  1:
+    npy: >
+      Career advancement is pursued only when externally prompted or when organizational pressure creates immediate necessity. Strategic positioning appears reactive rather than self-directed, triggered by performance reviews or peer promotions rather than internal drive. Professional brand development remains dormant until circumstance demands it, showing minimal sustained effort toward expanding authority or scope. Stretch assignments are accepted reluctantly, primarily to avoid appearing uncooperative rather than from genuine aspiration for growth.
+  2:
+    npy: >
+      Professional advancement patterns show intermittent activation, with bursts of strategic positioning alternating with passive periods. Visibility-seeking behavior emerges situationally—sometimes volunteering for high-profile projects, sometimes letting opportunities pass without clear pattern. The buffering mechanism against career stagnation fires inconsistently, creating uneven momentum in stakeholder relationship building and scope expansion. Personal milestones are set but lack the sustained behavioral reinforcement needed for reliable achievement.
+  3:
+    npy: >
+      Career strategy operates with reliable baseline engagement, maintaining steady progress toward advancement without consuming all professional energy. Stretch assignments are pursued with measured intentionality, balancing growth opportunities against current capacity and stress load. Professional brand building occurs consistently but proportionately, creating stable upward trajectory without destabilizing current performance. The stress-buffering mechanism allows for strategic risk-taking in scope expansion while maintaining emotional equilibrium through setbacks.
+  4:
+    npy: >
+      Professional ambition demonstrates sustained strategic architecture, with deliberate positioning for advancement operating as a continuous background process. High-visibility project pursuit is systematic and well-calibrated to organizational power structures, showing sophisticated stakeholder management and timing. The resilience circuitry enables aggressive milestone-setting while maintaining composure through competitive environments and temporary career plateaus. Cross-functional influence expands methodically, with each stretch assignment integrated into a coherent long-term advancement narrative.
+  5:
+    npy: >
+      Career advancement operates as an autonomous strategic system, generating its own momentum independent of external validation or organizational prompting. Professional authority expansion becomes self-reinforcing, with each achievement creating new platforms for scope and influence rather than endpoints. The stress-buffering architecture enables sustained operation in high-stakes environments where others experience burnout, maintaining strategic clarity during prolonged executive pressure. Ambition transcends individual promotion-seeking, creating organizational legacy and industry positioning that perpetuates influence across long time horizons.
+
+Persistence:
+  1:
+    npy: >
+      Sustained effort collapses quickly when monotony or frustration exceeds immediate tolerance thresholds, requiring external pressure to maintain engagement. Tedious work like documentation or legacy code maintenance triggers avoidance behaviors, with task completion depending on deadline proximity rather than internal drive. The stress-buffering system offers minimal protection against repetitive setbacks, causing early disengagement from debugging sessions or compliance work. Long-term goal focus deteriorates without frequent external validation or visible progress markers.
+  2:
+    npy: >
+      Grinding through tedious work shows variable capacity, with some sessions demonstrating surprising endurance while others collapse prematurely without clear pattern. The resilience mechanism engages intermittently during extended debugging or infrastructure maintenance, creating unpredictable performance on thankless projects. Frustration tolerance fluctuates significantly—sometimes weathering multiple setbacks, sometimes abandoning efforts after initial obstacles. Long-term project commitment exists but requires periodic external reinforcement to prevent drift.
+  3:
+    npy: >
+      Sustained effort through monotonous work maintains steady baseline, showing reliable completion of compliance requirements and legacy maintenance without dramatic resistance. The stress-buffering capacity enables multi-hour debugging sessions with moderate frustration tolerance, though some recovery time is needed afterward. Long-term goal orientation remains stable through periods without immediate rewards, supported by adequate emotional regulation during repetitive tasks. Thankless infrastructure work is completed proportionately, integrated into workflow without significant avoidance or resentment patterns.
+  4:
+    npy: >
+      Persistence through frustration and setbacks demonstrates robust self-sustaining architecture, maintaining focus during extended problem-solving without external motivation. Tedious documentation and regulatory work are executed with consistent quality despite absence of recognition, showing well-developed stress absorption capacity. The resilience circuitry enables recovery from repeated debugging failures without accumulated demoralization, treating each iteration as data rather than defeat. Long-term project commitment operates strategically, with patience for delayed gratification integrated into professional identity and performance metrics.
+  5:
+    npy: >
+      Sustained effort operates as an autonomous endurance system, generating its own motivational loops independent of external rewards or immediate progress. Grinding through months of legacy code maintenance or compliance work proceeds without depletion, supported by sophisticated stress-buffering that prevents frustration accumulation. The persistence architecture creates its own meaning from repetitive work, finding optimization challenges and systemic improvements within seemingly thankless tasks. Long-horizon focus is self-reinforcing, with the capacity to maintain strategic direction through years of incremental progress where others experience burnout or drift.
+
+Stress_Capacity:
+  1:
+    npy: >
+      Decision-making quality deteriorates rapidly during production incidents or tight deadlines, with minimal stress-buffering to maintain cognitive clarity. Crisis situations trigger reactive patterns rather than systematic response, requiring significant external structure to prevent escalation. Recovery from high-pressure events is slow and incomplete, with accumulated stress passing directly to team dynamics and stakeholder relationships. Multiple competing urgent priorities create immediate overwhelm, collapsing the capacity for prioritization or strategic triage.
+  2:
+    npy: >
+      Performance under pressure shows inconsistent resilience, with some incidents managed effectively while others trigger disproportionate stress responses. The buffering mechanism engages intermittently during security breaches or deadline compression, creating unpredictable capacity for stakeholder management. Recovery time varies significantly—sometimes bouncing back quickly, sometimes requiring extended periods to regain baseline functioning. Organizational stress absorption works situationally, occasionally shielding the team but other times amplifying pressure through visible personal strain.
+  3:
+    npy: >
+      Crisis decision-making maintains functional clarity during most production incidents and deadline pressure, supported by moderate stress-buffering capacity. Recovery from high-pressure situations occurs at reasonable pace without significant burnout accumulation over standard project cycles. Stakeholder expectation management during emergencies shows reliable composure, though extended stress periods require deliberate recovery practices. Competing urgent priorities are managed with adequate triage capability, maintaining team stability while absorbing proportionate organizational stress.
+  4:
+    npy: >
+      High-pressure situations activate sophisticated stress-buffering architecture, maintaining strategic clarity during complex incidents and security breaches. Recovery from crisis events is rapid and complete, with minimal accumulated demoralization enabling sustained performance through consecutive deadline cycles. Stakeholder management demonstrates consistent composure even when organizational panic escalates, creating stabilizing influence during uncertainty. The capacity to absorb competing urgent priorities operates systematically, protecting team dynamics while making clear-headed resource allocation decisions under simultaneous constraints.
+  5:
+    npy: >
+      Stress capacity functions as an autonomous regulation system, converting high-pressure situations into enhanced rather than degraded performance. Crisis decision-making operates with exceptional clarity independent of incident severity, supported by stress-buffering that prevents cognitive compromise during extended emergencies. Recovery is essentially instantaneous, with no detectable burnout accumulation even through sustained periods of organizational turbulence. The architecture creates calm in chaos, absorbing stakeholder anxiety and competitive deadline pressure while maintaining long-horizon strategic perspective that transcends immediate crisis dynamics.
+
+Career_Resilience:
+  1:
+    npy: >
+      Professional setbacks create sustained identity disruption, with minimal buffering against the emotional impact of project failures or restructuring. Skill pivoting appears forced and reactive rather than opportunistic, driven by necessity without internal resourcefulness. Motivation deteriorates significantly during uncertainty periods, requiring substantial external support to maintain basic professional engagement. Failure experiences compound rather than convert to learning, creating risk-aversion patterns that constrain future career options.
+  2:
+    npy: >
+      Recovery from job loss or major setbacks shows variable capacity, with some disruptions processed more effectively than others without clear predictive pattern. Professional reinvention emerges inconsistently—sometimes demonstrating surprising adaptability, sometimes remaining stuck in obsolete identity frameworks. The resilience mechanism offers intermittent protection during organizational turbulence, creating uneven motivation maintenance through uncertainty. Learning from failure occurs situationally, with some experiences integrated constructively while others generate lasting risk-aversion.
+  3:
+    npy: >
+      Bouncing back from professional disruptions demonstrates reliable baseline resilience, processing project failures and restructuring without permanent identity damage. Skill pivoting occurs with moderate adaptability, showing capacity to learn adjacent technologies and reinvent within reasonable professional boundaries. Motivation maintenance through uncertainty periods remains stable, supported by adequate stress-buffering and sense of professional self-worth. Failure experiences are integrated proportionately as learning opportunities, maintaining calculated risk-taking capacity without reckless optimism or paralysis.
+  4:
+    npy: >
+      Career disruptions activate sophisticated recovery architecture, converting job loss and restructuring into strategic repositioning rather than crisis. Professional reinvention demonstrates sustained adaptability, with skill pivoting executed systematically to capture emerging opportunities across industry disruption. The stress-buffering mechanism maintains consistent motivation and identity stability through extended uncertainty, showing resilience against prolonged market turbulence. Failure integration operates strategically, extracting nuanced learning while maintaining confidence for ambitious next moves and calculated career experimentation.
+  5:
+    npy: >
+      Professional resilience functions as an autonomous adaptation system, transforming major setbacks into accelerated rather than delayed career development. Industry disruption and organizational collapse are processed as recalibration opportunities, with skill reinvention happening proactively before external pressure demands it. The architecture maintains unshakeable professional identity independent of role, company, or market conditions, generating motivation from internal coherence rather than external stability. Failure becomes integrated as essential career data, creating antifragile professional trajectory that strengthens rather than weakens through volatility and disruption.
+
+Purpose_Meaning:
+  1:
+    npy: >
+      Professional satisfaction depends heavily on external validation metrics, with minimal internal coherence independent of achievement markers. Value alignment appears reactive and situational, requiring constant reinforcement from organizational recognition or stakeholder approval. Long-term direction fragments under pressure, showing little stress-buffering to maintain philosophical coherence during setbacks or uncertainty. Meaning-making operates through immediate tactical wins rather than strategic legacy considerations, creating vulnerability to motivation collapse during routine periods.
+  2:
+    npy: >
+      Sense of professional purpose shows intermittent activation, with periods of value-aligned engagement alternating with drift toward purely transactional work orientation. The meaning-making mechanism fires inconsistently—sometimes finding deeper satisfaction in contribution, sometimes requiring external achievement to maintain motivation. Direction stability fluctuates through career transitions, showing variable resilience against industry disruption or organizational mission changes. Community impact and legacy thinking emerge situationally but don't yet constitute reliable sources of professional identity.
+  3:
+    npy: >
+      Professional meaning operates with stable baseline independent of immediate project outcomes, supported by moderate values-driven decision-making. Career direction demonstrates reliable coherence across role changes and industry shifts, showing adequate stress-buffering to maintain purpose during challenging periods. Satisfaction derives proportionately from both achievement and alignment, creating balanced motivation that doesn't collapse during recognition droughts. Legacy considerations and stakeholder impact factor consistently into strategic choices, though not yet dominant over practical career advancement.
+  4:
+    npy: >
+      Purpose-driven work orientation demonstrates sustained architecture, with value alignment operating as primary filter for opportunity evaluation and strategic positioning. The meaning-making system generates consistent professional satisfaction independent of external validation cycles, showing sophisticated stress-buffering against achievement pressure. Long-term direction maintains strategic clarity through major disruptions, with organizational contribution and stakeholder impact integrated into core professional identity. Legacy building operates systematically, creating career trajectory focused on sustained influence rather than episodic accomplishment.
+  5:
+    npy: >
+      Professional purpose functions as autonomous meaning-generation system, creating profound satisfaction independent of role, recognition, or conventional success metrics. Value alignment transcends organizational constraints, with career direction self-determined through philosophical coherence rather than external opportunity structures. The architecture maintains unshakeable sense of contribution during extended periods without visible impact, supported by stress-buffering that converts setbacks into deeper conviction. Legacy and generational influence operate as primary career organizing principles, with daily work integrated into decades-long vision that generates intrinsic motivation regardless of immediate circumstances.
+
+Healing_Capacity:
+  1:
+    npy: >
+      Professional wounds from project failures or interpersonal conflicts show minimal natural resolution, requiring extensive external processing support. Career transitions following setbacks remain emotionally unintegrated, with pain patterns interfering with subsequent performance and stakeholder relationships. The stress-buffering system offers little protection against rumination, causing past failures to contaminate present decision-making and risk assessment. Difficult experiences accumulate as scar tissue rather than wisdom, creating progressive risk-aversion and professional bitterness over time.
+  2:
+    npy: >
+      Recovery from professional trauma shows variable capacity, with some setbacks processing more effectively than others without clear pattern. Emotional wounds from organizational restructuring or leadership conflicts resolve intermittently—sometimes converting to growth, sometimes persisting as unprocessed pain. The resilience mechanism offers inconsistent protection against chronic grievance, creating unpredictable capacity to move forward after major career disruptions. Learning extraction from painful experiences is situational, with some failures integrated constructively while others generate lasting defensiveness.
+  3:
+    npy: >
+      Professional healing operates with reliable baseline capacity, processing project failures and interpersonal conflicts at reasonable pace without permanent emotional damage. Career transitions following setbacks show moderate integration, allowing forward movement while extracting proportionate learning from difficult experiences. The stress-buffering mechanism provides adequate protection against rumination, maintaining present-focused decision-making despite past disappointments. Painful experiences convert gradually to professional wisdom, supporting measured rather than reckless risk-taking in subsequent roles and stakeholder relationships.
+  4:
+    npy: >
+      Recovery from career trauma demonstrates sophisticated processing architecture, converting major setbacks into accelerated rather than delayed professional development. The resilience circuitry enables rapid emotional integration of failures and conflicts, maintaining stakeholder relationship capacity without defensive barriers. Stress-buffering operates strategically against post-traumatic patterns, preventing past organizational wounds from contaminating current leadership presence and decision clarity. Painful experiences are metabolized systematically into nuanced professional judgment, creating wisdom that enhances rather than constrains future strategic risk-taking and interpersonal openness.
+  5:
+    npy: >
+      Professional healing functions as autonomous integration system, transforming even severe career trauma into fundamental strength rather than limitation. Recovery from catastrophic failures or betrayals occurs with remarkable speed and completeness, supported by stress-buffering that prevents chronic wound formation. The architecture converts painful experiences into professional depth independent of time passage, with learning extraction happening immediately rather than through prolonged processing. Resilience transcends individual recovery, creating capacity to hold space for organizational grief and team trauma while maintaining strategic clarity and compassionate leadership through collective disruption.
+```

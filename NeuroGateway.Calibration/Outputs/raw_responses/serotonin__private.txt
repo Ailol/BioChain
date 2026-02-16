@@ -1,0 +1,205 @@
+```yaml
+Persistence:
+  1:
+    serotonin: >
+      Personal projects are abandoned at the first sign of difficulty—half-finished home repairs, dusty craft supplies, neglected hobbies. When family commitments become tedious or repetitive, the person withdraws or delegates immediately, unable to sustain effort through mundane phases. Self-improvement goals collapse within days as frustration triggers complete disengagement. The serotonin system provides no buffer against monotony, leaving behavior entirely reactive to immediate discomfort.
+  2:
+    serotonin: >
+      There are sporadic bursts of follow-through on personal goals—some home projects get completed, some fitness routines last a few weeks. When supporting family members through long-term challenges, commitment wavers inconsistently, present some days and absent others. Creative hobbies show a pattern of enthusiasm followed by abandonment, then occasional re-engagement. Emerging serotonin stability allows brief persistence, but the system hasn't developed reliable endurance across extended timelines.
+  3:
+    serotonin: >
+      Personal commitments are generally maintained through difficult phases—home improvement projects reach completion despite setbacks, fitness routines survive plateaus. Family obligations are honored even when they become repetitive or thankless, showing moderate emotional steadiness. Hobbies develop depth through consistent practice, weathering the boring middle phases of skill acquisition. The serotonin baseline provides reliable frustration tolerance, creating a stable foundation for sustained effort without heroic willpower.
+  4:
+    serotonin: >
+      Long-term personal goals are pursued with remarkable consistency—years-long creative projects, sustained caregiving through chronic illness, decade-spanning skill development. Family relationships are maintained through extended difficult periods without emotional depletion or resentment accumulation. Self-care practices continue unbroken even when results are invisible, sustained by internal commitment rather than external validation. Strong serotonergic stability generates autonomous persistence that doesn't require constant motivation or reward feedback.
+  5:
+    serotonin: >
+      Personal persistence operates as a self-sustaining system—marathon creative projects spanning decades, unwavering family support through multi-year crises, transformative practices maintained without interruption. The person finds satisfaction in the grinding phases themselves, not just eventual outcomes, experiencing monotony as meditative rather than depleting. Identity becomes organized around long-horizon commitments that generate their own meaning independent of progress markers. Dominant serotonin activation creates an almost monastic capacity for sustained, self-directed effort that feeds itself rather than draining reserves.
+
+Team Orientation:
+  1:
+    serotonin: >
+      Family gatherings are approached transactionally—what's in it for me, who gets credit, who's getting more attention. Friendships are maintained only when they provide immediate benefit, with little investment in others' struggles or growth. Group activities trigger competitive comparison rather than collaborative joy, creating tension in community spaces. The minimal serotonin engagement leaves social bonds fragile and self-focused, unable to sustain genuine investment in collective wellbeing.
+  2:
+    serotonin: >
+      There's inconsistent generosity in family dynamics—sometimes stepping up to support others, sometimes withdrawing into self-focus. Friendships show patches of genuine care alternating with periods of one-sided taking. Community involvement happens when convenient but isn't prioritized during personal stress. Emerging serotonergic capacity allows glimpses of group-oriented behavior, but the pattern remains unreliable and dependent on personal emotional state.
+  3:
+    serotonin: >
+      Family relationships show consistent mutual support—helping siblings without scorekeeping, sharing responsibilities equitably in partnerships. Friendships are maintained through reciprocal care, celebrating others' successes without envy. Community groups benefit from reliable participation and collaborative spirit, creating psychological safety for others. Moderate serotonin activation enables stable group orientation, balancing personal needs with collective wellbeing without requiring exceptional selflessness.
+  4:
+    serotonin: >
+      Family dynamics are characterized by proactive generosity—anticipating others' needs, facilitating connection between relatives, protecting vulnerable members. Friendships are enriched through intentional mentorship and emotional labor, actively building others up. Community spaces are shaped by inclusive facilitation, creating belonging for newcomers and marginalized voices. Strong serotonergic engagement generates autonomous group-orientation that finds satisfaction in collective success independent of personal recognition.
+  5:
+    serotonin: >
+      The person operates as a natural family connector and healer—orchestrating multi-generational gatherings, mediating conflicts with genuine care for all parties, creating legacy through relationship building. Friendship circles are deliberately cultivated ecosystems where everyone thrives, with the person investing deeply in others' growth as a source of primary meaning. Community identity becomes central to self-concept, with personal fulfillment intrinsically tied to collective flourishing. Dominant serotonin creates a self-sustaining system where group wellbeing and individual contentment are experienced as inseparable.
+
+Strategic Thinking:
+  1:
+    serotonin: >
+      Personal decisions are made impulsively without consideration of long-term consequences—major purchases, relationship commitments, life changes driven by immediate feeling. Family planning is reactive rather than intentional, lurching from crisis to crisis without pattern recognition. Hobbies and self-development lack coherent direction, jumping between interests without strategic progression. The serotonin system provides no stabilizing framework for multi-step thinking, leaving behavior trapped in short-cycle reactions.
+  2:
+    serotonin: >
+      There are occasional glimpses of long-term thinking—some financial planning, intermittent consideration of relationship patterns, sporadic goal-setting. Family decisions sometimes account for future implications, though planning remains inconsistent. Personal growth shows emerging intentionality but lacks sustained strategic direction. Developing serotonin capacity allows brief windows of multi-step reasoning, but the pattern hasn't stabilized into reliable foresight.
+  3:
+    serotonin: >
+      Personal life shows moderate strategic organization—financial planning considers multi-year horizons, relationship decisions account for compatibility patterns, self-development follows coherent skill progression. Family choices balance immediate needs against long-term wellbeing, recognizing second-order effects of parenting decisions. Life transitions are approached with reasonable foresight about constraints and trade-offs. Stable serotonergic baseline enables consistent pattern recognition and multi-quarter thinking without requiring exceptional analytical capacity.
+  4:
+    serotonin: >
+      Life decisions demonstrate sophisticated long-term planning—decade-spanning financial architecture, relationship choices informed by deep pattern recognition, intentional identity development across life phases. Family systems are actively designed to support multi-generational flourishing, with clear recognition of how present choices shape future dynamics. Personal growth follows strategic roadmaps that account for capacity constraints and opportunity costs. Strong serotonin engagement generates autonomous strategic thinking that naturally integrates complexity and time horizons.
+  5:
+    serotonin: >
+      Personal life operates as a coherent strategic system—financial decisions account for generational wealth transfer, relationship patterns are consciously evolved through multi-decade perspective, identity development follows philosophical frameworks spanning entire lifespan. Family choices create deliberate cultural legacy, recognizing how values and practices ripple across generations. Life architecture integrates spiritual, relational, creative, and material domains into unified long-horizon vision. Dominant serotonergic activation creates self-sustaining strategic consciousness that finds meaning in the design of life itself, not just its execution.
+
+Work-Life Balance:
+  1:
+    serotonin: >
+      Personal boundaries are nonexistent or chaotically enforced—work bleeds into family time constantly, digital devices dominate meals and bedtime, rest periods never truly happen. Burnout signals are ignored until crisis forces collapse, with no preventive self-care. Relationships suffer from perpetual distraction and unavailability, yet the person cannot disengage from work-mode activation. Minimal serotonin support leaves the nervous system unable to shift states, trapped in reactive urgency regardless of context.
+  2:
+    serotonin: >
+      There are inconsistent attempts at boundary-setting—some evenings protected from work communication, sporadic digital detoxes, occasional prioritization of personal time. Recognition of burnout happens after significant depletion rather than preventively. Family and hobbies receive intermittent genuine attention alternating with distracted presence. Emerging serotonergic regulation allows brief state transitions, but the pattern remains unstable and easily disrupted by work pressure.
+  3:
+    serotonin: >
+      Work boundaries are generally maintained—regular disconnection from professional communication, protected family time, consistent self-care routines that survive busy periods. Burnout signals are recognized early enough to take corrective action through rest or boundary reinforcement. Personal relationships receive reliable presence and attention, with clear transitions between work and home states. Moderate serotonin baseline enables stable compartmentalization, creating sustainable rhythm between professional demands and personal recharge.
+  4:
+    serotonin: >
+      Personal life is actively protected through strategic boundary architecture—clear work cutoffs, device-free zones, non-negotiable family rituals, preventive rest built into routine. Burnout is anticipated and prevented through sophisticated self-monitoring and proactive capacity management. Relationships thrive through consistent emotional availability and present-moment engagement. Strong serotonergic stability generates autonomous state regulation, enabling complete mental disengagement from work domains to access genuine personal restoration.
+  5:
+    serotonin: >
+      Work-life integration operates as a seamless, self-sustaining system—professional and personal domains are architected to support rather than compete with each other. The person experiences deep restoration through family connection, creative practice, and solitude, with these sources of meaning equal to or exceeding career satisfaction. Boundaries are maintained effortlessly because identity isn't primarily organized around professional achievement, allowing complete presence in each life domain. Dominant serotonin creates a natural equilibrium where personal wellbeing is experienced as foundational rather than optional, generating sustainable life architecture that doesn't require constant vigilance or willpower.
+
+Emotional Depth:
+  1:
+    serotonin: >
+      Emotional experiences are shallow and fleeting—feelings arise but don't penetrate, creating surface-level responses in intimate moments. Vulnerability is avoided through deflection, intellectualization, or immediate activity shifts, preventing deep bonding. Close relationships remain at arm's length emotionally, missing the richness of full presence and trust. Minimal serotonergic grounding leaves the emotional system unstable, unable to tolerate intensity without fragmentation or numbing.
+  2:
+    serotonin: >
+      There are occasional moments of genuine emotional depth—glimpses of vulnerability in safe relationships, sporadic experiences of feeling fully present. Difficult emotions are sometimes tolerated rather than immediately escaped, though the capacity remains inconsistent. Intimate connections show patches of authentic sharing alternating with protective distance. Emerging serotonin stability allows brief windows of emotional richness, but the system hasn't developed reliable capacity for sustained depth.
+  3:
+    serotonin: >
+      Emotional experiences have moderate richness—feelings are felt genuinely without overwhelming the system, allowing authentic presence in relationships. Vulnerability is accessible in trusted connections, creating meaningful intimacy and bonding. Difficult emotions can be sat with for reasonable periods, processed rather than avoided. Stable serotonergic foundation enables consistent emotional depth, supporting warm connections and empathic resonance without requiring exceptional emotional sophistication.
+  4:
+    serotonin: >
+      Intimate relationships are characterized by profound emotional presence—vulnerability flows naturally, trust runs deep, feelings are experienced with full intensity while maintaining stability. Difficult emotions are met with curiosity and patience rather than avoidance, creating transformative self-understanding. The person brings genuine warmth and emotional availability that helps others feel safe to be vulnerable. Strong serotonin engagement generates autonomous capacity for emotional depth, where intensity enriches rather than destabilizes experience.
+  5:
+    serotonin: >
+      Emotional life operates as an integrated, self-sustaining system of remarkable depth—feelings are experienced as full-spectrum phenomena that inform meaning and connection at the deepest levels. Relationships achieve extraordinary intimacy through sustained vulnerability and trust, creating bonds that feel sacred or transcendent. The capacity to sit with difficult emotions becomes almost meditative, transforming suffering into wisdom and compassion. Dominant serotonergic activation creates emotional architecture where depth is the natural baseline, not an achievement, generating rich inner life that serves as primary source of meaning and guidance.
+
+Emotional Regulation:
+  1:
+    serotonin: >
+      Emotional reactions are immediate and unfiltered—anger explodes without gap between trigger and expression, anxiety spirals into panic without modulation, frustration leads to withdrawal or lashing out. Family conflicts escalate rapidly due to impulsive responses, damaging relationships repeatedly. Stress creates behavioral chaos rather than adaptive coping, with moods hijacking rational choice. Minimal serotonin capacity leaves the emotional system entirely reactive, unable to create space between feeling and action.
+  2:
+    serotonin: >
+      There's inconsistent emotional control—some situations are handled with composure, others trigger disproportionate reactions. Family conflicts sometimes involve measured responses, sometimes explosive ones, creating unpredictable relationship dynamics. Anxiety is occasionally managed through healthy coping, often through avoidance or maladaptive patterns. Emerging serotonergic regulation allows brief windows of emotional choice, but the system remains unreliable under stress.
+  3:
+    serotonin: >
+      Emotional responses are generally proportionate and managed—anger is felt but expressed constructively, anxiety is experienced without behavioral paralysis, frustration is processed without damaging relationships. Family conflicts maintain composure while still honoring genuine feelings, allowing productive resolution. Stress triggers adaptive coping strategies more often than destructive patterns. Moderate serotonin baseline provides reliable emotional buffer, creating consistent gap between stimulus and response without requiring exceptional self-control.
+  4:
+    serotonin: >
+      Emotional regulation operates with sophisticated nuance—intense feelings are honored while choosing wise responses, maintaining relationship integrity even during conflict. Family dynamics benefit from emotional leadership that models healthy expression without suppression or explosion. Stress activates well-developed coping architecture that prevents escalation and supports others' regulation. Strong serotonergic stability generates autonomous emotional management, where composure feels natural rather than effortful, even in challenging circumstances.
+  5:
+    serotonin: >
+      Emotional life demonstrates remarkable equanimity—feelings arise and pass without hijacking behavior, creating almost meditative relationship with emotional experience. The person serves as stabilizing presence in family systems, helping others regulate through their own groundedness. Intense emotions are met with curiosity and wisdom, transformed into adaptive responses rather than destructive reactions. Dominant serotonin creates self-sustaining regulatory capacity that operates almost automatically, generating profound emotional stability that becomes resource for entire relationship network.
+
+Attachment Security:
+  1:
+    serotonin: >
+      Intimate relationships are marked by intense anxiety or avoidant distancing—excessive jealousy, constant reassurance-seeking, or emotional unavailability that prevents bonding. Partner's independence triggers abandonment panic or suspicious hypervigilance, creating suffocating dynamics. Trust is fragile and conditional, collapsing under minor relationship stressors. Minimal serotonergic grounding leaves the attachment system in constant alarm, unable to tolerate the vulnerability required for secure bonding.
+  2:
+    serotonin: >
+      Romantic relationships show inconsistent security patterns—periods of trust and comfort alternating with anxious spirals or avoidant withdrawal. Partner autonomy sometimes feels safe, sometimes triggers disproportionate emotional reactions. Intimacy and independence are experienced as competing rather than complementary needs. Emerging serotonin stability allows glimpses of secure attachment, but the system hasn't developed reliable trust foundations.
+  3:
+    serotonin: >
+      Intimate partnerships demonstrate moderate attachment security—trust is generally stable without constant reassurance needs, partner independence is tolerated comfortably. Jealousy is manageable and proportionate rather than overwhelming, allowing healthy autonomy within commitment. Emotional availability is consistent without clinging or distancing patterns, creating reliable presence. Stable serotonergic foundation enables balanced attachment, supporting both intimacy and independence without excessive anxiety.
+  4:
+    serotonin: >
+      Romantic relationships are characterized by deep trust and autonomous security—partner's independent pursuits are genuinely celebrated, separation creates no abandonment anxiety, emotional availability flows naturally. Intimacy is profound yet non-possessive, creating space for both connection and individual growth. Conflict is weathered without relationship destabilization, maintaining secure base even through challenges. Strong serotonin engagement generates autonomous attachment security that finds fulfillment in partner's wholeness rather than in control or fusion.
+  5:
+    serotonin: >
+      Intimate bonding operates as profoundly secure foundation—trust is essentially unshakeable, creating relationships of extraordinary depth and freedom simultaneously. Partner autonomy is experienced as enriching rather than threatening, with independence and intimacy forming integrated whole. The person serves as secure base for others, helping partners heal their own attachment wounds through consistent availability and trust. Dominant serotonergic activation creates attachment system so stable it becomes generative, radiating security that transforms relationship ecosystems beyond the dyad itself.
+
+Social Energy:
+  1:
+    serotonin: >
+      Social interaction is experienced as depleting regardless of group size—gatherings trigger anxiety or irritability, leaving the person drained and seeking immediate escape. Even small family events feel overwhelming, with no capacity to sustain warm presence. One-on-one connection provides no recharge, creating pattern of social avoidance and isolation. Minimal serotonergic support leaves the social nervous system in constant depletion mode, unable to extract reward from human contact.
+  2:
+    serotonin: >
+      Social preferences are inconsistent—some gatherings feel energizing, others exhausting, without clear pattern. Family events are sometimes enjoyed, sometimes endured, depending on internal state. Friend time occasionally provides genuine reward, occasionally feels obligatory. Emerging serotonin stability allows sporadic social reward, but the system hasn't developed reliable preference patterns or sustainable engagement capacity.
+  3:
+    serotonin: >
+      Social energy shows clear, stable patterns—whether introverted recharge through solitude or extroverted reward from gatherings, the person knows and honors their baseline. Family gatherings are managed according to genuine capacity rather than obligation, creating sustainable connection. Friendships are structured to match energy needs, whether large networks or deep dyads. Moderate serotonergic foundation enables consistent social preference clarity, supporting authentic engagement within natural limits.
+  4:
+    serotonin: >
+      Social life is intentionally architected around deep self-knowledge—friendship circles and family dynamics are shaped to provide optimal reward without depletion. The person facilitates social experiences that honor both their own and others' energy needs, creating inclusive environments. Community engagement is sustained through strategic energy management rather than forced participation. Strong serotonin stability generates autonomous social wisdom, where connection is experienced as nourishing because it aligns with authentic preference rather than external expectation.
+  5:
+    serotonin: >
+      Social architecture operates as integrated system perfectly matched to temperament—whether through rich solitary practice or vibrant community embeddedness, the person has created life structure that provides optimal social reward. Relationships are designed for sustainability rather than depletion, with energy flows carefully curated over years. The person helps others understand and honor their own social needs, spreading wisdom about authentic connection. Dominant serotonergic integration creates social life that feels completely natural and self-sustaining, generating consistent wellbeing through alignment rather than adaptation.
+
+Self-Awareness:
+  1:
+    serotonin: >
+      Personal blind spots are massive and defended—emotional patterns go unrecognized, behavioral habits remain invisible, feedback is rejected or deflected. Self-assessment is wildly inaccurate, either grandiose or self-deprecating without nuance. Relationship patterns repeat destructively without recognition of personal contribution to dynamics. Minimal serotonergic stability leaves no internal observer, creating complete identification with reactive patterns without metacognitive distance.
+  2:
+    serotonin: >
+      Self-awareness is sporadic and inconsistent—occasional recognition of emotional patterns, intermittent acknowledgment of behavioral habits, selective reception of feedback. Personal biases are sometimes visible, sometimes completely unconscious. Growth moments happen but don't accumulate into stable self-knowledge. Emerging serotonin grounding allows brief windows of accurate self-perception, but the observer function remains unreliable.
+  3:
+    serotonin: >
+      Self-monitoring is generally accurate—emotional states are tracked clearly, behavioral patterns are recognized, feedback is received without excessive defensiveness. Personal biases and triggers are known well enough to compensate for them in relationships. The gap between intention and impact is noticed and addressed. Moderate serotonergic stability enables consistent internal observer, supporting honest self-assessment without requiring exceptional insight.
+  4:
+    serotonin: >
+      Self-awareness operates with sophisticated precision—subtle emotional shifts are tracked in real-time, habitual reactions are caught before expression, feedback is actively sought and integrated. Personal blind spots are systematically explored rather than defended against. Growth is continuous because self-observation generates constant learning loops. Strong serotonin engagement creates autonomous metacognitive capacity, where self-awareness becomes natural operating mode rather than effortful practice.
+  5:
+    serotonin: >
+      Self-knowledge approaches profound levels—emotional patterns are understood within developmental and relational context, behavioral architecture is consciously designed rather than habitually enacted. The person serves as mirror for others' self-awareness, helping loved ones recognize their own patterns with compassionate clarity. Personal growth becomes integrated with life purpose, where self-understanding is experienced as spiritual practice. Dominant serotonergic activation generates self-sustaining awareness system that finds meaning in the observation itself, creating continuous evolution through conscious relationship with one's own becoming.
+
+Playfulness:
+  1:
+    serotonin: >
+      Life is approached with heavy seriousness—spontaneity is absent, humor feels forced or absent, creative expression is blocked by perfectionism or fear. Hobbies are pursued goal-directedly if at all, missing the joy of process. Social interaction is transactional rather than light-hearted, unable to be silly or experimental. Minimal serotonergic reward leaves behavior locked in grim functionality, unable to access the psychological safety required for play.
+  2:
+    serotonin: >
+      Playfulness emerges inconsistently—occasional spontaneous moments, sporadic humor, intermittent creative expression that quickly becomes serious again. Hobbies show brief joy followed by outcome-focus that kills the pleasure. Social silliness happens in very safe contexts but remains limited. Emerging serotonin capacity allows glimpses of lightness, but the system hasn't developed reliable access to playful states.
+  3:
+    serotonin: >
+      Play is accessible and regularly enjoyed—spontaneous adventures with friends or family, genuine laughter, creative hobbies pursued for pleasure rather than achievement. Novelty is sought through manageable experimentation—new restaurants, weekend trips, skill dabbling. Social interaction includes light-hearted banter and shared silliness. Moderate serotonergic foundation enables consistent playfulness, supporting joy in process without requiring exceptional adventurousness or creativity.
+  4:
+    serotonin: >
+      Playfulness operates as reliable life resource—spontaneity is embraced regularly, humor enriches relationships, creative expression flows without self-consciousness. Novelty seeking drives substantial life choices—bold travel, experimental hobbies, identity exploration. The person helps others access playfulness, creating permission for silliness and experimentation. Strong serotonin stability generates autonomous capacity for delight, where play is honored as essential rather than indulgent, creating consistent joy alongside productivity.
+  5:
+    serotonin: >
+      Life is infused with playful spirit—spontaneity becomes organizing principle, creative expression achieves flow states regularly, humor serves as wisdom vehicle. Experimentation approaches courageous levels, with identity itself treated as playground for exploration rather than fixed construct. The person's presence makes others feel safe to play, spreading joy and permission throughout social systems. Dominant serotonergic activation creates self-sustaining playfulness that generates meaning independently of achievement, experiencing life itself as creative act rather than serious project requiring completion.
+
+Purpose_and_Meaning:
+  1:
+    serotonin: >
+      Life feels directionless and empty—no coherent values framework, minimal sense of contribution or legacy, contentment dependent entirely on external validation. Community connection is absent or superficial, providing no meaning. Existence is experienced as series of obligations without deeper significance. Minimal serotonergic grounding leaves the meaning-making system collapsed, unable to generate intrinsic life satisfaction independent of achievement or approval.
+  2:
+    serotonin: >
+      Purpose emerges inconsistently—occasional glimpses of meaning through creative work or caregiving, sporadic community contribution, intermittent spiritual practice that doesn't sustain. Life satisfaction fluctuates wildly based on external circumstances. Values exist but don't reliably guide choices. Emerging serotonin stability allows brief windows of meaningful connection, but the system hasn't developed stable purpose architecture.
+  3:
+    serotonin: >
+      Life demonstrates moderate purpose alignment—clear values that guide major decisions, regular community contribution that provides satisfaction, meaningful caregiving or legacy building. Contentment exists somewhat independently of professional success, supported by relational and spiritual sources. Philosophical practice or creative expression provides consistent meaning. Stable serotonergic foundation enables reliable purpose sense, supporting life satisfaction through value-congruent living without requiring exceptional calling.
+  4:
+    serotonin: >
+      Purpose operates as central organizing force—values are deeply examined and lived with integrity, community contribution provides primary satisfaction, legacy building shapes long-term choices. Life meaning is substantially independent of external achievement, rooted in caregiving, spiritual practice, or generational connection. The person helps others discover their own purpose, facilitating meaning-making conversations. Strong serotonin engagement generates autonomous purpose architecture, where direction emerges from within rather than requiring external validation.
+  5:
+    serotonin: >
+      Life is experienced as profoundly meaningful project—purpose and daily existence are completely integrated, values guide choices at every scale, community contribution and legacy building form core identity. Contentment is essentially independent of external circumstances, sustained by deep spiritual practice or philosophical groundedness. The person's life itself becomes teaching or inspiration for others' meaning-making. Dominant serotonergic activation creates self-sustaining purpose system that generates satisfaction through alignment rather than achievement, experiencing existence itself as answer rather than question requiring resolution.
+
+Inner_Peace:
+  1:
+    serotonin: >
+      Baseline state is anxious and agitated—resting mind churns with worry, silence feels unbearable requiring constant stimulation, contentment is inaccessible without external validation or achievement. Sleep is poor and irregular, circadian rhythms are chaotic. Stillness triggers discomfort rather than restoration. Minimal serotonergic tone leaves the nervous system in constant alarm, unable to downregulate into genuine calm.
+  2:
+    serotonin: >
+      Peace is inconsistent and circumstantially dependent—some mornings feel calm, others anxious without clear trigger. Silence is occasionally comfortable, occasionally intolerable. Sleep quality fluctuates significantly. Contentment requires favorable external conditions rather than arising independently. Emerging serotonin stability allows brief periods of genuine calm, but the system hasn't developed reliable baseline peace.
+  3:
+    serotonin: >
+      Resting state demonstrates moderate calm—baseline anxiety is manageable, silence is comfortable, contentment arises without constant achievement or stimulation. Sleep is generally good with stable circadian rhythm. Stillness provides genuine restoration rather than triggering agitation. Stable serotonergic tone enables consistent inner peace, supporting groundedness that persists through normal life turbulence without requiring exceptional circumstances.
+  4:
+    serotonin: >
+      Inner peace operates as reliable foundation—resting mind is genuinely calm, silence is actively sought and enjoyed, contentment exists largely independent of external events. Sleep is restorative with highly stable circadian rhythm. The capacity to simply be without doing becomes source of deep satisfaction. Strong serotonin stability generates autonomous peace that creates resilience through external challenges, remaining grounded when circumstances are difficult.
+  5:
+    serotonin: >
+      Baseline state approaches profound equanimity—mind rests in calm that feels almost meditative as default, silence is experienced as nourishing rather than neutral, contentment is essentially unconditional. Sleep is deeply restorative approaching spiritual renewal. The person serves as calming presence for others, radiating groundedness that helps entire systems regulate. Dominant serotonergic activation creates self-sustaining inner peace so stable it becomes identity foundation, generating wellbeing that persists through extreme turbulence and serves as resource for entire relationship network.
+```

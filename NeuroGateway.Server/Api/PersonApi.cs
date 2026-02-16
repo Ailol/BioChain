@@ -1,4 +1,6 @@
+using NeuroGateway.Repository;
 using NeuroGateway.Service;
+using static NeuroGateway.AnalysisFramework.DimensionDefinitions;
 
 namespace NeuroGateway.Server.Api;
 
@@ -50,21 +52,44 @@ public static class PersonApi
             });
         });
 
+        group.MapGet("/{name}/profile/timeline", async (string name, ProfileRepository profileRepo) =>
+        {
+            var entries = await profileRepo.GetTimelineAsync(name);
+            return Results.Ok(new
+            {
+                person = name,
+                entries = entries.Select(e => new
+                {
+                    e.Chemical,
+                    e.ModulationFactor,
+                    createdAt = e.CreatedAt.ToString("o")
+                })
+            });
+        });
+
         return group;
     }
 
     public static RouteGroupBuilder MapDimensionApi(this RouteGroupBuilder group)
     {
-        group.MapGet("/{name}/dimensions", async (string name, DimensionService dimSvc) =>
+        group.MapGet("/{name}/dimensions", async (string name, string? mode, DimensionService dimSvc) =>
         {
-            var scores = await dimSvc.ScoreAsync(name);
-            return Results.Ok(new { person = name, dimensions = scores });
+            var scoringMode = mode?.ToLowerInvariant() == "private" ? ScoringMode.Private : ScoringMode.Work;
+            var scores = await dimSvc.ScoreAsync(name, scoringMode);
+            return Results.Ok(new
+            {
+                person = name,
+                mode = scoringMode.ToString().ToLowerInvariant(),
+                behavioral = scores.Where(s => s.Section == "Behavioral"),
+                personal = scores.Where(s => s.Section == "Personal")
+            });
         });
 
-        group.MapPost("/{name}/dimensions/query", async (string name, DimensionQueryRequest req, DimensionService dimSvc) =>
+        group.MapGet("/{name}/shadow-matrix", async (string name, string? mode, DimensionService dimSvc) =>
         {
-            var score = await dimSvc.ScoreCustomAsync(name, req.Query);
-            return Results.Ok(new { person = name, dimension = score });
+            var scoringMode = mode?.ToLowerInvariant() == "private" ? ScoringMode.Private : ScoringMode.Work;
+            var matrix = await dimSvc.GetShadowMatrixAsync(name, scoringMode);
+            return Results.Ok(matrix);
         });
 
         return group;
@@ -72,4 +97,3 @@ public static class PersonApi
 }
 
 public record CreatePersonRequest(string Name);
-public record DimensionQueryRequest(string Query);

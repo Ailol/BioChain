@@ -1,0 +1,52 @@
+```yaml
+emotional_depth:
+  1:
+    estradiol: >
+      Professional interactions remain transactional and emotionally flat, responding to organizational triggers without genuine affective engagement. Stakeholder relationships are managed through protocol rather than authentic connection, creating functional but thin working alliances. Difficult team dynamics or project setbacks trigger withdrawal or procedural responses rather than emotional processing. The professional persona operates as a protective shell, preventing vulnerability from informing leadership presence or cross-functional collaboration.
+  2:
+    estradiol: >
+      Occasional moments of authentic emotional presence emerge during high-stakes projects or team crises, though quickly reverts to default detachment. Shows capacity for genuine concern during one-on-ones but struggles to sustain emotional availability across broader stakeholder networks. Performance feedback lands with brief affective impact before emotional defenses re-engage. Beginning to recognize that strategic relationships require more than transactional efficiency, though execution remains inconsistent.
+  3:
+    estradiol: >
+      Brings measured emotional authenticity to leadership contexts, allowing vulnerability to inform executive presence without overwhelming professional judgment. Stakeholder management balances strategic objectives with genuine relational investment, creating trust-based partnerships that enhance project delivery. Can sit with team distress during organizational change without rushing to superficial solutions, demonstrating resilience that acknowledges difficulty. Emotional depth operates as a strategic asset—enriching cross-functional collaboration while maintaining appropriate professional boundaries.
+  4:
+    estradiol: >
+      Leads with consistent emotional authenticity that transforms organizational culture, making vulnerability a strategic strength rather than professional liability. Deep processing of team dynamics and stakeholder needs informs sophisticated change management approaches that honor human complexity. Executive presence carries genuine warmth and relational depth, creating psychological safety that enhances performance metrics across teams. Emotional capacity operates as self-sustaining leadership infrastructure—difficult feelings are metabolized into organizational wisdom rather than avoided.
+  5:
+    estradiol: >
+      Professional identity is inseparable from profound emotional authenticity, creating leadership presence that fundamentally reshapes how organizations process challenge and change. Stakeholder relationships operate at depths that transcend traditional business partnerships, building trust architectures that withstand extreme pressure. Emotional intensity becomes organizational resource—transforming crises into collective growth opportunities through willingness to engage full affective complexity. This depth generates its own gravitational field, attracting talent and partnerships that value psychological richness as core business strategy.
+
+sensitivity:
+  1:
+    estradiol: >
+      Reads stakeholder signals through explicit communication only, missing subtle cues that indicate shifting team dynamics or emerging organizational resistance. Performance feedback registers cognitively but doesn't penetrate deeply enough to inform adaptive strategy, creating repeated blind spots in cross-functional leadership. Remains functionally detached from the emotional undercurrents that drive project success or failure, treating empathic attunement as irrelevant to resource allocation decisions. Professional environment is processed as information stream rather than relational field requiring nuanced responsiveness.
+  2:
+    estradiol: >
+      Intermittently picks up on team tension or stakeholder dissatisfaction during heightened moments, though pattern recognition remains unreliable. Shows emerging capacity to read executive presence and adjust approach, but sensitivity comes in waves rather than sustained awareness. Critical feedback from leadership occasionally lands with disproportionate impact, disrupting deadline resilience before defenses re-stabilize. Beginning to recognize that organizational politics require attending to unstated concerns, though execution remains effortful and inconsistent.
+  3:
+    estradiol: >
+      Demonstrates reliable attunement to team emotional states and stakeholder concerns, using social intelligence to navigate complex organizational dynamics. Picks up on subtle shifts in meeting energy or project morale, adjusting leadership approach to address unspoken resistance or anxiety. Processes critical feedback with appropriate intensity—neither dismissing valuable input nor destabilizing under performance pressure. Empathic awareness operates as strategic advantage in change management, allowing anticipation of human factors that affect project delivery.
+  4:
+    estradiol: >
+      Maintains sophisticated radar for organizational emotional climate, detecting emerging issues before they surface in formal channels or performance metrics. Cross-functional leadership is informed by deep reading of stakeholder motivations and team psychological states, enabling preemptive intervention. Criticism and setbacks are metabolized through rich processing that extracts maximum learning without defensive distortion. Sensitivity functions as finely-calibrated instrument—creating executive presence that responds to organizational needs with precision timing and appropriate emotional matching.
+  5:
+    estradiol: >
+      Operates as organizational empath-in-chief, processing institutional emotional currents with such acuity that leadership becomes almost prescient in addressing human dynamics. Stakeholder management transcends traditional influence tactics through profound understanding of unspoken needs and cultural undercurrents shaping behavior. The mirror-like responsiveness extends to systemic patterns—sensing when entire departments or business units are approaching transformation or crisis points. This sensitivity generates autonomous intelligence loops that continuously refine organizational strategy based on affective data invisible to standard analytical frameworks.
+
+intimacy_capacity:
+  1:
+    estradiol: >
+      Maintains strict professional distance across all working relationships, avoiding personal disclosure or vulnerable conversations that might deepen stakeholder connections. One-on-ones follow rigid agenda formats that prevent genuine exchange, treating team members as functional resources rather than whole humans. Executive presence projects competence through emotional impenetrability, missing opportunities for trust-building that enhance collaborative project delivery. Leadership operates through formal authority rather than relational proximity, creating technically functional but psychologically sterile team dynamics.
+  2:
+    estradiol: >
+      Occasionally shares personal context during team building events or crisis moments, though quickly retreats to professional formality. Shows emerging capacity for authentic presence during mentoring conversations, but intimacy feels risky and is carefully rationed. Can tolerate brief moments of mutual vulnerability with trusted colleagues before defensive patterns re-engage. Beginning to experiment with relational leadership approaches, recognizing that career advancement may require deeper stakeholder connections than purely transactional networks provide.
+  3:
+    estradiol: >
+      Cultivates appropriately deep professional relationships through selective vulnerability and authentic presence in key stakeholder interactions. One-on-ones balance strategic objectives with genuine curiosity about team members' aspirations and challenges, creating psychological safety that enhances performance. Shares relevant personal experiences during change management to model adaptive leadership, strengthening organizational trust without oversharing. Intimacy operates as calibrated leadership tool—building alliances that withstand pressure while maintaining boundaries that preserve executive effectiveness.
+  4:
+    estradiol: >
+      Creates sustained spaces for professional intimacy that transform organizational culture, making authentic connection central to how teams operate under pressure. Cross-functional leadership is characterized by genuine investment in stakeholder success beyond immediate project needs, building relationships that support long-term strategic goals. Comfortable with emotional nakedness appropriate to context—sharing leadership struggles during town halls or offering undivided presence during team crisis. This relational depth operates as self-reinforcing system, attracting talent seeking workplaces where vulnerability enhances rather than threatens career advancement.
+  5:
+    estradiol: >
+      Professional identity is fundamentally relational, creating leadership presence that makes profound connection feel organizationally natural rather than exceptional. Stakeholder relationships achieve unusual depth while maintaining role clarity—partnerships carry emotional richness that amplifies rather than compromises strategic effectiveness. Creates institutional cultures where mutual vulnerability becomes performance advantage, fundamentally reshaping assumptions about executive presence and organizational influence. Intimacy capacity generates its own ecosystem, building networks of psychologically sophisticated professionals who operate at depths that redefine competitive advantage in talent retention and collaborative innovation.
+```

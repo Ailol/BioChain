@@ -7,11 +7,15 @@ using NeuroGateway.Repository;
 namespace NeuroGateway.Service;
 
 public class NeuroService(
+    ChatClient orchestratorClient,
     ChatClient reasoningClient,
     ChatClient layerClient,
     AgentTemplateRepository templateRepo,
-    AnalyzeService analyzeService)
+    AnalyzeService analyzeService,
+    DimensionService dimensionService)
 {
+    private const int ChunkThreshold = 500; // chars — short messages skip chunking
+
     private static readonly IReadOnlyDictionary<string, string> ChemicalLayers = DimensionDefinitions.ChemicalToLayer;
     private static readonly HashSet<string> AllChemicals = new(ChemicalLayers.Keys, StringComparer.OrdinalIgnoreCase);
 
@@ -72,7 +76,24 @@ public class NeuroService(
     private async Task<(List<AnalysisDecision> Decisions, Dictionary<string, List<AnalysisDecision>> LayerDecisions, List<string> Skipped)>
         AnalyzeAndGroupAsync(string person, string text, string relationship, string sourceType, bool save)
     {
-        var decisions = await analyzeService.AnalyzeAsync(person, text, relationship, sourceType: sourceType, save: save);
+        // Chunk long documents via orchestrator, short messages pass through directly
+        var chunks = text.Length > ChunkThreshold
+            ? await ChunkDocumentAsync(text)
+            : [text];
+
+        var allDecisions = new List<AnalysisDecision>();
+        foreach (var chunk in chunks)
+        {
+            var decisions = await analyzeService.AnalyzeAsync(
+                person, chunk, relationship, sourceType: sourceType, save: save);
+            allDecisions.AddRange(decisions);
+        }
+
+        // Deduplicate: keep the decision with longest reasoning per chemical
+        var merged = allDecisions
+            .GroupBy(d => d.Chemical, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderByDescending(d => d.Reasoning.Length).First())
+            .ToList();
 
         var layerDecisions = new Dictionary<string, List<AnalysisDecision>>
         {
@@ -81,16 +102,49 @@ public class NeuroService(
             ["peptide"] = []
         };
 
-        foreach (var d in decisions)
+        foreach (var d in merged)
         {
             if (ChemicalLayers.TryGetValue(d.Chemical, out var layer))
                 layerDecisions[layer].Add(d);
         }
 
-        var addedChemicals = new HashSet<string>(decisions.Select(d => d.Chemical), StringComparer.OrdinalIgnoreCase);
+        var addedChemicals = new HashSet<string>(merged.Select(d => d.Chemical), StringComparer.OrdinalIgnoreCase);
         var skipped = AllChemicals.Where(c => !addedChemicals.Contains(c)).Order().ToList();
 
-        return (decisions, layerDecisions, skipped);
+        return (merged, layerDecisions, skipped);
+    }
+
+    // ── Document chunking via orchestrator LLM ─────────────────────────────
+
+    private async Task<List<string>> ChunkDocumentAsync(string document)
+    {
+        const string systemPrompt = """
+            You are a document chunking assistant.
+            Split the following document into logical sections.
+            Each section should be a self-contained piece of content (e.g., a single job role, education block, project description, or skills section).
+
+            CRITICAL: Each chunk must be SHORT — maximum 800 characters (~200 words / ~400 tokens).
+            If a section is longer than 800 characters, split it into smaller sub-sections.
+            The downstream model has a 2048 token context limit, so smaller chunks are better.
+
+            Return ONLY the sections, separated by ---CHUNK--- markers.
+            Do not add commentary or labels. Preserve the original text exactly.
+            """;
+
+        try
+        {
+            var response = await orchestratorClient.SendAsync(systemPrompt, document);
+            var chunks = response
+                .Split("---CHUNK---", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(c => c.Length > 20)
+                .ToList();
+
+            return chunks.Count > 0 ? chunks : [document];
+        }
+        catch
+        {
+            return [document]; // fallback: analyze full document as single chunk
+        }
     }
 
     // ── Step 2: ReasoningSynthesizer ─────────────────────────────────────────
@@ -132,7 +186,7 @@ public class NeuroService(
 
         try
         {
-            return await reasoningClient.SendAsync(template.Role, sb.ToString());
+            return await orchestratorClient.SendAsync(template.Role, sb.ToString());
         }
         catch (Exception ex)
         {
@@ -218,12 +272,68 @@ public class NeuroService(
 
         try
         {
-            return await layerClient.SendAsync(synthesizer.Role, sb.ToString());
+            return await orchestratorClient.SendAsync(synthesizer.Role, sb.ToString());
         }
         catch (Exception ex)
         {
             return $"[Synthesizer error: {ex.Message}]";
         }
+    }
+
+    // ── Orchestrator chat: direct multi-turn conversation ─────────────────
+
+    public async Task<string> OrchestratorChatAsync(
+        string person,
+        List<Microsoft.Extensions.AI.ChatMessage> messages,
+        CancellationToken ct = default)
+    {
+        var dims = await dimensionService.ScoreAsync(person);
+        var systemPrompt = BuildOrchestratorSystemPrompt(person, dims);
+
+        var fullMessages = new List<Microsoft.Extensions.AI.ChatMessage>
+        {
+            new(Microsoft.Extensions.AI.ChatRole.System, systemPrompt)
+        };
+        fullMessages.AddRange(messages);
+
+        return await orchestratorClient.SendAsync(fullMessages, ct);
+    }
+
+    private static string BuildOrchestratorSystemPrompt(string person, List<DimensionScore> dims)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"You are a biochemical personality analyst. You have deep knowledge of {person}'s psychological profile based on 27-agent neurochemical analysis.");
+        sb.AppendLine($"When the user asks about \"{person}\" or uses pronouns like \"their\"/\"them\", they are referring to this person.");
+        sb.AppendLine();
+        sb.AppendLine($"## {person}'s Dimension Profile");
+        sb.AppendLine();
+
+        var grouped = dims
+            .Where(d => d.EvidenceCount > 0)
+            .GroupBy(d => d.Section)
+            .OrderBy(g => g.Key);
+
+        foreach (var section in grouped)
+        {
+            sb.AppendLine($"### {section.Key}");
+            foreach (var d in section.OrderByDescending(d => d.Score))
+            {
+                sb.Append($"- **{d.Name}**: score={d.Score}/100, confidence={d.Confidence:F2}, consistency={d.Consistency:F2}, evidence={d.EvidenceCount}");
+                if (d.Trajectory is { } t)
+                    sb.Append($", trend={t.Direction} ({t.Slope:+0.00;-0.00}/day, R²={t.R2:F2})");
+                if (d.Circuit is { } c)
+                    sb.Append($", circuit={c.Pattern} ({c.CoherenceScore:F2})");
+                sb.AppendLine();
+
+                // Include top 3 chemical evidence entries (reasoning is the most valuable signal)
+                foreach (var ev in d.Evidence.OrderByDescending(e => e.Recency).Take(3))
+                    sb.AppendLine($"  - [{ev.Layer}/{ev.Chemical}] L{ev.Level:F1}: {ev.Reasoning}");
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("Answer questions about this person's profile with specificity. Reference the biochemical evidence, dimension scores, trajectories, and circuit patterns. Be concise but insightful.");
+        return sb.ToString();
     }
 
     private static string BuildLayerUserMessage(

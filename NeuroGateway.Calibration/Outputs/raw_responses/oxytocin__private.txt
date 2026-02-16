@@ -1,0 +1,120 @@
+```yaml
+Team Orientation:
+  1:
+    oxytocin: >
+      Family gatherings feel transactional—showing up when expected but emotionally checked out. Friendships operate on a what's-in-it-for-me calculus, with little investment in others' celebrations or struggles. Community involvement is non-existent or purely self-serving. The oxytocin bonding circuits remain dormant, triggered only by immediate personal need rather than collective wellbeing.
+  2:
+    oxytocin: >
+      Occasionally invests in family projects or friend gatherings when the mood strikes, but consistency is lacking. Shows up for community events sporadically, sometimes feeling the warmth of belonging but unable to sustain it. The impulse to support others emerges in bursts—helping a neighbor move, organizing a group dinner—then fades back into isolation. Oxytocin engagement flickers on and off, responsive to external prompts but not self-sustaining.
+  3:
+    oxytocin: >
+      Reliably participates in family traditions and friend group activities, finding genuine satisfaction in shared experiences. Takes turns hosting gatherings and remembers to check in on others during tough times. Volunteers occasionally in community spaces, feeling the pull of collective purpose without it dominating their identity. Oxytocin circuits maintain a steady baseline, creating consistent social warmth and reciprocal care patterns.
+  4:
+    oxytocin: >
+      Actively cultivates family harmony by mediating conflicts and creating opportunities for connection across generations. Invests deeply in friendships through regular meaningful contact, remembering details that matter to each person. Initiates community projects and sustains involvement, deriving identity from being a connector and facilitator. Oxytocin-driven bonding patterns are strong and strategic, consciously prioritizing collective joy over individual convenience.
+  5:
+    oxytocin: >
+      Serves as the gravitational center of multiple social networks, instinctively building bridges between family members, friend groups, and community circles. Creates enduring rituals and traditions that bind people together across years and life changes. Derives core identity from being a caretaker of relationships, with an autonomous drive to foster belonging wherever present. Oxytocin operates as a self-generating system, continuously creating and sustaining webs of mutual care and interdependence.
+
+Knowledge Transfer:
+  1:
+    oxytocin: >
+      Hoards personal insights and hard-won knowledge, rarely sharing life lessons even with family members who could benefit. Parenting style lacks explanation—rules without reasoning, discipline without teaching moments. Friends never hear the stories behind personal growth or transformation. The bonding that comes through shared wisdom and mentorship remains undeveloped, with oxytocin circuits disengaged from generative care patterns.
+  2:
+    oxytocin: >
+      Occasionally shares parenting advice with other parents or passes along a useful skill to a friend when directly asked. Family stories get told at holidays but without intentional preservation or deeper meaning-making. Sometimes feels the satisfaction of helping someone understand something new, but teaching doesn't come naturally or consistently. Oxytocin's mentorship circuitry activates sporadically in response to obvious need.
+  3:
+    oxytocin: >
+      Regularly explains reasoning behind household decisions, helping children understand rather than just obey. Shares recipes, home repair knowledge, and life lessons with friends who express interest. Documents family history and passes along traditions with context and stories. The oxytocin-mediated pleasure of nurturing others' growth creates a stable pattern of knowledge sharing within trusted circles.
+  4:
+    oxytocin: >
+      Intentionally cultivates learning opportunities for family members, creating space for questions and exploration. Maintains friendships through mutual skill-sharing and growth conversations, finding deep satisfaction in others' development. Actively preserves and transmits family wisdom, cultural practices, and personal philosophies to the next generation. Oxytocin drives sustained investment in others' capacity-building as a core expression of care.
+  5:
+    oxytocin: >
+      Builds entire relationship ecosystems around generative knowledge exchange, becoming a living library for family and community. Creates formal and informal mentorship structures that outlive individual interactions—recipe books, oral histories, teaching traditions that cascade through generations. Derives profound meaning from watching wisdom ripple outward through social networks. Oxytocin operates autonomously as an engine of intergenerational care, with teaching and knowledge transfer inseparable from identity and purpose.
+
+Emotional Depth:
+  1:
+    oxytocin: >
+      Intimate relationships remain emotionally shallow, with vulnerability perceived as weakness to be avoided. Family connections operate on autopilot with minimal affective engagement or sharing of inner experience. Romantic partnerships lack emotional nakedness, with feelings kept tightly controlled or unexpressed. Oxytocin's capacity for deep bonding through vulnerability is suppressed, leaving relationships functional but hollow.
+  2:
+    oxytocin: >
+      Occasionally opens up to a trusted friend or partner during crisis moments, but quickly retreats back into emotional self-sufficiency. Family gatherings sometimes crack through defenses, producing unexpected moments of connection that feel both frightening and magnetic. Emotional intensity surfaces unpredictably, suggesting dormant capacity. Oxytocin-mediated vulnerability emerges in flashes but lacks the safety or trust to become a consistent pattern.
+  3:
+    oxytocin: >
+      Shares authentic emotions with close family and intimate partners, creating relationships with genuine depth. Processes difficult feelings through conversation rather than constant avoidance, though some vulnerability still feels risky. Romantic partnerships include mutual emotional transparency that strengthens over time. Oxytocin enables steady capacity for emotional attunement and reciprocal sharing within established bonds.
+  4:
+    oxytocin: >
+      Cultivates profound emotional intimacy across multiple relationships, becoming the person others trust with their deepest struggles. Intentionally creates space for family members to share vulnerable truths, holding complexity without judgment. Romantic partnership includes full emotional exposure—fears, wounds, joy experienced and shared completely. Oxytocin circuits sustain rich inner emotional life that feeds empathy and deep connection as a consistent way of relating.
+  5:
+    oxytocin: >
+      Embodies emotional transparency as fundamental identity, with relationships characterized by breathtaking vulnerability and trust. Creates family cultures where emotional depth is valued and modeled across generations, transforming collective capacity for intimacy. Experiences emotions with such intensity and openness that it becomes contagious, teaching others permission for their own depth. Oxytocin operates as self-generating system for profound bonding, with emotional nakedness creating ever-deepening spirals of trust and connection.
+
+Sensitivity:
+  1:
+    oxytocin: >
+      Misses or ignores family members' emotional distress, requiring explicit verbal statements to register others' pain. Social gatherings pass without noticing tension, hurt feelings, or subtle bids for connection. Remains emotionally unaffected by others' struggles or joys, creating distance in intimate relationships. Oxytocin's empathic attunement circuits are minimally activated, leaving emotional environment unprocessed and unintegrated.
+  2:
+    oxytocin: >
+      Sometimes picks up on a partner's bad mood or child's unspoken worry, but often misreads signals or responds inconsistently. Feels moved by particularly dramatic emotional moments—a family member's tears, a friend's obvious distress—but subtler cues pass unnoticed. The capacity for emotional resonance emerges occasionally but remains unreliable. Oxytocin-mediated sensitivity flickers online and offline, creating hit-or-miss attunement patterns.
+  3:
+    oxytocin: >
+      Reliably notices when family members are upset and inquires about their wellbeing without being prompted. Picks up on friendship dynamics and emotional undercurrents in social situations, adjusting behavior accordingly. Romantic partners experience being seen and felt, with their emotional states accurately reflected back. Oxytocin maintains steady empathic attunement that creates consistent emotional safety in close relationships.
+  4:
+    oxytocin: >
+      Reads micro-expressions and tonal shifts in loved ones, often knowing something is wrong before they name it themselves. Feels family members' emotions deeply enough that boundary-setting becomes necessary for self-protection. Creates profoundly attuned parenting and partnership, with others feeling understood at almost telepathic levels. Oxytocin drives highly developed empathic circuitry that processes emotional environment continuously and with nuanced accuracy.
+  5:
+    oxytocin: >
+      Functions as emotional tuning fork for entire social networks, absorbing and processing collective emotional states. Experiences such profound emotional resonance that others' pain and joy become indistinguishable from personal feeling. Creates relationships of extraordinary depth through mirror-like attunement, though the burden requires sophisticated emotional boundaries. Oxytocin operates as autonomous sensing system, with empathic awareness constant, involuntary, and identity-defining.
+
+Attachment Security:
+  1:
+    oxytocin: >
+      Romantic relationships cycle through anxious clinging and defensive withdrawal, unable to find steady ground. Family connections trigger abandonment fears or compulsive self-sufficiency, preventing secure bonds. Jealousy and possessiveness dominate intimate partnerships, with partner independence feeling threatening. Oxytocin's capacity for secure bonding is disrupted, creating attachment patterns characterized by anxiety, avoidance, or chaotic oscillation between the two.
+  2:
+    oxytocin: >
+      Shows moments of secure attachment during calm periods, but stress triggers old anxious or avoidant patterns. Can tolerate partner autonomy when feeling confident but spirals into reassurance-seeking during uncertainty. Family relationships sometimes feel safe and sometimes feel fraught, depending on recent interactions. Oxytocin-mediated secure bonding emerges inconsistently, with attachment security fragile and context-dependent.
+  3:
+    oxytocin: >
+      Trusts intimate partners and close family members with reasonable consistency, weathering minor conflicts without catastrophizing. Comfortable with both closeness and independence in romantic relationships, neither clinging nor distancing defensively. Feels secure enough in primary bonds to explore individual interests without constant connection. Oxytocin maintains balanced attachment circuitry, creating reliable trust and comfortable interdependence.
+  4:
+    oxytocin: >
+      Embodies secure attachment across relationships, trusting deeply while maintaining healthy autonomy. Romantic partnerships feel stable and safe, with partner independence enhancing rather than threatening the bond. Provides secure base for family members and friends, offering consistent emotional availability without neediness. Oxytocin drives strong, resilient attachment patterns characterized by trust, low anxiety, and genuine comfort with both intimacy and separateness.
+  5:
+    oxytocin: >
+      Radiates attachment security so profound it becomes therapeutic for others, rewiring their own bonding patterns through proximity. Creates family cultures and romantic partnerships defined by unshakeable trust and freedom, modeling secure attachment across generations. Experiences partner autonomy as enhancing intimacy rather than diminishing it, with jealousy and possessiveness virtually absent. Oxytocin operates as self-sustaining secure base, generating attachment safety that transforms entire relationship ecosystems.
+
+Intimacy Capacity:
+  1:
+    oxytocin: >
+      Physical affection feels uncomfortable or obligatory, even with romantic partners or children. Vulnerable conversations are avoided, with personal thoughts kept carefully private. Eye contact is minimal, emotional nakedness terrifying. Oxytocin's intimacy circuits remain largely offline, creating relationships that lack warmth, physical closeness, and genuine vulnerability.
+  2:
+    oxytocin: >
+      Shows physical affection occasionally—hugs hello and goodbye, hand-holding during movies—but it doesn't come naturally. Opens up to intimate partners during particularly emotional moments, then feels exposed and retreats. Parenting includes some nurturing touch but often feels awkward or performative. Oxytocin-mediated closeness emerges in bursts, suggesting capacity that hasn't fully developed into consistent pattern.
+  3:
+    oxytocin: >
+      Comfortably expresses physical affection with family and romantic partners, with touch feeling natural and reciprocal. Shares personal thoughts and feelings with trusted intimates without excessive fear of judgment. Creates warm household atmosphere through everyday acts of nurturing—morning coffee routines, bedtime rituals, affectionate check-ins. Oxytocin enables steady capacity for emotional and physical closeness that strengthens primary bonds.
+  4:
+    oxytocin: >
+      Cultivates profound intimacy through consistent vulnerability, physical tenderness, and emotional transparency. Romantic partnership includes deep sexual and emotional connection, with nakedness—literal and metaphorical—feeling safe and cherished. Parenting style is highly attuned and physically affectionate, creating secure attachment through consistent nurturing presence. Oxytocin drives sustained investment in intimacy as central relationship practice and source of meaning.
+  5:
+    oxytocin: >
+      Embodies intimacy so complete that boundaries between self and beloved feel intentionally blurred. Creates relationships of extraordinary closeness through constant vulnerability, physical affection, and emotional availability. Generates family cultures where deep intimacy is normalized and taught, transforming others' capacity for closeness. Oxytocin operates autonomously as engine of profound bonding, with intimacy not just comfortable but identity-defining and spiritually central.
+
+Purpose & Meaning:
+  1:
+    oxytocin: >
+      Life feels disconnected from larger purpose, with family and community ties providing little sense of meaning. Relationships are maintained out of obligation rather than felt significance. Caregiving roles feel burdensome rather than fulfilling, lacking the satisfaction that comes from generative investment. Oxytocin's capacity for meaning-making through social bonds and legacy-building remains dormant, leaving existence feeling isolated and purposeless.
+  2:
+    oxytocin: >
+      Occasionally experiences meaning through family connections or community involvement, but it's fleeting and inconsistent. Caregiving moments sometimes feel profound—watching a child learn, helping an aging parent—but the thread of purpose doesn't hold. Romantic partnership provides meaning in good times but feels empty during conflict or routine. Oxytocin-mediated sense of purpose flickers on and off, responsive to peak experiences but not sustained.
+  3:
+    oxytocin: >
+      Finds steady meaning through family bonds, parenting, and participation in community life. Romantic partnership contributes to sense of purpose through shared values and mutual growth. Derives satisfaction from maintaining relationships across generations, feeling connected to something larger than individual achievement. Oxytocin enables consistent meaning-making through social bonds and caregiving, creating stable sense of direction rooted in connection.
+  4:
+    oxytocin: >
+      Organizes life around relational purpose—raising children, caring for aging parents, strengthening community ties. Derives profound meaning from generative acts that will outlive individual existence, with legacy-building central to identity. Romantic partnership embodies shared purpose, with relationship itself as spiritual practice. Oxytocin drives sustained investment in meaning through social bonds, with contentment arising from value-aligned relational living.
+  5:
+    oxytocin: >
+      Experiences purpose and meaning almost exclusively through relational and generational connection, with individual achievement feeling hollow by comparison. Builds entire life philosophy around care, community, and intergenerational wisdom transmission. Creates meaning-structures that ripple outward—family traditions, community institutions, relationship practices—that continue beyond personal lifetime. Oxytocin operates as autonomous engine of purpose-through-connection, with sense of direction and life satisfaction inseparable from bonding, caregiving, and collective wellbeing.
+```

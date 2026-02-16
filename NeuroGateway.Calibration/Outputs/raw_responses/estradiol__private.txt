@@ -1,0 +1,52 @@
+```yaml
+emotional_depth:
+  1:
+    estradiol: >
+      Emotional exchanges remain transactional and surface-level, triggered only by immediate relational demands. Family interactions follow scripted patterns without genuine vulnerability, treating feelings as inconvenient disruptions rather than meaningful signals. When difficult emotions arise, the default response is immediate suppression or distraction—changing the subject, turning to screens, or leaving the room. Connection with others feels functional rather than nourishing, maintaining relationships through obligation rather than emotional resonance.
+  2:
+    estradiol: >
+      Moments of genuine emotional presence emerge unpredictably, usually sparked by crisis or significant life events rather than daily practice. Close relationships occasionally access deeper vulnerability—a tearful conversation with a parent, an honest moment with a partner—but these feel like exceptions rather than patterns. Difficult feelings are sometimes acknowledged but rarely fully explored, leading to partial processing that leaves emotional residue. The inner emotional landscape remains partially mapped, with rich territories that go unexplored for long stretches.
+  3:
+    estradiol: >
+      A reliable emotional presence develops in trusted relationships, creating space for vulnerability without it overwhelming the system. Family bonds deepen through consistent willingness to feel alongside others—sitting with a friend's grief, sharing genuine fears with a partner. Difficult emotions are met with curiosity rather than immediate avoidance, though there's still a tendency to seek resolution rather than simply witnessing. The inner emotional life becomes a valued source of self-knowledge, informing choices about relationships and personal boundaries with increasing sophistication.
+  4:
+    estradiol: >
+      Emotional depth becomes a defining feature of close relationships, with vulnerability actively cultivated as a practice rather than an occasional state. Intimate partnerships thrive on regular emotional check-ins and the willingness to explore uncomfortable territory together—examining patterns, owning wounds, celebrating growth. The capacity to sit with another's pain without rushing to fix creates profound holding space in friendships and family connections. Rich emotional attunement generates warmth that others gravitate toward, making this person a natural confidant whose presence feels emotionally nourishing.
+  5:
+    estradiol: >
+      Emotional depth operates as an autonomous relational force, transforming every intimate connection into a space of profound psychological safety and mutual revelation. The practice of feeling fully—both joy and sorrow, fear and desire—becomes self-sustaining, creating feedback loops where vulnerability begets more vulnerability. Family relationships evolve into laboratories of emotional growth, with this person modeling and inviting depths of honesty that shift entire relational systems. The inner emotional world is so richly developed and integrated that it generates its own meaning, becoming a wellspring of empathy that flows outward without depletion.
+
+sensitivity:
+  1:
+    estradiol: >
+      Social cues register only at the most obvious level—raised voices, tears, explicit statements—while subtle emotional undercurrents pass unnoticed. Art and music function as background rather than moving forces, consumed for distraction rather than emotional resonance. Criticism lands as factual information to be defended against rather than emotional communication requiring attunement. The emotional atmosphere of rooms and relationships doesn't register as signal, leaving interactions feeling slightly off without understanding why.
+  2:
+    estradiol: >
+      Heightened sensitivity flickers on and off, more acute with certain people or in specific contexts—catching a friend's hidden sadness but missing a partner's quiet withdrawal. Particular forms of art or music occasionally break through defenses, creating unexpected emotional responses that feel surprising rather than integrated. Criticism stings more than expected, leading to hours of rumination about particular comments or interactions. The empathic capacity is present but unreliable, like a radio that picks up strong signals clearly but loses the quieter frequencies.
+  3:
+    estradiol: >
+      A consistent attunement to others' emotional states develops, picking up on tension in a family gathering or a friend's forced cheerfulness with reliable accuracy. Stories, films, and music regularly evoke strong empathic responses—crying at commercials, feeling altered by a song, carrying characters' emotions for days. Criticism is processed through both its content and its emotional subtext, requiring deliberate self-care practices to prevent taking on others' judgments too deeply. This sensitivity enhances connection but demands boundary-setting to prevent emotional overwhelm in crowded or conflictual environments.
+  4:
+    estradiol: >
+      Empathic attunement operates like a finely calibrated instrument, detecting emotional shifts in loved ones before they're verbally expressed—knowing a partner needs support before they ask, sensing a child's anxiety beneath surface behavior. Artistic experiences provide profound emotional nourishment and catharsis, sought out intentionally as part of emotional regulation and self-exploration. The mirror-like quality of emotional responsiveness is understood as both gift and responsibility, managed through sophisticated boundaries that allow deep feeling without losing self. Social environments are carefully curated based on emotional tolerance, creating a life rhythm that honors this heightened sensitivity.
+  5:
+    estradiol: >
+      Sensitivity evolves into a comprehensive perceptual system that reads the emotional field of relationships with extraordinary precision, functioning almost pre-cognitively. Every interaction carries layers of subtext that are naturally decoded—family dynamics, unspoken needs, relational tensions—creating both profound insight and the burden of seeing what others miss. Art becomes a primary language of emotional processing and meaning-making, with beauty and tragedy equally necessary nutrients for the inner life. This depth of feeling generates its own ecosystem of creative expression, intimate connection, and community care, transforming sensitivity from reactive trait into generative force.
+
+intimacy_capacity:
+  1:
+    estradiol: >
+      Physical and emotional closeness is tolerated rather than sought, approached with guardedness or obligation. Eye contact feels uncomfortable, conversations stay safely in the territory of facts and logistics, and personal disclosure is minimal even with longtime partners or family. Nurturing behaviors, if present, follow routine rather than genuine attunement—scripted affection rather than responsive warmth. The vulnerability required for true intimacy triggers defensive patterns, keeping relationships functional but emotionally distant.
+  2:
+    estradiol: >
+      Windows of genuine intimacy open unexpectedly, often facilitated by external circumstances—late-night conversations during travel, emotional breakthrough moments, or specific relational contexts that feel safer. Physical affection and deeper sharing occur but feel slightly effortful, requiring conscious override of default distance-keeping patterns. Certain relationships access more vulnerability than others, creating pockets of real intimacy while other connections remain cordial but guarded. The capacity exists but hasn't yet become a sustainable relational baseline.
+  3:
+    estradiol: >
+      A stable foundation of intimacy develops in primary relationships, marked by regular vulnerable conversations and comfortable physical closeness. Eye contact and touch become natural expressions of connection rather than conscious choices, creating warmth that others recognize and respond to. Personal thoughts and experiences are shared with increasing ease in trusted circles—close friends, romantic partners, immediate family—while appropriate boundaries are maintained with acquaintances. Nurturing behaviors emerge responsively, attuned to what specific loved ones need rather than following generic caregiving scripts.
+  4:
+    estradiol: >
+      Deep intimacy becomes a cultivated practice that shapes relationship choices and personal growth. Romantic partnerships thrive on emotional nakedness—regular sharing of fears, desires, evolving identities—creating bonds that deepen over time. Friendships are characterized by mutual vulnerability and the kind of presence that makes others feel truly seen. Physical closeness is both comfortable and intentional, used to communicate care, maintain connection, and regulate shared emotional states. The safe spaces created for vulnerability ripple outward, affecting family dynamics, parenting approaches, and community bonds.
+  5:
+    estradiol: >
+      Intimacy capacity operates as an organizing principle of relational life, transforming every close connection into a space of profound mutual revelation and growth. The comfort with emotional and physical nakedness is so developed that it creates gravitational pull—people feel invited into deeper authenticity simply by proximity. Romantic and familial relationships become ongoing practices of seeing and being seen, where vulnerability is not only welcomed but actively generated through curiosity and presence. This capacity for intimacy is self-renewing, with each deepening connection expanding the overall capacity for closeness, creating relational ecosystems characterized by extraordinary psychological safety and transformative mutual care.
+```

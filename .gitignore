@@ -80,3 +80,10 @@ nCrunchTemp_*
 # Aspire
 .aspire/
 nul
+
+# Test data
+cv/
+
+# Calibration raw datasets (large, downloaded separately)
+NeuroGateway.Calibration/RawData/*
+!NeuroGateway.Calibration/RawData/.gitkeep

@@ -6,23 +6,34 @@ namespace NeuroGateway.Service;
 
 public class EmbeddingService(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
-    AnalyzedDataRepository analyzedDataRepo)
+    AnalyzedDataRepository analyzedDataRepo,
+    ProfileRepository profileRepo)
 {
-    public async Task<int> BackfillAsync(string? person = null)
+    public async Task<(int AnalyzedData, int Profiles)> BackfillAsync(string? person = null)
     {
-        var entries = await analyzedDataRepo.GetWithoutEmbeddingsAsync(person);
-        if (entries.Count == 0) return 0;
-
-        var count = 0;
-        foreach (var (id, content) in entries)
+        // 1. Backfill analyzed_data embeddings
+        var adEntries = await analyzedDataRepo.GetWithoutEmbeddingsAsync(person);
+        var adCount = 0;
+        foreach (var (id, content) in adEntries)
         {
             var embedding = await embeddingGenerator.GenerateAsync(content);
             var vector = FormatVector(embedding.Vector.Span);
             await analyzedDataRepo.UpdateEmbeddingAsync(id, vector);
-            count++;
+            adCount++;
         }
 
-        return count;
+        // 2. Backfill biochemical_profile embeddings (from reasoning text)
+        var profileEntries = await profileRepo.GetWithoutEmbeddingsAsync(person);
+        var profileCount = 0;
+        foreach (var (id, reasoning) in profileEntries)
+        {
+            var embedding = await embeddingGenerator.GenerateAsync(reasoning);
+            var vector = FormatVector(embedding.Vector.Span);
+            await profileRepo.UpdateEmbeddingAsync(id, vector);
+            profileCount++;
+        }
+
+        return (adCount, profileCount);
     }
 
     public async Task<string> GenerateVectorAsync(string text)

@@ -1,0 +1,120 @@
+```yaml
+Team Orientation:
+  1:
+    oxytocin: >
+      Social bonding circuits remain dormant in collaborative contexts, activating only when external pressure demands coordination. Stakeholder engagement is transactional—limited to information extraction rather than relationship building. Team dynamics are viewed as obstacles to individual velocity, with minimal investment in psychological safety or collective performance metrics. Cross-functional interactions trigger avoidance rather than approach responses, creating isolated execution patterns.
+  2:
+    oxytocin: >
+      Affiliation patterns emerge inconsistently, sometimes engaging in mentoring or code review with genuine care, other times withdrawing into solo execution. Team success registers as valuable but doesn't consistently override individual recognition drives. Pair programming and knowledge sharing happen reactively when requested rather than as self-initiated bonding behaviors. The organizational social fabric receives attention in bursts, followed by periods of isolation that fragment relationship continuity.
+  3:
+    oxytocin: >
+      Social engagement systems maintain steady baseline activation, reliably facilitating inclusive retrospectives and protecting team psychological safety. Credit-sharing and contribution amplification occur naturally in familiar contexts, though stress or deadline pressure can temporarily suppress these prosocial patterns. Cross-functional leadership demonstrates authentic care for collective outcomes balanced with personal accountability. Trust-building behaviors are intentional and consistent, creating stable team dynamics without completely subordinating individual visibility to group identity.
+  4:
+    oxytocin: >
+      Bonding circuits drive sustained investment in organizational social capital through systematic mentoring, deliberate knowledge transfer, and proactive conflict resolution. Team performance metrics become intrinsically rewarding, generating self-reinforcing loops where facilitating others' growth produces neurochemical satisfaction. Cross-functional stakeholder relationships are cultivated strategically as long-horizon investments, with genuine empathic attunement informing influence patterns. Psychological safety becomes a measurable deliverable, with behavioral patterns consistently amplifying collective intelligence over individual heroics.
+  5:
+    oxytocin: >
+      Affiliation systems operate as autonomous engines of organizational cohesion, spontaneously generating trust architectures and mentorship ecosystems that persist beyond individual projects. Team success creates deeper reward signals than any personal recognition, fundamentally reorienting career advancement strategies around collective capability building. Executive presence manifests through authentic relational depth rather than dominance displays, with stakeholder management becoming an expression of genuine prosocial drive. The professional identity becomes inseparable from community contribution, creating self-sustaining cycles where facilitating others' excellence generates its own intrinsic motivation.
+
+Knowledge Transfer:
+  1:
+    oxytocin: >
+      Teaching and documentation behaviors activate only under compliance pressure, producing minimal-viable knowledge artifacts without relational investment. Technical explanations remain expert-centric, lacking the empathic translation required for accessible onboarding materials. Conference talks and mentoring opportunities trigger avoidance rather than generative engagement. Knowledge hoarding patterns emerge not from malice but from absence of prosocial reward signals that make teaching intrinsically satisfying.
+  2:
+    oxytocin: >
+      Documentation and explanation patterns emerge situationally—sometimes investing genuine care in architecture decision records, other times producing perfunctory handoffs. Mentoring relationships form when chemistry clicks but aren't systematically cultivated across team boundaries. Teaching moments generate sporadic satisfaction without consistent follow-through into structured knowledge transfer initiatives. The empathic bridge between expert and novice perspectives exists but requires external activation rather than self-generating.
+  3:
+    oxytocin: >
+      Knowledge sharing operates as reliable baseline behavior, with technical blog posts and onboarding materials reflecting genuine investment in collective capability. Mentoring relationships are maintained consistently, translating complex concepts through empathic understanding of learning curves. Conference presentations balance expertise demonstration with accessible teaching, creating connection rather than distance. Cross-functional communication shows sustained effort to build shared understanding, though stress can temporarily shift focus toward delivery over documentation.
+  4:
+    oxytocin: >
+      Teaching circuits generate sustained intrinsic motivation, with knowledge transfer becoming strategic priority alongside feature delivery. Architecture decision records and documentation receive care proportional to their relationship-building value, creating organizational memory that facilitates trust. Mentoring patterns extend systematically across team boundaries, with genuine investment in growing capabilities beyond immediate project needs. Technical communication becomes vehicle for building social capital, where explaining complex systems creates both intellectual clarity and interpersonal bonds that strengthen stakeholder relationships.
+  5:
+    oxytocin: >
+      Knowledge transfer operates as autonomous prosocial engine, spontaneously generating educational ecosystems that transcend individual projects or reporting structures. Teaching becomes inseparable from identity—conference talks, documentation, and mentoring emerge as natural expressions of bonding drive rather than career advancement tactics. Cross-organizational learning initiatives create self-sustaining communities where facilitating others' growth produces neurochemical rewards exceeding any individual recognition. The professional legacy becomes measured entirely through capability multiplier effects, with knowledge sharing creating its own intrinsic satisfaction independent of performance metrics.
+
+Emotional Depth:
+  1:
+    oxytocin: >
+      Workplace relationships remain surface-level transactional, with vulnerability circuits suppressed even in psychologically safe contexts. One-on-ones and skip-level meetings involve information exchange without genuine emotional presence or trust-based disclosure. Difficult stakeholder conversations trigger defensive patterns rather than empathic engagement, limiting conflict resolution effectiveness. Team retrospectives access only cognitive analysis, missing the relational depth that transforms process improvement into genuine connection.
+  2:
+    oxytocin: >
+      Emotional engagement emerges selectively—occasionally bringing authentic presence to team dynamics, other times retreating to purely tactical interactions. Trusted relationships sometimes access deeper vulnerability, but patterns remain inconsistent rather than reliably available. Performance reviews and feedback conversations fluctuate between genuine empathic attunement and formulaic evaluation. The capacity for workplace intimacy exists but activates unpredictably, creating uneven stakeholder relationship depth.
+  3:
+    oxytocin: >
+      Professional relationships sustain moderate emotional authenticity, with one-on-ones reflecting genuine presence and measured vulnerability. Feedback conversations access empathic attunement while maintaining appropriate boundaries, creating trust without overwhelming others. Team dynamics benefit from emotional availability that processes conflict constructively rather than avoiding difficult feelings. Cross-functional stakeholder management demonstrates consistent warmth and genuine interest, though highest-stakes executive interactions may trigger protective distancing.
+  4:
+    oxytocin: >
+      Emotional circuits enable sustained relational depth across organizational contexts, with vulnerability becoming strategic asset in change management and team building. One-on-ones create genuine safety where direct reports access authentic connection alongside developmental feedback. Executive presence integrates emotional intelligence naturally, reading stakeholder states with precision while maintaining appropriate professional boundaries. Difficult conversations engage full affective range, processing organizational conflict with empathic sophistication that transforms adversarial dynamics into collaborative problem-solving.
+  5:
+    oxytocin: >
+      Professional relationships access profound emotional authenticity, creating trust architectures that enable transformational change initiatives and organizational healing. Leadership presence manifests through complete vulnerability-competence integration, where emotional availability becomes source of influence rather than liability. Stakeholder dynamics benefit from mirror-like attunement that processes others' unspoken concerns while maintaining centered stability. The workplace becomes arena for genuine human connection, with emotional depth facilitating resource allocation conversations, performance management, and strategic alignment through bonds that transcend purely transactional exchange.
+
+Sensitivity:
+  1:
+    oxytocin: >
+      Social cue detection operates at minimal resolution, missing subtle team dynamics and stakeholder emotional states that inform effective collaboration. Performance feedback and organizational criticism are processed purely cognitively, without empathic attunement triggering recalibration. Cross-functional meetings access only explicit verbal content, overlooking nonverbal signals that reveal hidden concerns or resistance. Change management initiatives proceed without sensing organizational emotional undercurrents, limiting stakeholder buy-in effectiveness.
+  2:
+    oxytocin: >
+      Empathic attunement emerges inconsistently—sometimes detecting team morale shifts or stakeholder hesitation, other times operating with reduced social awareness. Performance reviews occasionally access deeper emotional resonance with direct reports' experiences, but patterns aren't reliably available under deadline pressure. Organizational politics and interpersonal dynamics register situationally rather than through consistent monitoring. The capacity for reading social cues exists but requires favorable conditions rather than functioning as default operating mode.
+  3:
+    oxytocin: >
+      Social perception maintains steady sensitivity, reliably detecting team psychological safety fluctuations and stakeholder emotional states during meetings. Performance management conversations access genuine empathic resonance with direct reports' challenges without becoming overwhelmed. Cross-functional leadership benefits from consistent ability to sense unspoken concerns and adjust communication strategies accordingly. Change initiatives incorporate organizational emotional intelligence, though highest-stress scenarios may temporarily reduce attunement capacity as focus narrows to delivery metrics.
+  4:
+    oxytocin: >
+      Heightened social awareness operates as strategic asset, with stakeholder meetings revealing nuanced emotional dynamics that inform influence tactics and conflict resolution. Team retrospectives access deep empathic attunement, detecting morale patterns and psychological safety gaps before they manifest as performance issues. Executive presence benefits from precise reading of unspoken organizational politics and emotional undercurrents. Performance feedback conversations demonstrate sophisticated sensitivity to how criticism lands, adjusting delivery in real-time based on mirror-like responsiveness to others' states.
+  5:
+    oxytocin: >
+      Social perception operates at extraordinary resolution, spontaneously detecting micro-expressions and organizational emotional fields that escape conventional awareness. Stakeholder management becomes almost intuitive, with empathic circuits processing unspoken concerns and resistance patterns before they crystallize into explicit obstacles. Change management initiatives benefit from profound sensitivity to collective emotional states, facilitating transformational shifts through precise attunement to readiness and resistance. The organizational environment registers as rich emotional landscape rather than neutral backdrop, with leadership effectiveness emerging from this heightened mirror-like responsiveness that both gifts insight and demands careful energy management.
+
+Attachment Security:
+  1:
+    oxytocin: >
+      Professional relationships exhibit anxious-avoidant patterns, with stakeholder interactions triggering either excessive accommodation or defensive withdrawal. Team dynamics suffer from inconsistent availability—either over-involved in others' work or emotionally absent. Cross-functional partnerships lack stable trust foundation, with colleague autonomy generating either control attempts or disengagement. Performance pressure intensifies insecure bonding patterns, undermining collaborative resilience during deadline cycles.
+  2:
+    oxytocin: >
+      Workplace attachment shows emerging stability—sometimes maintaining balanced engagement with stakeholders, other times sliding into anxiety-driven micromanagement or avoidant distancing. Direct report relationships fluctuate between secure trust and possessive over-involvement when performance concerns arise. Cross-functional collaborations work well under favorable conditions but stress reveals underlying insecurity patterns. The capacity for secure professional bonding exists but remains context-dependent rather than constitutive.
+  3:
+    oxytocin: >
+      Professional relationships demonstrate stable trust foundation, comfortable with both close collaboration and autonomous execution. Direct reports receive consistent support without excessive monitoring, trusting their capability while remaining available. Cross-functional partnerships tolerate ambiguity and independence without triggering control behaviors or abandonment concerns. Performance feedback maintains secure attachment—neither clinging to problematic team members nor prematurely severing relationships during difficulties—creating reliable relationship continuity across project cycles.
+  4:
+    oxytocin: >
+      Workplace bonding operates from secure foundation, with stakeholder relationships maintaining trust through extended absences and organizational uncertainty. Direct report development benefits from confident autonomy-granting, facilitating growth without possessive retention or anxious checking. Cross-functional leadership demonstrates comfort with colleague independence and differing approaches, building influence through secure trust rather than control. Change management initiatives proceed without attachment-driven resistance, maintaining relational stability while organizational structures shift.
+  5:
+    oxytocin: >
+      Professional relationships embody profound attachment security, creating trust architectures that remain stable through radical organizational change and role transitions. Stakeholder management operates without jealousy or possessiveness—celebrating colleagues' external opportunities and network expansion rather than perceiving competition. Direct reports experience complete developmental freedom, supported through departures and career pivots without resentment. The capacity to maintain secure bonds across organizational distance and uncertainty becomes leadership superpower, facilitating matrix structures and remote collaboration through intrinsic trust that requires neither proximity nor control.
+
+Intimacy Capacity:
+  1:
+    oxytocin: >
+      Professional interactions maintain maximum relational distance, with one-on-ones remaining purely transactional and feedback conversations avoiding genuine vulnerability. Eye contact and emotional presence are minimized during difficult conversations, limiting stakeholder trust formation. Team building exercises trigger discomfort rather than bonding, creating missed opportunities for psychological safety development. Cross-functional relationships lack the openness required for authentic partnership, constraining collaborative problem-solving effectiveness.
+  2:
+    oxytocin: >
+      Workplace intimacy emerges selectively—occasionally accessing deeper connection during team offsites or trusted one-on-ones, other times maintaining professional distance. Vulnerable conversations about career concerns or organizational challenges happen sporadically rather than reliably. Feedback exchanges sometimes achieve authentic mutual disclosure, but patterns remain inconsistent. The capacity for professional closeness exists in favorable conditions but doesn't extend systematically across stakeholder relationships or organizational contexts.
+  3:
+    oxytocin: >
+      Professional relationships sustain moderate intimacy, with one-on-ones creating genuine safety for career conversations and personal challenge sharing. Cross-functional partnerships develop trust through measured vulnerability and reciprocal disclosure about project concerns. Team dynamics benefit from appropriate emotional openness that builds psychological safety without oversharing. Executive presence integrates authentic presence and strategic boundaries, creating stakeholder connections that feel genuine while maintaining professional containerization.
+  4:
+    oxytocin: >
+      Workplace relationships access significant intimacy depth, with one-on-ones creating transformative space for direct reports' whole-person development. Feedback conversations involve mutual vulnerability that strengthens rather than threatens professional bonds. Cross-functional leadership benefits from openness that accelerates trust formation and facilitates difficult resource allocation discussions. Team building and change management initiatives leverage genuine emotional availability, creating organizational containers where appropriate vulnerability catalyzes collective performance and innovation.
+  5:
+    oxytocin: >
+      Professional relationships embody profound intimacy capacity, creating trust depths that transform organizational culture and enable radical transparency initiatives. One-on-ones become arenas for complete authenticity, facilitating direct reports' personal-professional integration and whole-life flourishing. Executive presence demonstrates extraordinary comfort with vulnerability as leadership tool, sharing strategic uncertainties and personal learning edges without diminishing authority. The workplace becomes space for genuine human encounter, where appropriate emotional and intellectual nakedness creates organizational bonds that enable transformational change, radical innovation, and performance breakthroughs impossible within conventional professional distance.
+
+Purpose & Meaning:
+  1:
+    oxytocin: >
+      Career satisfaction derives entirely from external achievement markers—compensation, title progression, and individual recognition—with minimal prosocial reward. Legacy considerations and mentoring relationships generate no intrinsic motivation beyond resume-building. Community contribution and organizational mission alignment remain abstract concepts rather than experiential drivers. Work meaning depends on performance metrics rather than relational fulfillment, creating satisfaction vulnerability to promotion cycles and market fluctuations.
+  2:
+    oxytocin: >
+      Professional purpose shows emerging prosocial dimension—sometimes deriving satisfaction from team impact or mentee development, other times reverting to purely individual achievement focus. Organizational mission alignment matters situationally but doesn't consistently guide career decisions. Legacy building through knowledge transfer or culture contribution generates sporadic fulfillment without sustained motivation. The capacity for purpose beyond external validation exists but remains underdeveloped, creating meaning that fluctuates with circumstantial factors.
+  3:
+    oxytocin: >
+      Career satisfaction integrates balanced achievement and contribution motives, with genuine fulfillment from both individual performance and team capability building. Organizational mission alignment influences role selection consistently, creating work meaning that transcends compensation discussions. Mentoring relationships and knowledge transfer generate reliable prosocial reward, supplementing but not replacing personal growth drivers. Professional legacy considers both technical contributions and relational impact, creating purpose resilience that survives individual project outcomes.
+  4:
+    oxytocin: >
+      Professional meaning centers substantially on prosocial contribution, with mentee development and organizational capability building generating deep intrinsic satisfaction. Career advancement decisions prioritize mission alignment and community impact alongside traditional success metrics. Legacy considerations focus heavily on knowledge transfer, culture building, and generational succession rather than personal attribution. Work satisfaction derives increasingly from facilitating others' success, creating purpose foundation that provides meaning stability through market cycles and organizational changes.
+  5:
+    oxytocin: >
+      Career purpose operates almost entirely through prosocial channels, with professional identity inseparable from community contribution and generational capability transfer. Compensation and title become secondary to impact on organizational culture and mentee trajectories, creating satisfaction independent of external validation. Legacy building through teaching, culture work, and ecosystem development generates profound intrinsic reward that exceeds any individual achievement. The work becomes expression of caregiving drive at organizational scale, finding ultimate meaning through facilitating collective flourishing rather than personal success—a professional existence whose satisfaction comes from bonds formed, capabilities transferred, and community value created.
+```

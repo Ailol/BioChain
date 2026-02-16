@@ -1,0 +1,120 @@
+```yaml
+Risk Tolerance:
+  1:
+    endocannabinoid: >
+      Risk assessment becomes a rigid, threat-focused calculation with minimal capacity for stress buffering during ambiguous decisions. When facing unproven technologies or architectural choices, the professional retreats to established practices and seeks exhaustive stakeholder validation before proceeding. Decision-making under uncertainty triggers persistent anxiety that cannot be metabolized, leading to analysis paralysis or delegation of accountability. The absence of adaptive stress response means each uncertain bet feels equally threatening, preventing any strategic risk differentiation.
+  2:
+    endocannabinoid: >
+      Emerging capacity to distinguish between productive and unproductive uncertainty begins to shape project decisions, though this discernment remains inconsistent. The professional occasionally challenges established practices when external support is visible, but retreats when organizational pressure mounts. Stress buffering during high-stakes decisions appears sporadically—sometimes enabling bold architectural proposals, other times collapsing into conservative patterns. Accountability for uncertain outcomes is accepted in theory but triggers significant anxiety that interferes with execution confidence.
+  3:
+    endocannabinoid: >
+      A reliable stress-buffering system enables measured risk-taking within strategic boundaries, allowing the professional to bet on unproven technologies when evidence supports the decision. Ambiguity in project parameters no longer triggers automatic threat responses; instead, incomplete information becomes workable context for iterative decision-making. The capacity to metabolize failure anxiety means accountability for uncertain outcomes feels manageable rather than existential. Cross-functional leadership in novel domains proceeds with appropriate caution balanced by adaptive confidence.
+  4:
+    endocannabinoid: >
+      Sophisticated stress regulation creates sustainable comfort with radical alternatives and architectural innovation, even when organizational consensus is absent. The professional demonstrates consistent capacity to recalibrate emotional responses during high-uncertainty initiatives, maintaining strategic clarity while others escalate. Risk differentiation becomes intuitive—distinguishing between reckless and calculated bets without requiring extensive validation cycles. This sustained adaptability enables championing unproven approaches with appropriate accountability, building organizational credibility for future uncertain ventures.
+  5:
+    endocannabinoid: >
+      Autonomous stress-buffering systems generate self-reinforcing comfort with existential uncertainty, transforming ambiguity from threat into strategic opportunity. The professional creates ventures and architectural paradigms without predetermined outcomes, maintaining psychological equilibrium through extended periods of unknown viability. Risk tolerance operates as an independent variable in decision-making—external validation becomes irrelevant to internal confidence. This self-generating adaptability influences organizational culture, establishing new baselines for what constitutes acceptable uncertainty in strategic planning and resource allocation.
+
+Problem Solving:
+  1:
+    endocannabinoid: >
+      Problem-solving rigidity emerges from inability to shift cognitive perspective when standard debugging approaches fail, creating repetitive, unproductive solution attempts. The professional applies familiar patterns even when contextual feedback signals their inadequacy, lacking the cognitive flexibility to explore lateral alternatives. When complex problems resist initial decomposition strategies, stress accumulation blocks creative recombination of concepts across domains. Performance under novel constraints becomes increasingly effortful as the inability to adaptively shift mental models compounds technical challenges.
+  2:
+    endocannabinoid: >
+      Occasional cognitive flexibility allows breakthrough solutions when environmental conditions are favorable, though creative problem-solving remains unreliable under deadline pressure. The professional demonstrates emerging capacity to connect insights across technology stacks during low-stress exploration, but reverts to conventional approaches when delivery metrics intensify. Novel architectural solutions appear intermittently—sometimes achieving elegant simplification, other times missing obvious lateral alternatives. Mental model shifting occurs reactively rather than strategically, dependent on external prompts rather than internal creative initiative.
+  3:
+    endocannabinoid: >
+      Reliable cognitive flexibility enables consistent lateral thinking when standard debugging approaches prove insufficient, generating novel solutions without requiring extended recovery periods. The professional navigates complex problem decomposition with adaptive perspective-shifting, recognizing when current mental models need recalibration. Cross-domain insight connection occurs naturally during architecture discussions, balancing creative exploration with practical constraints. Stress during unfamiliar challenges no longer blocks creative recombination; instead, moderate pressure enhances rather than inhibits solution elegance.
+  4:
+    endocannabinoid: >
+      Sustained cognitive adaptability creates consistent breakthrough capacity across diverse technical challenges, with mental model flexibility becoming a reliable competitive advantage. The professional demonstrates strategic perspective-shifting during stakeholder negotiations, reframing intractable problems into tractable subproblems through creative constraint reinterpretation. Novel architectural solutions emerge systematically rather than accidentally, as the capacity to fluidly recombine concepts operates independently of external pressure. This developed flexibility influences team dynamics, establishing patterns where complexity is simplified rather than accumulated through successive iterations.
+  5:
+    endocannabinoid: >
+      Autonomous cognitive flexibility generates self-sustaining creative problem-solving that operates independently of contextual stress or organizational support. The professional creates entirely new solution categories by recombining insights across previously unconnected domains, establishing novel architectural paradigms. Mental model shifting occurs preemptively—anticipating when conventional approaches will fail before evidence accumulates, enabling proactive strategy pivots. This self-generating adaptability influences organizational innovation capacity, as the professional's comfort with radical reconceptualization permits exploration of solution spaces others cannot access.
+
+Work-Life Balance:
+  1:
+    endocannabinoid: >
+      Boundary maintenance collapses under professional demands, with work communications triggering immediate response regardless of personal context or time. The professional demonstrates minimal capacity to recognize burnout signals before physical or psychological breakdown becomes unavoidable. Recovery periods fail to restore baseline functioning, as stress accumulation continues even during nominal time off. Career advancement appears to require unsustainable heroic efforts, with no reliable mechanism for distinguishing urgent from manufactured urgency.
+  2:
+    endocannabinoid: >
+      Emerging awareness of burnout signals occasionally prompts boundary experimentation, though implementation remains inconsistent when organizational pressure increases. The professional sets disconnection intentions that hold during low-stakes periods but collapse during project delivery cycles. Personal health and relationship priorities surface intermittently, creating sporadic attempts at sustainable pacing that lack reliable maintenance systems. Recovery capacity appears dependent on external validation—permission from leadership feels necessary before truly disconnecting.
+  3:
+    endocannabinoid: >
+      Reliable boundary systems enable consistent disconnection from work communications during protected personal time, with stress buffering preventing anxiety about missed updates. The professional recognizes burnout warning signs early enough to implement preventive action, maintaining performance quality without requiring recovery crises. Sustainable pacing becomes the default operational mode, with heroic sprints reserved for genuinely exceptional circumstances rather than routine expectations. Personal priorities maintain appropriate weight in resource allocation decisions, neither completely subordinated to career demands nor rigidly defended against all professional flexibility.
+  4:
+    endocannabinoid: >
+      Sophisticated boundary maintenance operates strategically rather than defensively, with the professional designing work structures that inherently support sustainability. Burnout prevention becomes proactive rather than reactive, as self-awareness of energy cycles informs project commitments before depletion occurs. The capacity to metabolize professional stress without carrying it into personal contexts creates genuine psychological separation between domains. This sustained balance influences team dynamics, as the professional models that executive presence and career advancement don't require constant availability.
+  5:
+    endocannabinoid: >
+      Autonomous boundary systems generate self-reinforcing separation between professional and personal domains, with work intensity naturally modulating to maintain long-term sustainability. The professional creates organizational structures that systematically prevent burnout conditions for entire teams, establishing cultural norms where disconnection enhances rather than threatens performance metrics. Recovery capacity operates continuously rather than episodically, as the ability to fully inhabit personal life without professional intrusion maintains consistent high-level functioning. This self-generating balance redefines stakeholder expectations, demonstrating that sustainable pace produces superior long-horizon outcomes compared to perpetual urgency.
+
+Emotional Regulation:
+  1:
+    endocannabinoid: >
+      Emotional reactivity dominates interpersonal interactions, with anger or anxiety hijacking professional responses before cognitive processing can occur. The professional experiences impulsive reactions during stakeholder conflicts that damage cross-functional relationships and undermine executive presence. Frustration emerges explosively during deadline pressure or through complete withdrawal, creating unpredictable team dynamics that others must navigate cautiously. Stress accumulation lacks any buffering mechanism, meaning composure deteriorates progressively across project cycles without natural reset.
+  2:
+    endocannabinoid: >
+      Emerging capacity to recognize emotional triggers occasionally permits chosen responses rather than reflexive reactions, though this control remains fragile under sustained pressure. The professional demonstrates inconsistent composure during organizational conflict—sometimes maintaining professional tone, other times reverting to defensive or aggressive patterns. Anxiety during high-stakes presentations appears sporadically manageable, but unpredictably overwhelms cognitive capacity when multiple stressors combine. Recovery from emotional escalation begins to occur but requires extended periods, limiting effectiveness in rapid-cycle team environments.
+  3:
+    endocannabinoid: >
+      Reliable stress buffering enables consistent emotional composure during interpersonal conflict, with feelings fully experienced but not driving behavioral choices. The professional processes frustration constructively during project setbacks, maintaining team morale without suppressing genuine emotional responses. Anxiety during stakeholder presentations remains present but no longer hijacks executive presence or strategic thinking. Recovery from emotional activation occurs naturally within normal work rhythms, preventing progressive stress accumulation across delivery cycles.
+  4:
+    endocannabinoid: >
+      Sophisticated emotional regulation creates sustained composure even during extreme organizational turbulence, with the professional demonstrating strategic response selection under conditions where others escalate. Anger or frustration when present becomes information rather than behavioral driver, informing change management approaches without contaminating team dynamics. The capacity to metabolize high-intensity emotions in real-time maintains consistent executive presence across diverse stakeholder contexts. This developed regulation influences organizational culture, as the professional's modeling creates permission for others to experience emotions without reactivity.
+  5:
+    endocannabinoid: >
+      Autonomous emotional regulation generates self-sustaining composure that operates independently of external conditions or organizational support systems. The professional maintains strategic clarity during existential business threats when others experience psychological paralysis, with emotional responses enhancing rather than impairing decision quality. Stress buffering capacity creates space for others' emotional reactivity without contamination, enabling leadership during collective crisis moments. This self-generating regulation redefines performance expectations, demonstrating that emotional sophistication constitutes competitive advantage in complex stakeholder environments.
+
+Self-Awareness:
+  1:
+    endocannabinoid: >
+      Self-monitoring capacity remains minimal, with behavioral patterns operating outside conscious recognition and defensive distortion blocking feedback integration. The professional demonstrates little awareness of personal triggers during stakeholder conflicts, repeatedly engaging patterns that undermine stated intentions without recognizing the repetition. Performance feedback provokes defensiveness rather than reflection, as accurate self-assessment threatens existing identity structures. The gap between intended impact and actual effect on team dynamics remains invisible, preventing any adaptive modification of interpersonal approach.
+  2:
+    endocannabinoid: >
+      Emerging self-monitoring allows occasional recognition of emotional states and habitual reactions, though this awareness often arrives after behavioral consequences manifest. The professional demonstrates sporadic capacity to identify personal biases during project retrospectives, but struggles to apply insights preventively in future similar situations. Feedback integration occurs inconsistently—sometimes prompting genuine reflection and adjustment, other times triggering defensive rationalization. Awareness of the intention-impact gap surfaces intermittently, creating brief windows of behavioral modification that don't sustain across contexts.
+  3:
+    endocannabinoid: >
+      Reliable self-monitoring enables accurate real-time awareness of emotional states and their influence on professional decisions, with minimal defensive distortion during feedback conversations. The professional recognizes personal triggers before they fully activate, allowing strategic choice about stakeholder engagement approach. Growth from performance feedback occurs consistently, as accurate self-assessment provides foundation for targeted capability development. The intention-impact gap becomes visible during interactions rather than only retrospectively, enabling adaptive modification of communication style within conversations.
+  4:
+    endocannabinoid: >
+      Sophisticated self-awareness operates as continuous background process, with the professional maintaining accurate monitoring of behavioral patterns even during high-stress organizational dynamics. Personal biases and habitual reactions become transparent enough to permit strategic compensation, as self-knowledge informs rather than limits leadership effectiveness. Feedback integration occurs fluidly, with defensive reactions recognized and metabolized before blocking genuine learning. This sustained self-awareness influences team development, as the professional's modeling demonstrates that acknowledging limitations enhances rather than undermines executive credibility.
+  5:
+    endocannabinoid: >
+      Autonomous self-monitoring generates comprehensive real-time awareness of internal states and their systemic effects across organizational contexts. The professional maintains accurate self-assessment even during identity-threatening feedback, with psychological flexibility preventing defensive distortion from blocking critical insights. Personal pattern recognition operates preemptively, identifying emerging behavioral tendencies before they manifest as problematic team dynamics. This self-generating awareness redefines leadership development paradigms, demonstrating that transparent self-knowledge creates sustainable influence more reliably than projected confidence.
+
+Playfulness:
+  1:
+    endocannabinoid: >
+      Professional identity becomes rigidly goal-oriented, with spontaneity or humor feeling threatening to competence performance and therefore suppressed in workplace contexts. The individual demonstrates minimal capacity for light-hearted social interaction during team building, as every activity becomes evaluated for strategic career utility. Hobbies outside work remain either abandoned or transformed into achievement projects, losing any intrinsic joy in favor of measurable outcomes. Novelty-seeking appears non-existent, with travel and exploration avoided as inefficient uses of limited recovery time.
+  2:
+    endocannabinoid: >
+      Emerging permission for non-productive activity creates sporadic moments of genuine playfulness, though these remain compartmentalized and easily abandoned under professional pressure. The individual occasionally engages humor during low-stakes team interactions but reverts to rigid seriousness when project delivery intensifies. Creative hobbies surface intermittently, providing brief respite before goal-oriented thinking reasserts dominance. Novelty-seeking in travel or exploration occurs when explicitly scheduled, but lacks spontaneous initiation and feels effortful rather than restorative.
+  3:
+    endocannabinoid: >
+      Reliable capacity for playfulness creates consistent space for spontaneous humor and creative expression alongside professional responsibilities, with neither domain completely dominating identity. The individual maintains hobbies that provide genuine joy without requiring productivity justification, experiencing intrinsic satisfaction in process rather than only outcomes. Light-hearted social interaction flows naturally in team contexts, building relational cohesion without forced artificiality. Novelty-seeking in travel and exploration occurs regularly, balanced appropriately against work commitments without requiring external permission.
+  4:
+    endocannabinoid: >
+      Sustained playfulness operates as reliable counterbalance to professional intensity, with the individual demonstrating sophisticated capacity to shift between serious strategic focus and genuine silliness. Creative expression outside work flourishes through diverse experimental pursuits, as comfort with non-utilitarian activity generates rich personal life. Spontaneous humor enhances rather than undermines executive presence, with the professional's psychological flexibility creating approachable leadership style. Novelty-seeking becomes systematic rather than accidental, with regular exploration of unfamiliar domains maintaining adaptive cognitive capacity.
+  5:
+    endocannabinoid: >
+      Autonomous playfulness generates self-sustaining creative exploration that operates independently of professional validation or achievement metrics. The individual maintains rich experimental life across multiple domains—artistic, physical, intellectual—with genuine joy in process creating psychological resilience that enhances organizational leadership. Spontaneity and humor flow naturally regardless of stakeholder context, as deep comfort with uncertainty permits authentic self-expression without strategic calculation. This self-generating playfulness influences organizational culture, demonstrating that sustainable high performance requires systematic non-productive space rather than constant goal orientation.
+
+Inner Peace:
+  1:
+    endocannabinoid: >
+      Baseline anxiety dominates psychological experience, with resting state characterized by persistent tension that external achievement temporarily masks but never resolves. The professional experiences chronic sleep disruption and circadian instability, as stress accumulation continues even during supposed rest periods. Silence and stillness trigger discomfort rather than restoration, requiring constant external stimulation or productivity to maintain psychological equilibrium. Contentment appears entirely dependent on recent accomplishments, creating exhausting cycle where self-worth requires continuous validation through performance metrics.
+  2:
+    endocannabinoid: >
+      Emerging capacity for baseline calm appears during protected vacation periods but collapses rapidly upon returning to organizational demands. The professional experiences occasional quality sleep when project deadlines temporarily lift, though circadian stability remains fragile and easily disrupted. Comfort with non-productive time surfaces sporadically—brief moments of simply being without needing to do—but these feel unfamiliar and slightly threatening. Contentment begins to detach slightly from achievement validation, though self-worth still requires regular external confirmation.
+  3:
+    endocannabinoid: >
+      Reliable baseline calm persists through normal professional turbulence, with resting anxiety maintained at manageable levels that don't interfere with recovery or strategic thinking. The professional achieves consistent quality sleep and stable circadian rhythms even during demanding project cycles, as stress buffering prevents work intensity from contaminating rest. Silence and stillness become restorative rather than uncomfortable, with capacity to be without doing providing genuine psychological recovery. Contentment maintains appropriate independence from recent achievements, though significant setbacks still temporarily destabilize inner equilibrium.
+  4:
+    endocannabinoid: >
+      Sustained inner peace operates as stable foundation beneath professional activity, with the individual maintaining psychological groundedness even during organizational crisis. Sleep quality and circadian stability remain consistent regardless of external pressure, as sophisticated stress regulation prevents reactive disruption of biological rhythms. Comfort with non-productive presence becomes natural default state, with silence and stillness providing reliable access to deep restoration. Self-worth detaches substantially from performance validation, though professional identity still contributes meaningfully to overall life satisfaction.
+  5:
+    endocannabinoid: >
+      Autonomous inner peace generates self-sustaining psychological equilibrium that remains unshaken by professional outcomes or organizational turbulence. The individual maintains profound baseline calm and circadian stability even during existential business threats, as deeply established stress buffering operates independently of external conditions. Capacity to simply be without needing to do, produce, or perform becomes primary psychological mode, with professional activity emerging from wholeness rather than compensating for its absence. This self-generating peace redefines leadership paradigms, demonstrating that sustainable influence flows from groundedness rather than achievement-driven striving.
+```

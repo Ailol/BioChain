@@ -1,0 +1,18 @@
+```yaml
+Sensitivity:
+  1:
+    dynorphin: >
+      Emotional vulnerability triggers immediate protective withdrawal, creating a reactive shield against perceived criticism or rejection. Family interactions feel safer when kept surface-level, as deeper emotional attunement activates uncomfortable stress responses. Empathic moments are brief and quickly followed by emotional distancing—feeling someone's pain creates an urgent need to escape rather than connect. Personal boundaries function as rigid barriers rather than flexible membranes, preventing the overwhelm that comes from absorbing others' emotions.
+  2:
+    dynorphin: >
+      Beginning to tolerate emotional exposure in select relationships, though still experiencing noticeable discomfort when deeply moved by art, music, or others' struggles. Close friendships reveal an emerging capacity to sit with difficult feelings without immediately shutting down, though the pattern remains inconsistent. Criticism still lands heavily, creating aversive reactions that can disrupt domestic harmony for hours or days. Moments of genuine empathic attunement alternate with protective distancing, creating a push-pull dynamic in intimate connections.
+  3:
+    dynorphin: >
+      Moderate stress tolerance allows for sustained emotional presence in family relationships and romantic partnerships, with manageable discomfort when processing others' pain. Personal growth includes recognizing when empathic overwhelm signals needed self-care rather than permanent withdrawal. Creative expression and artistic experiences generate deep feeling states that can be metabolized without triggering shutdown responses. Rejection and criticism activate noticeable emotional pain, but recovery patterns are developing—the sting fades within a reasonable timeframe rather than lingering indefinitely.
+  4:
+    dynorphin: >
+      Strong capacity to inhabit emotional vulnerability as a chosen practice rather than an overwhelming burden in intimate connections and community engagement. Mirror-like responsiveness to others' states feels increasingly purposeful—absorbing family members' emotions without losing personal boundaries or requiring immediate escape. Parenting approach demonstrates sustained attunement through children's difficult feelings, with stress responses informing rather than dictating engagement. The "burden" of deep sensitivity is reframed as information: emotional pain signals what matters, guiding identity expression and the cultivation of meaningful social belonging.
+  5:
+    dynorphin: >
+      Emotional attunement functions as an autonomous navigation system across all domains of personal life, with stress and discomfort serving as sophisticated data rather than signals to retreat. Deep empathic connections generate their own sustainability loops—feeling others' pain creates purposeful engagement rather than depletion, transforming the gift-burden paradox into integrated wisdom. Criticism and rejection are processed through a long-horizon lens where temporary discomfort informs relationship refinement and authentic self-expression. Creative and relational experiences access profound emotional depths without triggering protective mechanisms, allowing art, music, and intimate moments to move through freely while maintaining centered presence.
+```

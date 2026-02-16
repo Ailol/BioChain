@@ -164,6 +164,59 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
         return results;
     }
 
+    /// <summary>
+    /// Get all profile entries with full data for shadow-anchored scoring.
+    /// </summary>
+    public async Task<List<ProfileEntry>> GetProfileEntriesAsync(string person)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT bp.chemical, bp.reasoning, bp.embedding::text, bp.modulation_factor, bp.created_at
+            FROM biochemical_profile bp
+            JOIN personality p ON p.id = bp.personality_id
+            JOIN person per ON per.id = p.person_id
+            WHERE lower(per.first_name) = lower(@person)
+              AND bp.embedding IS NOT NULL
+            """;
+        AddParam(cmd, "person", person);
+
+        var results = new List<ProfileEntry>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new ProfileEntry(
+                reader.GetString(0),
+                reader.GetString(1),
+                ParseVector(reader.GetString(2)),
+                reader.GetFloat(3),
+                reader.GetDateTime(4)));
+        }
+        return results;
+    }
+
+    public record ProfileEntry(string Chemical, string Reasoning, float[] Embedding, float ModulationFactor, DateTime CreatedAt);
+
+    /// <summary>
+    /// Get timeline entries (chemical, modulation_factor, created_at) for heatmap/distribution charts.
+    /// Does NOT require embedding — returns all profile entries.
+    /// </summary>
+    public async Task<List<TimelineEntry>> GetTimelineAsync(string person)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        return await db.BiochemicalProfiles
+            .Join(db.Personalities, bp => bp.PersonalityId, p => p.Id, (bp, p) => new { bp, p })
+            .Join(db.Persons, x => x.p.PersonId, per => per.Id, (x, per) => new { x.bp, per })
+            .Where(x => x.per.FirstName.ToLower() == person.ToLower())
+            .OrderBy(x => x.bp.CreatedAt)
+            .Select(x => new TimelineEntry(x.bp.Chemical, x.bp.ModulationFactor, x.bp.CreatedAt))
+            .ToListAsync();
+    }
+
+    public record TimelineEntry(string Chemical, float ModulationFactor, DateTime CreatedAt);
+
     private static float[] ParseVector(string vectorStr)
     {
         var trimmed = vectorStr.Trim('[', ']');
@@ -172,6 +225,32 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
         for (var i = 0; i < parts.Length; i++)
             result[i] = float.Parse(parts[i], System.Globalization.CultureInfo.InvariantCulture);
         return result;
+    }
+
+    public async Task<List<(int Id, string Reasoning)>> GetWithoutEmbeddingsAsync(string? person = null)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var query = db.BiochemicalProfiles
+            .Join(db.Personalities, bp => bp.PersonalityId, p => p.Id, (bp, p) => new { bp, p })
+            .Join(db.Persons, x => x.p.PersonId, per => per.Id, (x, per) => new { x.bp, per })
+            .Where(x => x.bp.Embedding == null);
+
+        if (!string.IsNullOrEmpty(person))
+            query = query.Where(x => x.per.FirstName.ToLower() == person.ToLower());
+
+        return await query
+            .Select(x => new { x.bp.Id, x.bp.Reasoning })
+            .ToListAsync()
+            .ContinueWith(t => t.Result.Select(x => (x.Id, x.Reasoning)).ToList());
+    }
+
+    public async Task UpdateEmbeddingAsync(int profileId, string vectorLiteral)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        await db.Database.ExecuteSqlRawAsync(
+            "UPDATE biochemical_profile SET embedding = @p1::vector WHERE id = @p0",
+            new Npgsql.NpgsqlParameter("p0", profileId),
+            new Npgsql.NpgsqlParameter("p1", vectorLiteral));
     }
 
     private static void AddParam(System.Data.Common.DbCommand cmd, string name, object value)

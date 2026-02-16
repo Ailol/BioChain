@@ -1,0 +1,120 @@
+```yaml
+emotional_depth:
+  1:
+    endorphins: >
+      Emotional experiences feel overwhelming without natural buffering, leading to rapid withdrawal when feelings intensify beyond comfortable thresholds. Difficult emotions trigger immediate avoidance behaviors—distraction, numbing, or emotional shutdown—because the pain relief system fails to engage during discomfort. Vulnerability in close relationships feels dangerous rather than bonding, as there's no biochemical reward for sitting with hard feelings. The inner emotional life remains shallow not from lack of feeling, but from an underdeveloped capacity to metabolize emotional pain into connection.
+  2:
+    endorphins: >
+      Beginning to tolerate emotional discomfort in brief windows, though still prone to cutting conversations short when feelings get too intense. Occasional breakthrough moments of genuine vulnerability create unexpected warmth and connection, hinting at the bonding potential of shared pain. The system inconsistently rewards emotional depth—sometimes a difficult conversation feels strangely satisfying afterward, sometimes it just hurts. Emotional presence with others flickers between authentic and defended, depending on whether the natural analgesic response activates.
+  3:
+    endorphins: >
+      Reliably experiences the "relief after tears" phenomenon, where emotional release creates its own comfort and deepens intimacy bonds. Can sit with a partner or family member through their distress without needing to fix or flee, finding unexpected satisfaction in shared vulnerability. Difficult feelings are processed rather than avoided, generating a sense of emotional cleansing that reinforces staying present. The rich inner emotional life serves connection because discomfort is buffered by the body's natural capacity to find meaning and even sweetness in pain.
+  4:
+    endorphins: >
+      Actively seeks emotional depth as a source of intimate bonding, recognizing that vulnerability shared becomes pleasure through the alchemy of natural pain relief. Creates intentional spaces for difficult conversations, trusting the process will yield both catharsis and closeness. The capacity to sit with others' suffering feels almost meditative, generating a warm resilience that strengthens rather than depletes. Emotional intensity is welcomed rather than feared, as the system has learned that diving deep reliably produces the euphoria of authentic connection and mutual witness.
+  5:
+    endorphins: >
+      Emotional depth operates as a self-sustaining system where vulnerability actively generates its own reward independent of outcome. Can hold space for profound grief, rage, or fear in relationships with an almost serene presence, as if the body has learned to transmute all emotional intensity into bonding fuel. The inner emotional life is so rich and well-metabolized that it becomes a primary source of meaning, with difficult feelings processed into wisdom almost automatically. Creates profound safety for others through demonstrated capacity to not just tolerate but actually draw nourishment from the full spectrum of human emotion.
+
+attachment_security:
+  1:
+    endorphins: >
+      Partner autonomy triggers anxiety spirals because there's no internal comfort system to buffer separation distress. Intimacy feels addictive rather than secure—clinging behavior emerges from desperate attempts to maintain the only reliable source of soothing. Jealousy flares intensely because the threat of abandonment activates raw panic without natural analgesic buffering. Emotional availability swings between desperate pursuit and defensive withdrawal, never settling into stable presence because the nervous system can't self-regulate during relational stress.
+  2:
+    endorphins: >
+      Beginning to experience moments of calm trust when partners need space, though the default remains mild background anxiety about relationship security. Occasional experiences of feeling genuinely okay alone hint at developing internal soothing capacity. Jealousy still surfaces but sometimes resolves more quickly, as if the body is learning that distress doesn't have to spiral. Bonding patterns show early signs of flexibility—can sometimes tolerate partner independence without immediately catastrophizing.
+  3:
+    endorphins: >
+      Experiences a baseline comfort in relationships that doesn't require constant reassurance, as the body has learned to generate its own sense of safety. Partner independence registers as neutral or even mildly positive, creating space for personal pursuits that feel rewarding rather than anxiety-inducing. Jealousy arises rarely and passes relatively quickly, buffered by internal confidence that the relationship can withstand normal uncertainties. Emotional availability remains stable across varying circumstances because the attachment system isn't constantly triggering emergency responses.
+  4:
+    endorphins: >
+      Trusts deeply without needing to control, as the internal comfort system operates independently of partner behavior or proximity. Actually derives satisfaction from partner autonomy, experiencing their independence as evidence of relationship health rather than threat. Intimacy and separateness flow naturally without triggering attachment anxiety, creating a rhythm that feels both secure and breathing. The capacity to self-soothe during relationship uncertainty is so well-developed that it becomes an attractive force—others feel safe precisely because there's no desperate clinging or emotional hostage-taking.
+  5:
+    endorphins: >
+      Operates from such profound internal security that attachment behaviors emerge from genuine desire rather than need-based anxiety. Partner comings and goings create no disturbance to baseline wellbeing, as the self-soothing system generates its own complete sense of safety and connection. Can maintain deep emotional bonds across physical distance or periods of independence without any erosion of intimacy, trusting in the relationship's resilience with cellular certainty. The complete absence of possessive or controlling impulses creates relationships of pure mutual choice, where both partners experience freedom and commitment as complementary rather than competing forces.
+
+intimacy_capacity:
+  1:
+    endorphins: >
+      Physical closeness feels awkward or overwhelming without the natural reward that makes vulnerability pleasurable. Eye contact triggers discomfort rather than connection, as the bonding chemistry fails to activate during moments that should generate warmth. Sharing personal thoughts feels risky without payoff—there's no euphoric release that makes emotional nakedness worth the exposure. Nurturing behaviors toward partners or family members feel depleting rather than mutually rewarding because the acts of care don't trigger natural satisfaction.
+  2:
+    endorphins: >
+      Occasional breakthrough moments where physical affection or vulnerable conversation unexpectedly feels good, creating curiosity about deeper connection. Beginning to experience the "afterglow" of intimate sharing—a subtle warmth that lingers after taking emotional risks with trusted others. Eye contact sometimes generates surprising comfort rather than anxiety, though the pattern remains inconsistent. Nurturing acts toward loved ones occasionally produce satisfaction rather than just obligation, hinting at the reward potential in caregiving.
+  3:
+    endorphins: >
+      Physical and emotional closeness reliably generates warmth and satisfaction, creating sustainable intimacy patterns in romantic and family relationships. Vulnerable conversations produce a sense of relief and bonding that reinforces openness with trusted others. Eye contact and gentle touch trigger natural comfort responses that make intimacy feel safe rather than exposing. Caregiving behaviors toward partners, children, or close friends generate their own reward, creating self-sustaining cycles of nurturing and connection.
+  4:
+    endorphins: >
+      Actively cultivates spaces for deep intimacy, recognizing that vulnerability shared creates powerful bonding experiences that feel almost transcendent. Physical closeness and emotional nakedness generate profound satisfaction, making intimacy a primary source of wellbeing and meaning. Can hold sustained eye contact during difficult conversations, finding that the intensity itself produces unexpected sweetness and mutual trust. Nurturing becomes a sophisticated language of love, where acts of care are intrinsically rewarding and create visible safety for others to be fully themselves.
+  5:
+    endorphins: >
+      Intimacy operates as an autonomous generative force, creating its own deepening cycles of vulnerability and reward independent of outcome or reciprocity. The capacity to be emotionally naked feels completely natural and produces such profound satisfaction that it draws others into deeper authenticity. Physical presence and gentle attentiveness generate an almost meditative state of connection where boundaries soften without losing selfhood. Creates transformative intimacy environments where others experience their own vulnerability as safe and even euphoric, as if the well-developed capacity for connection becomes contagious through demonstrated embodiment.
+
+social_energy:
+  1:
+    endorphins: >
+      Social gatherings feel draining rather than energizing because group interaction doesn't trigger the reward chemistry that makes collective experience pleasurable. Extended socializing depletes without replenishing, as there's no euphoric release from laughter, shared experience, or group bonding. Preference defaults to solitary activities not from true introversion but from the absence of social reward signals. Large groups feel especially overwhelming because the complexity of multiple interactions never crystallizes into the uplifting chemistry of collective joy.
+  2:
+    endorphins: >
+      Beginning to experience occasional moments of genuine pleasure in group settings—a shared laugh that feels surprisingly good, a party moment that generates unexpected warmth. Social energy remains inconsistent, with some gatherings leaving a pleasant afterglow while others still feel purely depleting. Starting to distinguish between social contexts that activate reward (close friends, playful activities) versus those that don't (obligatory networking, superficial conversation). The recharge calculus becomes more nuanced than simple introversion/extroversion as the system learns what kinds of social interaction actually generate satisfaction.
+  3:
+    endorphins: >
+      Derives reliable reward from social connection, whether in intimate one-on-one conversations or group celebrations, though has clear preferences about context and depth. Laughter and shared experiences trigger genuine euphoria that makes socializing inherently reinforcing rather than effortful. Energy levels after social interaction reflect actual engagement quality rather than just time spent—a meaningful dinner party can feel energizing while superficial mingling depletes. Has developed intuitive sense of optimal social diet, balancing group energy with solitary recharge based on what generates sustainable wellbeing.
+  4:
+    endorphins: >
+      Experiences social connection as a primary source of natural euphoria, actively seeking opportunities for shared laughter, celebration, and collective experience. Group activities generate powerful satisfaction, particularly when involving playful interaction, synchronized movement, or communal joy. Can sustain extended social engagement without depletion because the bonding chemistry continuously replenishes energy reserves. Creates social environments that feel uplifting to others, as the authentic pleasure in connection becomes contagious and draws people into more rewarding interaction patterns.
+  5:
+    endorphins: >
+      Social energy operates as a self-generating system where connection creates its own expanding reward cycles independent of external validation. Group experiences trigger almost transcendent states of collective joy—communal laughter, shared music, celebration rituals produce powerful natural highs. Can move fluidly between intimate depth and playful group energy, finding profound satisfaction across the entire social spectrum. The capacity to generate and amplify collective euphoria makes them a catalyst for community bonding, as others experience heightened joy and connection simply through shared presence.
+
+playfulness:
+  1:
+    endorphins: >
+      Spontaneous play feels uncomfortable or pointless because there's no reward chemistry to make "useless" activities pleasurable. Humor and silliness trigger self-consciousness rather than joy, as the laughter response doesn't generate the euphoria that reinforces playful behavior. Novelty-seeking remains minimal because exploration and experimentation feel risky without the natural high that makes discovery rewarding. Creative expression stays goal-oriented and serious, unable to access the loose, experimental state where play becomes its own reward.
+  2:
+    endorphins: >
+      Beginning to experience moments of genuine pleasure in spontaneous silliness—a joke that lands, a playful interaction that feels surprisingly good. Occasional activities pursued purely for process enjoyment rather than outcome, though the pattern remains inconsistent. Novelty sometimes triggers curiosity and mild euphoria, hinting at the reward potential in exploration and experimentation. Creative expression shows emerging looseness, with brief windows where the activity itself generates satisfaction independent of quality or purpose.
+  3:
+    endorphins: >
+      Experiences reliable joy in playful interaction, spontaneous humor, and creative experimentation pursued for its own sake. Laughter generates genuine euphoria that reinforces lighthearted connection with friends and family. Novelty-seeking in hobbies and personal exploration produces satisfaction from the discovery process itself, not just outcomes. Can access the unselfconscious state where being silly, trying new things, or creating without purpose feels naturally rewarding and restorative.
+  4:
+    endorphins: >
+      Actively cultivates playfulness as a primary source of wellbeing, recognizing that spontaneous joy and creative exploration generate powerful natural highs. Humor and lighthearted interaction become sophisticated social tools for creating connection and diffusing tension. Pursues novelty and experimentation with enthusiasm, finding profound satisfaction in the explorer's mindset regardless of whether experiments succeed. Creative expression operates in a flow state where the process itself is euphoric, making play a renewable source of meaning and vitality.
+  5:
+    endorphins: >
+      Playfulness operates as an autonomous life force, generating its own reward cycles that fuel creativity, exploration, and joyful connection. Spontaneity and humor emerge effortlessly, creating environments where others feel permission to be silly and experimental. Novelty-seeking becomes almost meditative, with each new experience triggering genuine wonder and satisfaction independent of utility. The capacity to find joy in pure process transforms daily life into creative play, where even mundane activities can be approached with the experimental curiosity that makes existence feel perpetually fresh and rewarding.
+
+purpose_and_meaning:
+  1:
+    endorphins: >
+      Life satisfaction remains tethered to external achievement because there's no internal reward system for value-aligned living or contribution. Caregiving and community service feel depleting rather than meaningful, lacking the natural satisfaction that makes service intrinsically rewarding. Spiritual or philosophical practice feels empty without the euphoric sense of transcendence that reinforces contemplative pursuits. Meaning must be constantly manufactured through accomplishment because the body doesn't generate its own sense of rightness from purpose-driven choices.
+  2:
+    endorphins: >
+      Beginning to experience occasional moments of deep satisfaction from value-aligned actions or community contribution that surprise with their intensity. Acts of caregiving or service sometimes produce unexpected warmth and fulfillment that lingers afterward. Contemplative practices or philosophical reflection occasionally trigger a sense of peace or clarity that hints at intrinsic reward. The relationship between external achievement and wellbeing becomes less absolute as glimpses of meaning emerge from non-material sources.
+  3:
+    endorphins: >
+      Derives reliable satisfaction from living according to personal values, with aligned choices generating their own sense of rightness and peace. Community contribution and caregiving produce genuine fulfillment that reinforces service-oriented behavior as intrinsically rewarding. Spiritual or reflective practices trigger states of contentment and perspective that make contemplation self-sustaining. Life meaning operates semi-independently from external achievement, with purpose itself becoming a renewable source of wellbeing.
+  4:
+    endorphins: >
+      Value-aligned living generates profound satisfaction that operates independently of recognition or outcome, creating self-sustaining purpose cycles. Caregiving, legacy-building, and generational connection produce deep fulfillment that rivals or exceeds material success as a source of wellbeing. Philosophical or spiritual practice triggers transcendent states that make meaning-making a primary source of natural euphoria. Has developed sophisticated capacity to metabolize life experience into wisdom, finding the thread of purpose even through difficulty and uncertainty.
+  5:
+    endorphins: >
+      Purpose operates as an autonomous meaning-generating system where value-aligned living creates its own perpetual reward independent of external validation. Service and contribution trigger such profound satisfaction that caregiving becomes a primary life orientation, sustained entirely by intrinsic fulfillment. Contemplative practice produces transcendent states of connection to something larger, making philosophical or spiritual engagement a reliable source of natural euphoria. Life itself feels inherently meaningful because the body has learned to generate deep contentment from the simple fact of living according to values, creating legacy, and participating in community—the journey has become completely sufficient as its own destination.
+
+healing_capacity:
+  1:
+    endorphins: >
+      Emotional wounds remain raw and unprocessed because the natural pain relief system fails to engage during grief or trauma recovery. Breakups, losses, and major transitions trigger prolonged suffering without the gradual softening that should metabolize pain into acceptance. Post-traumatic patterns persist because there's no neurochemical reward for reorganizing after loss—the brain stays stuck in threat mode. Painful experiences accumulate as bitterness rather than wisdom because the body can't find meaning or closure in the processing of old hurts.
+  2:
+    endorphins: >
+      Beginning to experience moments where old wounds feel less sharp, though healing remains inconsistent and unpredictable. Occasional breakthroughs where crying or remembering produces unexpected relief, hinting at the body's capacity to metabolize emotional pain. Some difficult experiences start to integrate into narrative wisdom rather than remaining purely traumatic, showing early neuroplastic reorganization. Recovery after setbacks shows emerging resilience—not every trigger sends the system into full collapse, suggesting developing natural pain management.
+  3:
+    endorphins: >
+      Processes emotional wounds with reliable gradual softening, as the pain relief system engages consistently during grief and trauma recovery. Breakups and losses hurt acutely but metabolize over time into acceptance and new meaning, rather than calcifying into chronic bitterness. Shows adaptive resilience after major transitions, reorganizing identity and purpose without remaining stuck in past patterns. Difficult experiences convert into wisdom through natural integration processes, with old pain eventually becoming source material for empathy and perspective.
+  4:
+    endorphins: >
+      Demonstrates remarkable capacity to transform emotional wounds into growth, as the pain processing system generates its own healing momentum. Grief and trauma move through predictable integration phases, with each stage of mourning creating its own form of relief and resolution. Post-traumatic reorganization happens with unusual fluidity, as the brain actively seeks new patterns and meanings after disruption. Painful experiences become teachers almost automatically, metabolized into hard-won wisdom that deepens rather than hardens the capacity for connection and vulnerability.
+  5:
+    endorphins: >
+      Healing operates as an autonomous generative system where emotional pain triggers its own transformation into meaning and growth. Processes trauma and loss with almost alchemical capacity, converting suffering into wisdom so reliably that difficulty becomes catalyst rather than obstacle. The neuroplastic reorganization after major life disruptions happens with such completeness that identity can be fully rebuilt around new purposes and connections. Embodies living proof that humans can metabolize any experience into integration—the scars become sources of strength, the losses become openings, and chronic grief transforms into a refined capacity for presence with both joy and sorrow.
+```

@@ -1,0 +1,120 @@
+```yaml
+Persistence:
+  1:
+    gaba: >
+      Project follow-through collapses when immediate rewards disappear or obstacles multiply. Tedious compliance work and documentation requirements trigger rapid disengagement, with incomplete deliverables rationalized as lower priority. Debugging sessions abort prematurely when solutions aren't immediately visible, leaving technical debt unresolved. Career trajectory shows pattern of abandoned initiatives and half-finished infrastructure improvements whenever the work becomes monotonous.
+  2:
+    gaba: >
+      Sustained effort emerges inconsistently—some debugging sessions persist through frustration while others collapse at similar difficulty thresholds. Legacy codebase maintenance happens in bursts rather than steady progression, creating uneven technical debt management. Compliance work gets completed but often requires external pressure or deadline proximity to overcome monotony resistance. Performance reviews note capable execution paired with premature project abandonment when intrinsic interest wanes.
+  3:
+    gaba: >
+      Steady completion of unglamorous work establishes reliable project delivery, though enthusiasm visibly declines during extended maintenance phases. Documentation and regulatory requirements receive consistent attention without requiring constant managerial oversight, supporting cross-functional team coordination. Multi-month initiatives maintain forward momentum through predictable setback cycles, with recovery time from frustration measured in hours rather than days. Stakeholder management benefits from dependable follow-through even when work loses novelty or immediate reward.
+  4:
+    gaba: >
+      Strategic persistence drives completion of organizationally critical but personally unrewarding infrastructure projects that others abandon. Technical debt reduction becomes sustained focus area, with methodical debugging sessions extending across days without motivational decay. Compliance and documentation work receives proactive attention as recognized enablers of long-term system stability rather than obligatory burdens. Career advancement reflects reputation for finishing difficult, tedious initiatives that require sustained concentration beyond typical deadline-driven urgency.
+  5:
+    gaba: >
+      Autonomous pursuit of long-horizon technical improvements operates independently of external recognition or short-cycle reward structures. Legacy system modernization becomes self-directed multi-quarter focus, maintaining intensity through countless setbacks and monotonous refactoring cycles. Regulatory and documentation excellence emerges as personal standard rather than compliance minimum, creating organizational knowledge infrastructure others depend upon. Executive presence reflects unusual capacity to sustain strategic initiatives through extended periods of invisible progress and thankless implementation work.
+
+Stress_Capacity:
+  1:
+    gaba: >
+      Decision-making quality degrades rapidly during production incidents, with reactive troubleshooting creating secondary failures. Post-crisis recovery extends across days, accumulating burnout that diminishes baseline performance and deadline resilience. Stakeholder communications during high-pressure situations show visible emotional leakage—anxiety transmits directly to team dynamics and client relationships. Competing urgent priorities trigger paralysis or arbitrary task-switching rather than strategic triage, compromising project delivery across multiple workstreams.
+  2:
+    gaba: >
+      Crisis performance shows emerging stability—some security breaches managed with clear thinking while similar incidents provoke reactive scrambling. Recovery from high-pressure periods remains inconsistent, with burnout accumulation variable across quarters depending on stressor intensity and duration. Stakeholder expectation management during tight deadlines sometimes maintains composure, other times reveals stress through communication breakdown. Team dynamics reflect partial stress absorption, with pressure occasionally cascading downward during simultaneous urgent demands.
+  3:
+    gaba: >
+      Production incidents elicit measured troubleshooting protocols rather than panic responses, maintaining diagnostic clarity under time pressure. Stress recovery follows predictable patterns—performance returns to baseline within days rather than weeks, supporting sustainable deadline cycles. Multiple competing priorities receive rational triage based on organizational impact rather than whoever escalates loudest. Stakeholder communications during crises remain professional and solution-focused, absorbing reasonable anxiety without transmitting volatility to cross-functional partners or direct reports.
+  4:
+    gaba: >
+      Strategic clarity actually strengthens during high-stakes incidents, with crisis conditions activating enhanced focus rather than degrading decision quality. Rapid stress recovery enables consecutive high-pressure cycles without accumulated burnout—quarterly performance metrics show consistent delivery despite variable organizational turbulence. Team dynamics benefit from deliberate stress absorption, creating psychological safety where direct reports maintain performance during periods that destabilize adjacent departments. Executive presence during board-level crises demonstrates unusual composure that reassures stakeholders and enables effective change management.
+  5:
+    gaba: >
+      Autonomous stress regulation creates organizational anchor point during existential threats—layoffs, competitive disruption, or technical catastrophes. Crisis leadership becomes independent operational mode, sustaining strategic coordination across simultaneous emergency responses without visible degradation. Recovery from extreme pressure situations occurs within hours rather than days, enabling sustained high-performance periods that would incapacitate most peers. Organizational influence stems partly from demonstrated capacity to absorb stress that would otherwise fragment executive decision-making and cascade through team dynamics.
+
+Work_Life_Balance:
+  1:
+    gaba: >
+      Professional boundaries dissolve under minimal pressure, with evening and weekend work becoming default regardless of actual urgency. Communication responsiveness operates continuously—Slack messages and emails trigger immediate attention independent of personal context or stated working hours. Burnout signals go unrecognized until performance collapse forces intervention, creating crisis-recovery cycles that compromise both career trajectory and personal relationships. Sustainable pacing never establishes; all project modes default to heroic sprint with predictable exhaustion aftermath.
+  2:
+    gaba: >
+      Boundary-setting emerges inconsistently—some weeks maintain separation between professional and personal time while others revert to continuous availability. After-hours disconnection happens sporadically, often determined by external factors rather than intentional practice or burnout prevention strategy. Personal health and relationship prioritization competes with career demands rather than complementing them, creating zero-sum tradeoffs that vary by quarter. Performance reviews note capable delivery paired with visible sustainability concerns and irregular self-care patterns.
+  3:
+    gaba: >
+      Established boundaries support predictable work-life separation, with after-hours communication limited to genuine emergencies rather than habitual availability. Burnout signals receive recognition and trigger proactive schedule adjustments—vacation days actually get used rather than accumulated indefinitely. Personal relationships and health maintenance receive consistent time allocation without requiring crisis justification, supporting steady career performance over extended periods. Stakeholder management includes educating partners on sustainable expectation-setting rather than accepting unlimited demand.
+  4:
+    gaba: >
+      Strategic boundary architecture enables high performance without heroic unsustainability—intense work periods alternate with genuine recovery cycles by design. Communication protocols establish clear availability windows that cross-functional teams learn to respect, modeling healthy practices that influence team dynamics. Personal priorities receive explicit resource allocation in calendar and energy budgeting, creating integration rather than work-life conflict. Career advancement reflects demonstrated capacity for sustainable excellence rather than burnout-prone sprint performance, building organizational influence through reliable long-term delivery.
+  5:
+    gaba: >
+      Autonomous life design creates seamless professional-personal integration where boundaries serve growth rather than merely prevent collapse. Work intensity flexes strategically around personal commitments treated as non-negotiable—family events, health routines, and relationship investment operate as primary architecture with career fitting within rather than consuming available capacity. Burnout prevention becomes obsolete concept; sustainable pacing generates rather than depletes energy across years. Executive presence models alternative success paradigm where career achievement and personal flourishing operate synergistically, influencing organizational culture around performance sustainability.
+
+Emotional_Regulation:
+  1:
+    gaba: >
+      Workplace conflict triggers immediate reactive responses—anger displays during code reviews, defensive escalation in cross-functional disagreements, or visible anxiety during performance discussions. Email communications composed while frustrated create stakeholder management problems requiring subsequent damage control and relationship repair. Project setbacks produce emotional volatility that destabilizes team dynamics, with frustration expressed through withdrawal or interpersonal friction rather than constructive processing. Career advancement suffers from reputation for unpredictable reactions that make others hesitant to deliver critical feedback or involve in high-stakes negotiations.
+  2:
+    gaba: >
+      Emotional management shows emerging capacity—some interpersonal conflicts handled with composure while similar situations still trigger reactive patterns. Frustration processing varies between constructive problem-solving and explosive or withdrawn responses depending on stressor accumulation and context. Team interactions reflect partial impulse control, with professional demeanor maintained during stakeholder presentations but breaking down in internal disagreements. Performance feedback reveals awareness of regulation challenges paired with inconsistent application of coping strategies when pressure intensifies.
+  3:
+    gaba: >
+      Workplace composure remains stable during typical interpersonal friction, with measured responses replacing immediate reactivity during technical disagreements or resource conflicts. Frustration finds constructive outlets—direct conversation rather than passive-aggressive communication, problem-focused meetings rather than blame escalation. Stakeholder management benefits from emotional consistency that builds trust across cross-functional partnerships, even during tense deadline negotiations or change management resistance. Career trajectory reflects reputation for professionalism under stress, supporting leadership opportunities requiring steady presence during team conflict.
+  4:
+    gaba: >
+      Strategic emotional processing enables authentic feeling without behavioral hijacking—genuine frustration coexists with deliberate response selection during heated technical debates. Interpersonal conflict becomes opportunity for relationship strengthening rather than damage requiring repair, with composure maintained while still honoring legitimate anger or disappointment. Team dynamics benefit from modeled regulation, showing direct reports how to process setbacks constructively rather than explosively or through withdrawal. Executive presence includes capacity to absorb emotional intensity from stakeholders while maintaining clear decision-making during organizational crisis.
+  5:
+    gaba: >
+      Autonomous emotional architecture creates organizational steadiness during high-volatility periods—layoff communications, merger uncertainty, or strategic pivot announcements. Full emotional range operates without compromising professional effectiveness; anger, anxiety, and frustration inform rather than control behavioral choices across extended high-stakes negotiations. Interpersonal relationships deepen through conflict rather than avoiding it, with regulation capacity enabling genuine disagreement without defensive reactivity or relationship rupture. Organizational influence stems partly from demonstrated emotional maturity that qualifies for crisis leadership roles requiring steady presence when others become destabilized.
+
+Attachment_Security:
+  1:
+    gaba: >
+      Professional relationships show excessive monitoring patterns—tracking manager availability as proxy for job security, interpreting routine feedback as rejection signals, or requiring constant collaboration validation. Cross-functional partnerships suffer from either possessive territorial behavior or anxious over-accommodation that compromises technical standards. Stakeholder management reflects difficulty trusting delegation, with micromanagement stemming from abandonment concerns rather than legitimate oversight needs. Career networking attempts trigger visible anxiety, with professional intimacy either avoided entirely or pursued with inappropriate intensity.
+  2:
+    gaba: >
+      Trust patterns emerge inconsistently across professional relationships—some stakeholder partnerships develop healthy autonomy while others trigger monitoring or control behaviors. Managerial relationships show variable security, with performance feedback sometimes received neutrally and other times activating disproportionate anxiety about job stability. Team dynamics reflect partial comfort with both collaboration intimacy and independent work, though stress conditions revert to either clingy or avoidant patterns. Organizational relationships demonstrate awareness of attachment challenges paired with uneven capacity to maintain secure connection during uncertainty.
+  3:
+    gaba: >
+      Professional relationships maintain stable trust without excessive reassurance-seeking or defensive independence—managers can travel without triggering abandonment concerns, colleagues can disagree without jeopardizing partnership. Cross-functional collaboration balances autonomy and interdependence appropriately, with delegation comfort supporting effective resource allocation and team development. Stakeholder management shows consistent emotional availability across project cycles, neither withdrawing during stress nor becoming controlling when outcomes feel uncertain. Career networking builds genuine relationships rather than transactional connections, supporting organic organizational influence.
+  4:
+    gaba: >
+      Strategic relationship security enables high-trust distributed leadership—comfortable granting significant autonomy to direct reports while remaining genuinely available rather than hands-off avoidant. Executive partnerships tolerate extended independent work without requiring constant coordination check-ins, supporting efficient cross-functional project delivery at scale. Stakeholder disagreement strengthens rather than threatens professional bonds, with conflict processed as information rather than relationship risk. Career advancement reflects reputation for secure collaboration that makes others feel simultaneously trusted and supported, qualifying for leadership roles requiring both intimacy and appropriate distance.
+  5:
+    gaba: >
+      Autonomous attachment architecture creates unusual organizational relationship capacity—simultaneous deep trust and comfort with extended separation across global teams or long-horizon independent initiatives. Professional intimacy operates without possessiveness; mentorship relationships genuinely celebrate protégé success including departure to competitor organizations. Executive presence includes capacity to form rapid high-trust bonds during crisis without subsequent anxious monitoring, supporting effective change management and merger integration. Organizational influence stems partly from demonstrated relationship security that enables others to bring authentic challenges without fear of judgment or abandonment, creating psychological safety that accelerates team performance.
+
+Self_Awareness:
+  1:
+    gaba: >
+      Behavioral pattern recognition remains externally dependent—performance gaps become visible only through formal reviews rather than internal monitoring. Personal triggers and habitual reactions go unnoticed until stakeholders explicitly name their impact, creating repeated interpersonal friction from identical root causes. Feedback reception shows defensive distortion; critical input gets rationalized away rather than integrated, preventing growth from cross-functional observations about intention-impact gaps. Career development suffers from inability to accurately self-assess strengths and limitations, leading to role mismatches and surprised confusion when advancement doesn't materialize.
+  2:
+    gaba: >
+      Self-monitoring emerges inconsistently—some emotional states recognized accurately while others remain opaque until external consequences clarify internal dynamics. Behavioral pattern awareness varies; certain habitual reactions become visible through reflection while others continue operating outside conscious recognition. Feedback integration shows partial defensive reduction, with some critical input processed constructively and other observations rejected through rationalization. Performance development reflects growing awareness of personal biases and triggers, though application of insights remains uneven across professional contexts.
+  3:
+    gaba: >
+      Steady self-assessment supports realistic career planning and role selection, with honest appraisal of both capabilities and development areas informing strategic decisions. Emotional state monitoring operates reliably enough to recognize stress accumulation before performance impact, enabling proactive intervention rather than reactive damage control. Feedback reception maintains openness without defensive collapse—critical stakeholder input gets integrated as valuable data rather than personal attack. Team dynamics benefit from modeled self-awareness, showing others how to acknowledge intention-impact gaps and adjust behavior without shame spiraling.
+  4:
+    gaba: >
+      Strategic self-knowledge creates accelerated development cycles—behavioral patterns receive real-time recognition rather than retrospective discovery, enabling immediate course correction during stakeholder interactions. Personal bias awareness informs decision-making architecture, with known blind spots triggering deliberate external input before committing resources. Feedback actively solicited rather than merely tolerated, with 360-degree input treated as competitive advantage for leadership development. Executive presence includes unusual comfort discussing personal limitations and growth areas, modeling vulnerability that strengthens rather than undermines organizational influence.
+  5:
+    gaba: >
+      Autonomous self-reflection operates as continuous background process—behavioral patterns, emotional states, and habitual reactions receive ongoing monitoring that updates personal operating model in real-time. Intention-impact gaps become immediately visible through developed internal observation capacity, preventing repeated interpersonal friction from unrecognized patterns. Critical feedback triggers genuine curiosity rather than defensiveness; stakeholder observations about blind spots get integrated rapidly because internal monitoring already detected the pattern. Career trajectory reflects unusual developmental velocity stemming from accurate self-knowledge that enables precise capability building and strategic role selection optimizing natural strengths.
+
+Inner_Peace:
+  1:
+    gaba: >
+      Baseline anxiety permeates professional presence—restless energy during stakeholder meetings, difficulty remaining present during strategic planning sessions requiring stillness. Sleep disruption follows predictable work cycle pattern, with racing thoughts about project status preventing recovery that would support next-day performance. Contentment requires continuous external validation—achievement metrics, recognition signals, or visible progress—with gaps triggering immediate discomfort. Career advancement pursued partly as anxiety management strategy rather than genuine aspiration, creating perpetual striving without arrival experience even when milestones achieved.
+  2:
+    gaba: >
+      Calm baseline emerges inconsistently—some work periods show comfortable groundedness while others revert to restless tension regardless of objective circumstances. Sleep quality varies unpredictably across weeks, with circadian rhythm stability influenced by stressors but also breaking down during objectively calm periods. Moments of stillness become tolerable rather than anxiety-provoking, though sustained periods without productivity or external stimulation still trigger discomfort. Professional presence shows partial comfort simply being in meetings without needing to perform or produce visible value every moment.
+  3:
+    gaba: >
+      Steady baseline calm supports executive presence that reassures stakeholders without requiring performative confidence displays. Sleep quality remains stable through normal work cycle variations, with circadian rhythm supporting consistent cognitive performance and emotional regulation capacity. Contentment operates partially independent of achievement validation—periods between major milestones feel sustainable rather than threatening, though external recognition still provides meaningful reinforcement. Strategic planning sessions access genuine stillness, enabling reflective thinking rather than requiring constant motion or stimulation to tolerate ambiguity.
+  4:
+    gaba: >
+      Grounded presence creates notable stakeholder impact—cross-functional partners describe feeling calmer after interactions, with peaceful baseline transmitting through team dynamics during uncertainty. Sleep operates as reliable recovery mechanism with strong circadian architecture, supporting sustained high performance without accumulated deficit. Contentment without external validation enables patient capital allocation and long-horizon strategic thinking, with organizational influence stemming partly from comfort with invisible progress periods. Executive presence includes unusual stillness capacity during high-stakes negotiations, with silence operating as strategic tool rather than anxiety trigger requiring verbal filling.
+  5:
+    gaba: >
+      Autonomous peace architecture operates independently of external circumstances—organizational turbulence, career setbacks, or competitive threats leave baseline calm fundamentally undisturbed. Professional presence reflects unusual groundedness that becomes organizational anchor during existential crisis, with others explicitly seeking proximity for stabilizing effect. Achievement and recognition shift from validation sources to simple information, with contentment preceding rather than following success metrics. Leadership influence stems partly from demonstrated capacity to simply be without needing to do, creating space for strategic reflection and authentic relationship that accelerates team performance through transmitted stillness rather than transmitted urgency.
+```

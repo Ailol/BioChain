@@ -1,0 +1,18 @@
+```yaml
+Sensitivity:
+  1:
+    dynorphin: >
+      Workplace criticism triggers immediate defensive reactions with minimal processing buffer. Stakeholder feedback lands as personal attack rather than professional input, creating short-cycle stress responses that disrupt performance metrics. Team dynamics register primarily as threat or safety signals, with emotional awareness remaining reactive rather than strategic. The professional environment feels like a series of microtraumas requiring constant recovery rather than navigational information.
+  2:
+    dynorphin: >
+      Beginning to distinguish between professional critique and personal rejection, though the distinction remains inconsistent under deadline pressure. Negative feedback still creates disproportionate stress responses that temporarily derail focus, but recovery patterns are emerging. Empathic awareness of team emotional states starts appearing sporadically—sometimes leveraged for stakeholder management, sometimes overwhelming project concentration. The stress-processing system shows early signs of calibration rather than pure reaction.
+  3:
+    dynorphin: >
+      Emotional attunement functions as reliable organizational intelligence without constant overwhelm. Critical feedback generates measured stress responses that inform performance improvement rather than triggering shutdown spirals. Team emotional dynamics are read accurately and integrated into cross-functional leadership decisions with appropriate boundaries. The system maintains empathic awareness while preserving deadline resilience—sensitivity serves as professional asset rather than liability, with stress responses proportional to actual organizational stakes.
+  4:
+    dynorphin: >
+      Sophisticated emotional pattern recognition drives proactive stakeholder management and change leadership strategies. Stress responses to criticism are metabolized quickly into actionable intelligence about organizational dynamics and team needs. Empathic attunement operates as strategic radar—detecting morale shifts, resistance patterns, and cultural undercurrents that inform resource allocation and executive presence. The sensitivity framework functions as competitive advantage, processing interpersonal complexity without performance degradation even under sustained pressure.
+  5:
+    dynorphin: >
+      Emotional awareness operates as autonomous organizational navigation system generating long-horizon strategic insights. The stress-processing architecture transforms interpersonal feedback into continuous organizational learning loops independent of immediate triggers. Empathic intelligence drives self-sustaining stakeholder relationship networks and anticipatory change management frameworks. Sensitivity functions as meta-cognitive tool that reads systemic emotional patterns across departments and hierarchies, creating executive influence through precise attunement to human dynamics while maintaining complete stress resilience under any professional conditions.
+```

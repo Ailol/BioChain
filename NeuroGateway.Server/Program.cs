@@ -114,13 +114,18 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
         ? new ChatClient(CreateChatClient(llm.AgentLayer))
         : reasoningChatClient;
 
+    // ChatClient for orchestrator (document chunking — Qwen3-32B-AWQ, 16K context)
+    var orchestratorClient = new ChatClient(CreateChatClient(llm.Orchestrator!));
+
     // Embedding generator (optional — null if not configured)
     var embedGen = CreateEmbeddingGenerator(llm.Embedding);
     if (embedGen is not null)
     {
         services.AddSingleton(embedGen);
         services.AddSingleton<EmbeddingService>();
+        services.AddSingleton<ShadowAnchorService>();
         services.AddSingleton<DimensionService>();
+        services.AddSingleton<CalibrationService>();
     }
 
     // Services
@@ -128,10 +133,12 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<AnalyzeService>();
     services.AddSingleton<ProfileService>();
     services.AddSingleton(sp => new NeuroService(
+        orchestratorClient,
         reasoningChatClient,
         layerChatClient,
         sp.GetRequiredService<AgentTemplateRepository>(),
-        sp.GetRequiredService<AnalyzeService>()));
+        sp.GetRequiredService<AnalyzeService>(),
+        sp.GetRequiredService<DimensionService>()));
 
     LogLlmConfig(llm);
 }

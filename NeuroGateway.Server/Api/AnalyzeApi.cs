@@ -49,9 +49,27 @@ public static class AnalyzeApi
             });
         });
 
+        group.MapPost("/orchestrator", async (OrchestratorChatRequest req, NeuroService svc, CancellationToken ct) =>
+        {
+            var messages = req.Messages.Select(m =>
+                new Microsoft.Extensions.AI.ChatMessage(
+                    m.Role.Equals("user", StringComparison.OrdinalIgnoreCase)
+                        ? Microsoft.Extensions.AI.ChatRole.User
+                        : m.Role.Equals("system", StringComparison.OrdinalIgnoreCase)
+                            ? Microsoft.Extensions.AI.ChatRole.System
+                            : Microsoft.Extensions.AI.ChatRole.Assistant,
+                    m.Content)).ToList();
+
+            var response = await svc.OrchestratorChatAsync(req.Person, messages, ct);
+            return Results.Ok(new { response });
+        });
+
         return group;
     }
 }
+
+public record OrchestratorMessage(string Role, string Content);
+public record OrchestratorChatRequest(string Person, List<OrchestratorMessage> Messages);
 
 public record ChatAnalyzeRequest(
     string Person,

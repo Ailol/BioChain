@@ -16,11 +16,16 @@ public class EmbeddingTools(EmbeddingService embeddingService)
     public async Task<string> BackfillEmbeddings(
         [Description("Optional: limit to specific person")] string? person = null)
     {
-        var count = await embeddingService.BackfillAsync(person);
+        var (adCount, profileCount) = await embeddingService.BackfillAsync(person);
+        var total = adCount + profileCount;
         return JsonSerializer.Serialize(new
         {
-            embeddingsGenerated = count,
-            message = count > 0 ? $"Generated {count} embedding(s)" : "No entries pending embeddings"
+            analyzed_data_embeddings = adCount,
+            profile_embeddings = profileCount,
+            total,
+            message = total > 0
+                ? $"Generated {adCount} analyzed_data + {profileCount} profile embedding(s)"
+                : "No entries pending embeddings"
         }, IndentedJson);
     }
 }

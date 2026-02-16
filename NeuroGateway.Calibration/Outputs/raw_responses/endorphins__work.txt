@@ -1,0 +1,120 @@
+```yaml
+emotional_depth:
+  1:
+    endorphins: >
+      Workplace emotional expression is entirely reactive to immediate stressors, with no buffering capacity against criticism or setbacks. This professional shows minimal resilience during high-pressure deadlines, displaying raw stress responses without natural regulation. Stakeholder conflicts trigger extended distress cycles with little internal recovery mechanism. Performance suffers noticeably after difficult feedback or tense team dynamics, requiring external intervention to restore baseline functioning.
+  2:
+    endorphins: >
+      Beginning signs of natural stress buffering appear during challenging projects, though inconsistently applied. This professional occasionally demonstrates resilience after difficult stakeholder meetings, recovering independently within days rather than hours. Cross-functional tensions still penetrate deeply, but some capacity for processing workplace disappointments is emerging. Recovery patterns are unpredictable—sometimes bouncing back from deadline pressure quickly, other times remaining affected for extended periods.
+  3:
+    endorphins: >
+      Moderate emotional resilience allows this professional to absorb project setbacks and critical feedback without extended disruption to performance. Workplace stress triggers natural regulatory responses that maintain steady executive presence during organizational turbulence. Team conflicts and resource allocation battles are processed with appropriate intensity but don't derail strategic focus. This balanced approach creates reliable stakeholder relationships built on authentic engagement without emotional volatility.
+  4:
+    endorphins: >
+      Strong internal resilience system transforms workplace adversity into strategic learning rather than persistent wounds. This professional demonstrates exceptional deadline resilience, maintaining composure and performance quality under sustained pressure. Difficult stakeholder negotiations and organizational change are processed deeply yet constructively, with natural recovery that strengthens rather than depletes. Executive presence remains stable through crisis management, converting challenging experiences into enhanced organizational influence and leadership credibility.
+  5:
+    endorphins: >
+      Autonomous emotional processing system generates continuous resilience that operates independent of external workplace conditions. This professional's capacity to sit with organizational complexity and ambiguity creates self-sustaining leadership presence during multi-year transformations. Crisis situations activate rather than deplete performance, with natural stress conversion mechanisms that enhance strategic clarity. The depth of engagement with workplace challenges creates powerful stakeholder trust and cross-functional influence, as others experience this leader's genuine presence during difficulty as stabilizing and transformative.
+
+attachment_security:
+  1:
+    endorphins: >
+      Professional relationships are fragile, requiring constant external validation to maintain collaborative functioning. Team autonomy triggers anxiety about project control and career advancement, leading to micromanagement patterns. Stakeholder independence is experienced as abandonment rather than healthy partnership, disrupting cross-functional initiatives. This professional cannot sustain collaborative confidence without continuous reassurance about their organizational value and position security.
+  2:
+    endorphins: >
+      Emerging capacity for trusting team members without excessive oversight appears inconsistently across projects. This professional occasionally allows stakeholder autonomy without anxiety spirals, though retreats to controlling behaviors under deadline pressure. Moments of secure collaboration alternate with possessive resource allocation and fear-driven project management. Recovery from perceived professional slights is developing but remains fragile and context-dependent.
+  3:
+    endorphins: >
+      Balanced trust enables effective delegation and stakeholder partnership without abandonment anxiety or excessive control. This professional maintains collaborative relationships through organizational changes and shifting team compositions with steady confidence. Cross-functional leadership reflects comfort with both deep partnership and healthy professional boundaries. Resource allocation decisions demonstrate security—sharing credit and opportunity without scarcity-driven hoarding that undermines team dynamics.
+  4:
+    endorphins: >
+      Strong relational security creates powerful stakeholder partnerships built on mutual autonomy and sustained trust. This professional navigates career transitions and organizational restructuring without clinging to specific teams or defensive territoriality. Executive presence reflects deep confidence in professional value independent of particular relationships or positions. Change management initiatives benefit from this leader's capacity to maintain connection while encouraging team growth and independence.
+  5:
+    endorphins: >
+      Autonomous professional security generates self-sustaining collaborative networks that transcend organizational structures and reporting relationships. This leader's capacity for trusting without anxiety creates organizational influence extending far beyond formal authority. Stakeholder relationships withstand extended separation, role changes, and even competitive dynamics without deterioration. The secure base this professional provides transforms team dynamics across the organization, enabling radical autonomy and psychological safety that drives exceptional performance and innovation.
+
+intimacy_capacity:
+  1:
+    endorphins: >
+      Professional interactions remain entirely transactional, with no capacity for vulnerable stakeholder dialogue or authentic team connection. Performance conversations stay rigidly surface-level, avoiding any genuine disclosure about challenges or uncertainties. Cross-functional relationships lack the trust-building depth required for effective change management. This professional's inability to create safe spaces for difficult conversations limits organizational influence and executive presence.
+  2:
+    endorphins: >
+      Occasional moments of authentic stakeholder engagement emerge, though quickly retracted when vulnerability feels risky. This professional sometimes shares genuine project concerns with trusted colleagues but inconsistently maintains that openness. Team dynamics benefit from emerging willingness to acknowledge mistakes and uncertainties, creating sporadic psychological safety. The pattern remains fragile—deeper professional intimacy appears then disappears based on perceived safety of the immediate context.
+  3:
+    endorphins: >
+      Moderate openness to vulnerable leadership conversations builds reliable stakeholder trust and team psychological safety. This professional shares strategic uncertainties appropriately, creating space for genuine problem-solving rather than defensive posturing. Cross-functional partnerships deepen through mutual disclosure about resource constraints and organizational challenges. Executive presence includes authentic acknowledgment of complexity without oversharing, striking effective balance between transparency and professionalism.
+  4:
+    endorphins: >
+      Strong capacity for professional vulnerability creates transformative stakeholder relationships and exceptional team dynamics. This leader openly discusses strategic doubts and organizational challenges, modeling the psychological safety required for innovation. Performance conversations include genuine mutual exploration rather than hierarchical evaluation, building deep trust. Change management initiatives succeed through this professional's willingness to share the emotional reality of transformation, creating authentic organizational connection.
+  5:
+    endorphins: >
+      Autonomous capacity for deep professional intimacy generates self-sustaining networks of radical trust and psychological safety. This leader's openness about strategic complexity and personal uncertainty creates organizational spaces where others bring their full humanity to work. Cross-functional influence extends through vulnerable sharing that transcends typical executive presence—stakeholders experience unprecedented safety to explore difficult truths. The depth of professional intimacy this person cultivates transforms organizational culture, enabling conversations and innovations impossible in traditional corporate environments.
+
+social_energy:
+  1:
+    endorphins: >
+      Professional gatherings provide no natural reward—conferences, team events, and stakeholder meetings are purely depleting obligations. This professional requires extended isolation to recover from even brief collaborative sessions, limiting networking capacity. Large organizational initiatives suffer because cross-functional engagement drains rather than energizes strategic contribution. Career advancement is constrained by inability to sustain the relational presence required for executive visibility and influence.
+  2:
+    endorphins: >
+      Emerging sources of professional social reward appear inconsistently—some stakeholder interactions energize while most still deplete. This professional occasionally finds team collaboration stimulating but cannot sustain extended cross-functional engagement without exhaustion. Networking events alternate between surprisingly rewarding and entirely draining with little predictability. Developing capacity for social recharge from certain professional contexts, though the pattern remains unreliable for strategic relationship building.
+  3:
+    endorphins: >
+      Balanced social energy enables sustained stakeholder engagement with appropriate recharge cycles built into work patterns. This professional finds moderate reward in team collaboration and cross-functional projects without requiring constant interaction. Organizational influence reflects reliable capacity for both deep one-on-one partnerships and larger group facilitation. Executive presence is maintained through strategic social engagement that respects natural energy patterns rather than forcing unsustainable networking.
+  4:
+    endorphins: >
+      Strong social reward system drives exceptional stakeholder relationship building and cross-functional leadership presence. This professional gains energy from extensive collaborative work, organizational gatherings, and wide networking that advances strategic initiatives. Team dynamics benefit from sustained engagement that doesn't deplete—this leader remains present and effective through extended interaction. Career advancement accelerates through natural capacity for the relational presence that builds organizational influence and executive visibility.
+  5:
+    endorphins: >
+      Autonomous social reward generation creates self-sustaining networks of professional relationships that energize rather than deplete. This leader's capacity for continuous stakeholder engagement drives unprecedented organizational influence across multiple functions and hierarchical levels simultaneously. Large-scale change management initiatives thrive on this professional's genuine energy from extensive human interaction—presence compounds rather than diminishes. The social stamina creates competitive advantage in relationship-intensive leadership, enabling strategic influence impossible for those requiring regular isolation to maintain performance.
+
+playfulness:
+  1:
+    endorphins: >
+      Professional life is entirely goal-oriented with zero capacity for exploratory projects or experimental approaches. This individual demonstrates rigid adherence to established processes, unable to find any reward in creative problem-solving or novel stakeholder engagement. Team interactions remain purely transactional—no humor, spontaneity, or light-hearted connection that builds collaborative relationships. Innovation initiatives fail because this professional experiences no pleasure from experimentation, only anxiety about deviation from proven delivery methods.
+  2:
+    endorphins: >
+      Occasional moments of creative exploration appear in low-stakes projects, though quickly abandoned under deadline pressure. This professional sometimes experiments with novel approaches to stakeholder engagement but inconsistently sustains playful problem-solving. Team dynamics benefit from emerging humor and spontaneity, creating sporadic psychological safety for innovation. The pattern remains fragile—playful experimentation surfaces then disappears based on perceived risk to performance metrics and career advancement.
+  3:
+    endorphins: >
+      Moderate capacity for professional playfulness enables creative problem-solving and innovative stakeholder approaches alongside reliable project delivery. This professional finds balanced reward in both experimental initiatives and established processes, avoiding rigid adherence to either extreme. Team collaboration includes appropriate humor and spontaneity that builds relationships without undermining executive presence. Strategic initiatives benefit from willingness to explore novel solutions while maintaining accountability for organizational outcomes.
+  4:
+    endorphins: >
+      Strong playful engagement with professional challenges drives exceptional innovation and creative stakeholder solutions. This leader finds genuine reward in experimental approaches to complex problems, sustained even under significant deadline pressure. Cross-functional teams benefit from infectious enthusiasm for trying new methods and learning from failures. Change management initiatives succeed through this professional's capacity to make transformation feel exploratory rather than threatening, building organizational energy for strategic pivots.
+  5:
+    endorphins: >
+      Autonomous playfulness generates self-sustaining innovation systems that continuously explore novel approaches independent of external permission. This leader's genuine joy in professional experimentation creates organizational cultures where calculated risk-taking and creative problem-solving become normative. Strategic influence extends through infectious capacity to find delight in complexity and ambiguity that paralyzes others. The sustained playful engagement with work transforms team dynamics across entire functions, enabling breakthrough innovations that emerge from treating serious business challenges as fascinating puzzles worth exploring for their inherent interest.
+
+purpose_and_meaning:
+  1:
+    endorphins: >
+      Professional satisfaction depends entirely on external achievement markers—title, compensation, and visible performance metrics provide no internal meaning. This individual experiences no contentment from value-aligned work, only reactive pursuit of conventional career advancement. Organizational contribution creates zero intrinsic reward independent of recognition and promotion outcomes. Projects lack directional coherence beyond immediate deliverables, with no sense of legacy building or meaningful impact driving strategic choices.
+  2:
+    endorphins: >
+      Emerging sense that certain projects align with deeper values provides inconsistent professional motivation beyond external rewards. This professional occasionally experiences contentment from stakeholder impact and organizational contribution, though pattern remains fragile. Moments of purpose-driven work alternate with purely achievement-focused behavior depending on context and pressure. Developing capacity for finding meaning in team development and knowledge transfer, but external validation still dominates career decision-making.
+  3:
+    endorphins: >
+      Moderate alignment between professional work and deeper values creates balanced satisfaction independent of immediate performance outcomes. This professional finds reliable meaning in stakeholder impact and organizational contribution alongside appropriate attention to career advancement. Strategic initiatives reflect coherent direction toward legacy building rather than scattered pursuit of visible achievements. Team development and knowledge transfer provide genuine contentment, creating sustainable motivation through both success and setback.
+  4:
+    endorphins: >
+      Strong sense of professional purpose drives strategic choices toward meaningful organizational impact independent of conventional advancement. This leader experiences deep contentment from value-aligned work and stakeholder contribution that sustains motivation through extended challenges. Career decisions reflect clear directional purpose transcending immediate goals—legacy building and generational knowledge transfer guide resource allocation. Change management initiatives benefit from authentic commitment to transformation itself rather than personal visibility from leading it.
+  5:
+    endorphins: >
+      Autonomous purpose generation creates self-sustaining professional meaning that operates independent of organizational recognition or career outcomes. This leader's deep alignment between work and values transforms stakeholder relationships—others experience the authentic commitment to contribution rather than advancement. Strategic influence extends through decades-long vision of legacy and impact that transcends typical business cycles and leadership transitions. The profound sense of meaning this professional derives from organizational contribution creates gravitational pull, attracting talent and resources toward initiatives that serve purposes larger than individual achievement or corporate metrics.
+
+healing_capacity:
+  1:
+    endorphins: >
+      Professional setbacks create extended dysfunction with no natural recovery mechanism—failed projects haunt performance for months or years. This individual shows minimal resilience after organizational trauma like layoffs, restructurings, or public failures. Career transitions remain unprocessed wounds rather than integrated learning experiences, creating bitter rather than wise responses. Performance suffers chronically from accumulated grievances and unhealed professional disappointments that compound over time.
+  2:
+    endorphins: >
+      Emerging capacity for processing workplace setbacks appears inconsistently—some failures integrate into learning while others remain raw wounds. This professional occasionally demonstrates resilience after project failures or difficult departures, though recovery timeline remains extended and unpredictable. Organizational changes sometimes transform into wisdom, other times calcify into bitterness depending on context. Developing ability to rebuild meaning after career disruptions, but pattern lacks reliability for sustained high-performance trajectory.
+  3:
+    endorphins: >
+      Moderate healing capacity enables steady recovery from professional setbacks and organizational trauma without extended performance disruption. This professional processes failed initiatives and difficult transitions effectively, converting painful experiences into strategic wisdom. Career resilience reflects balanced ability to reorganize after restructurings, layoffs, or major project failures and rebuild engagement. Stakeholder conflicts and performance disappointments are integrated appropriately—neither suppressed nor endlessly ruminated, supporting sustained executive presence.
+  4:
+    endorphins: >
+      Strong recovery system transforms professional adversity into accelerated growth and enhanced organizational contribution. This leader demonstrates exceptional resilience after career disruptions, processing trauma and transition in ways that deepen rather than diminish strategic capacity. Failed initiatives and difficult departures become integrated wisdom that strengthens stakeholder relationships and change management effectiveness. Executive presence benefits from visible pattern of converting painful experiences into enhanced leadership rather than defensive scarring or bitterness.
+  5:
+    endorphins: >
+      Autonomous healing capacity creates self-sustaining resilience that transforms even severe professional trauma into sources of strategic strength and organizational wisdom. This leader's ability to process career disruptions, public failures, and organizational betrayals generates gravitational influence—others experience the transformation of wounds into integrated insight. Decades of accumulated setbacks have produced profound rather than bitter leadership, with each difficulty contributing to deepening capacity for guiding others through transitions. The visible pattern of converting professional pain into wisdom creates unique stakeholder trust during crisis management, as this leader's presence communicates lived understanding that complexity and suffering can become sources of meaning rather than diminishment.
+```

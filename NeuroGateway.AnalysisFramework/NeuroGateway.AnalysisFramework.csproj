@@ -15,4 +15,8 @@
     <ProjectReference Include="..\NeuroGateway.Models\NeuroGateway.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Constants\ShadowProfiles.yaml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -21,8 +21,10 @@ services:
       - ASPNETCORE_URLS=http://+:13370
       - PERSONALITY_DB=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
       # Per-purpose endpoints (override appsettings.json for Docker networking)
-      - Llm__Orchestrator__Endpoint=http://host.docker.internal:11434
+      - Llm__Orchestrator__Model=claude-sonnet-4-20250514
       - Llm__AgentAnalyzing__Endpoint=http://host.docker.internal:8000
+      - Llm__AgentReasoning__Endpoint=http://host.docker.internal:8000
+      - Llm__AgentLayer__Endpoint=http://host.docker.internal:8000
       - Llm__Embedding__Endpoint=http://host.docker.internal:11434
       - Llm__Embedding__Model=qwen3-embedding:4b
       # API keys come from .env via env_file above
