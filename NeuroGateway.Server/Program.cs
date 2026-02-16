@@ -99,6 +99,9 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<AgentTemplateRepository>();
     services.AddSingleton<RelationshipRepository>();
     services.AddSingleton<ProfileRepository>();
+    services.AddSingleton<ChemicalRepository>();
+    services.AddSingleton<DimensionRepository>();
+    services.AddSingleton<ChemicalInteractionRepository>();
 
     // ChatClient for analyzing agents (AgentAnalyzing — neuro LoRA, SKIP/ADD)
     var analyzingChatClient = new ChatClient(CreateChatClient(llm.AgentAnalyzing!));
@@ -119,6 +122,9 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
 
     // Embedding generator (optional — null if not configured)
     var embedGen = CreateEmbeddingGenerator(llm.Embedding);
+    // DimensionDefinitionsService — DB-backed chemical/dimension lookup
+    services.AddSingleton<DimensionDefinitionsService>();
+
     if (embedGen is not null)
     {
         services.AddSingleton(embedGen);
@@ -138,7 +144,8 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
         layerChatClient,
         sp.GetRequiredService<AgentTemplateRepository>(),
         sp.GetRequiredService<AnalyzeService>(),
-        sp.GetRequiredService<DimensionService>()));
+        sp.GetRequiredService<DimensionService>(),
+        sp.GetRequiredService<DimensionDefinitionsService>()));
 
     LogLlmConfig(llm);
 }
@@ -186,6 +193,9 @@ static async Task RunHttpMode(string[] args)
     var personGroup = app.MapPersonApi();
     app.MapAnalyzeApi();
     app.MapRelationshipApi();
+    app.MapChemicalApi();
+    app.MapChemicalInteractionApi();
+    app.MapDimensionMasterApi();
     if (app.Services.GetService<EmbeddingService>() is not null)
         app.MapEmbeddingApi();
     if (app.Services.GetService<DimensionService>() is not null)

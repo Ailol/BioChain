@@ -1,6 +1,5 @@
 using System.Text;
 using NeuroGateway.AgentFramework;
-using NeuroGateway.AnalysisFramework;
 using NeuroGateway.Models;
 using NeuroGateway.Repository;
 
@@ -12,12 +11,27 @@ public class NeuroService(
     ChatClient layerClient,
     AgentTemplateRepository templateRepo,
     AnalyzeService analyzeService,
-    DimensionService dimensionService)
+    DimensionService dimensionService,
+    DimensionDefinitionsService dimDefs)
 {
     private const int ChunkThreshold = 500; // chars — short messages skip chunking
 
-    private static readonly IReadOnlyDictionary<string, string> ChemicalLayers = DimensionDefinitions.ChemicalToLayer;
-    private static readonly HashSet<string> AllChemicals = new(ChemicalLayers.Keys, StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyDictionary<string, string>? _chemicalLayers;
+    private HashSet<string>? _allChemicals;
+
+    private async Task<IReadOnlyDictionary<string, string>> GetChemicalLayersAsync()
+    {
+        _chemicalLayers ??= await dimDefs.GetChemicalToLayerAsync();
+        return _chemicalLayers;
+    }
+
+    private async Task<HashSet<string>> GetAllChemicalsAsync()
+    {
+        if (_allChemicals is not null) return _allChemicals;
+        var layers = await GetChemicalLayersAsync();
+        _allChemicals = new HashSet<string>(layers.Keys, StringComparer.OrdinalIgnoreCase);
+        return _allChemicals;
+    }
 
     // ── Chat: full 4-step pipeline with suggested response ───────────────────
 
@@ -102,14 +116,16 @@ public class NeuroService(
             ["peptide"] = []
         };
 
+        var chemicalLayers = await GetChemicalLayersAsync();
         foreach (var d in merged)
         {
-            if (ChemicalLayers.TryGetValue(d.Chemical, out var layer))
+            if (chemicalLayers.TryGetValue(d.Chemical, out var layer))
                 layerDecisions[layer].Add(d);
         }
 
+        var allChemicals = await GetAllChemicalsAsync();
         var addedChemicals = new HashSet<string>(merged.Select(d => d.Chemical), StringComparer.OrdinalIgnoreCase);
-        var skipped = AllChemicals.Where(c => !addedChemicals.Contains(c)).Order().ToList();
+        var skipped = allChemicals.Where(c => !addedChemicals.Contains(c)).Order().ToList();
 
         return (merged, layerDecisions, skipped);
     }

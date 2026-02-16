@@ -5,34 +5,34 @@ namespace NeuroGateway.Repository;
 public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
 {
     public async Task InsertAsync(int personalityId, int? analyzedDataId, string chemical,
-        string reasoning, float modulationFactor, string? vectorLiteral)
+        string reasoning, float intensityFactor, string? vectorLiteral)
     {
         await using var db = await factory.CreateDbContextAsync();
         if (vectorLiteral is null)
         {
-            var entity = new Entities.BiochemicalProfileEntity
+            var entity = new Entities.ChemicalObservationEntity
             {
                 PersonalityId = personalityId,
                 AnalyzedDataId = analyzedDataId,
                 Chemical = chemical,
                 Reasoning = reasoning,
-                ModulationFactor = modulationFactor,
+                IntensityFactor = intensityFactor,
                 CreatedAt = DateTime.UtcNow
             };
-            db.BiochemicalProfiles.Add(entity);
+            db.ChemicalObservations.Add(entity);
             await db.SaveChangesAsync();
         }
         else
         {
             await db.Database.ExecuteSqlRawAsync("""
-                INSERT INTO biochemical_profile (personality_id, analyzed_data_id, chemical, reasoning, modulation_factor, embedding, created_at)
+                INSERT INTO chemical_observation (personality_id, analyzed_data_id, chemical, reasoning, intensity_factor, embedding, created_at)
                 VALUES (@p0, @p1, @p2, @p3, @p4, @p5::vector, NOW())
                 """,
                 new Npgsql.NpgsqlParameter("p0", personalityId),
                 new Npgsql.NpgsqlParameter("p1", (object?)analyzedDataId ?? DBNull.Value),
                 new Npgsql.NpgsqlParameter("p2", chemical),
                 new Npgsql.NpgsqlParameter("p3", reasoning),
-                new Npgsql.NpgsqlParameter("p4", modulationFactor),
+                new Npgsql.NpgsqlParameter("p4", intensityFactor),
                 new Npgsql.NpgsqlParameter("p5", vectorLiteral));
         }
     }
@@ -40,7 +40,7 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
     public async Task<List<(string Chemical, string Reasoning)>> GetByPersonAsync(string person)
     {
         await using var db = await factory.CreateDbContextAsync();
-        return await db.BiochemicalProfiles
+        return await db.ChemicalObservations
             .Join(db.Personalities, bp => bp.PersonalityId, p => p.Id, (bp, p) => new { bp, p })
             .Join(db.Persons, x => x.p.PersonId, per => per.Id, (x, per) => new { x.bp, per })
             .Where(x => x.per.FirstName.ToLower() == person.ToLower())
@@ -52,7 +52,7 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
     public async Task<List<(string Chemical, int Count)>> GetChemicalCountsAsync(string person)
     {
         await using var db = await factory.CreateDbContextAsync();
-        return await db.BiochemicalProfiles
+        return await db.ChemicalObservations
             .Join(db.Personalities, bp => bp.PersonalityId, p => p.Id, (bp, p) => new { bp, p })
             .Join(db.Persons, x => x.p.PersonId, per => per.Id, (x, per) => new { x.bp, per })
             .Where(x => x.per.FirstName.ToLower() == person.ToLower())
@@ -79,7 +79,7 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
                         (1 - (bp.embedding <=> @msgVec::vector)) * @msgW
                         + (1 - (bp.embedding <=> @relVec::vector)) * (1 - @msgW) DESC
                     ) AS rn
-                FROM biochemical_profile bp
+                FROM chemical_observation bp
                 JOIN personality p ON p.id = bp.personality_id
                 JOIN person per ON per.id = p.person_id
                 WHERE lower(per.first_name) = lower(@person)
@@ -111,7 +111,7 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
             SELECT bp.chemical, bp.reasoning,
                    1 - (bp.embedding <=> @dimVec::vector) AS similarity,
                    bp.created_at
-            FROM biochemical_profile bp
+            FROM chemical_observation bp
             JOIN personality p ON p.id = bp.personality_id
             JOIN person per ON per.id = p.person_id
             WHERE lower(per.first_name) = lower(@person)
@@ -143,7 +143,7 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT bp.chemical, bp.embedding::text, bp.created_at
-            FROM biochemical_profile bp
+            FROM chemical_observation bp
             JOIN personality p ON p.id = bp.personality_id
             JOIN person per ON per.id = p.person_id
             WHERE lower(per.first_name) = lower(@person)
@@ -174,8 +174,8 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
         await conn.OpenAsync();
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT bp.chemical, bp.reasoning, bp.embedding::text, bp.modulation_factor, bp.created_at
-            FROM biochemical_profile bp
+            SELECT bp.chemical, bp.reasoning, bp.embedding::text, bp.intensity_factor, bp.created_at
+            FROM chemical_observation bp
             JOIN personality p ON p.id = bp.personality_id
             JOIN person per ON per.id = p.person_id
             WHERE lower(per.first_name) = lower(@person)
@@ -197,25 +197,25 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
         return results;
     }
 
-    public record ProfileEntry(string Chemical, string Reasoning, float[] Embedding, float ModulationFactor, DateTime CreatedAt);
+    public record ProfileEntry(string Chemical, string Reasoning, float[] Embedding, float IntensityFactor, DateTime CreatedAt);
 
     /// <summary>
-    /// Get timeline entries (chemical, modulation_factor, created_at) for heatmap/distribution charts.
+    /// Get timeline entries (chemical, intensity_factor, created_at) for heatmap/distribution charts.
     /// Does NOT require embedding — returns all profile entries.
     /// </summary>
     public async Task<List<TimelineEntry>> GetTimelineAsync(string person)
     {
         await using var db = await factory.CreateDbContextAsync();
-        return await db.BiochemicalProfiles
+        return await db.ChemicalObservations
             .Join(db.Personalities, bp => bp.PersonalityId, p => p.Id, (bp, p) => new { bp, p })
             .Join(db.Persons, x => x.p.PersonId, per => per.Id, (x, per) => new { x.bp, per })
             .Where(x => x.per.FirstName.ToLower() == person.ToLower())
             .OrderBy(x => x.bp.CreatedAt)
-            .Select(x => new TimelineEntry(x.bp.Chemical, x.bp.ModulationFactor, x.bp.CreatedAt))
+            .Select(x => new TimelineEntry(x.bp.Chemical, x.bp.IntensityFactor, x.bp.CreatedAt))
             .ToListAsync();
     }
 
-    public record TimelineEntry(string Chemical, float ModulationFactor, DateTime CreatedAt);
+    public record TimelineEntry(string Chemical, float IntensityFactor, DateTime CreatedAt);
 
     private static float[] ParseVector(string vectorStr)
     {
@@ -230,7 +230,7 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
     public async Task<List<(int Id, string Reasoning)>> GetWithoutEmbeddingsAsync(string? person = null)
     {
         await using var db = await factory.CreateDbContextAsync();
-        var query = db.BiochemicalProfiles
+        var query = db.ChemicalObservations
             .Join(db.Personalities, bp => bp.PersonalityId, p => p.Id, (bp, p) => new { bp, p })
             .Join(db.Persons, x => x.p.PersonId, per => per.Id, (x, per) => new { x.bp, per })
             .Where(x => x.bp.Embedding == null);
@@ -248,7 +248,7 @@ public class ProfileRepository(IDbContextFactory<PersonalityDbContext> factory)
     {
         await using var db = await factory.CreateDbContextAsync();
         await db.Database.ExecuteSqlRawAsync(
-            "UPDATE biochemical_profile SET embedding = @p1::vector WHERE id = @p0",
+            "UPDATE chemical_observation SET embedding = @p1::vector WHERE id = @p0",
             new Npgsql.NpgsqlParameter("p0", profileId),
             new Npgsql.NpgsqlParameter("p1", vectorLiteral));
     }

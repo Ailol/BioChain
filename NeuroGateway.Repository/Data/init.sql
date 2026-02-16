@@ -50,25 +50,87 @@
         CREATE INDEX idx_analyzed_data_person ON analyzed_data(person_id);
 
         -- ─────────────────────────────────────
-        -- Biochemical Profile
-        -- Append-only evidence log.
-        -- One row per chemical per analyzed input.
-        -- Model knows pharmacology. DB stores observations.
+        -- Chemical Master Table
         -- ─────────────────────────────────────
 
-        CREATE TABLE biochemical_profile (
+        CREATE TABLE chemical (
+            id SERIAL PRIMARY KEY,
+            key VARCHAR(30) NOT NULL UNIQUE,
+            label VARCHAR(50) NOT NULL,
+            layer VARCHAR(20) NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE INDEX idx_chemical_key ON chemical(key);
+        CREATE INDEX idx_chemical_layer ON chemical(layer);
+
+        -- ─────────────────────────────────────
+        -- Dimension Master Table
+        -- ─────────────────────────────────────
+
+        CREATE TABLE dimension (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL UNIQUE,
+            section VARCHAR(20) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            description TEXT NOT NULL,
+            work_relevance FLOAT NOT NULL DEFAULT 1.0,
+            private_relevance FLOAT NOT NULL DEFAULT 1.0,
+            sort_order INT NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+
+        -- ─────────────────────────────────────
+        -- Dimension ↔ Chemical Affinity
+        -- ─────────────────────────────────────
+
+        CREATE TABLE dimension_chemical_affinity (
+            id SERIAL PRIMARY KEY,
+            dimension_id INT NOT NULL REFERENCES dimension(id) ON DELETE CASCADE,
+            chemical_id INT NOT NULL REFERENCES chemical(id) ON DELETE CASCADE,
+            weight FLOAT NOT NULL,
+            UNIQUE (dimension_id, chemical_id)
+        );
+        CREATE INDEX idx_dca_dimension ON dimension_chemical_affinity(dimension_id);
+        CREATE INDEX idx_dca_chemical ON dimension_chemical_affinity(chemical_id);
+
+        -- ─────────────────────────────────────
+        -- Chemical Interactions
+        -- ─────────────────────────────────────
+
+        CREATE TABLE chemical_interaction (
+            id SERIAL PRIMARY KEY,
+            source_chemical_id INT NOT NULL REFERENCES chemical(id) ON DELETE CASCADE,
+            target_chemical_id INT NOT NULL REFERENCES chemical(id) ON DELETE CASCADE,
+            mod_factor FLOAT NOT NULL,
+            mechanism TEXT,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (source_chemical_id, target_chemical_id)
+        );
+        CREATE INDEX idx_ci_source ON chemical_interaction(source_chemical_id);
+        CREATE INDEX idx_ci_target ON chemical_interaction(target_chemical_id);
+
+        -- ─────────────────────────────────────
+        -- Chemical Observations (per-person evidence log)
+        -- Append-only. One row per chemical per analyzed input.
+        -- ─────────────────────────────────────
+
+        CREATE TABLE chemical_observation (
             id SERIAL PRIMARY KEY,
             personality_id INT NOT NULL REFERENCES personality(id) ON DELETE CASCADE,
             analyzed_data_id INT REFERENCES analyzed_data(id) ON DELETE SET NULL,
-            chemical VARCHAR(30) NOT NULL,              -- dopamine, oxytocin, estradiol, etc.
+            chemical VARCHAR(30) NOT NULL,
             reasoning TEXT NOT NULL,
             embedding vector(2560),
-            modulation_factor FLOAT NOT NULL,          -- -1.0 (inhibitory) → +1.0 (excitatory)
+            intensity_factor FLOAT NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE (personality_id, analyzed_data_id, chemical)
         );
-        CREATE INDEX idx_bp_personality ON biochemical_profile(personality_id);
-        CREATE INDEX idx_bp_analyzed ON biochemical_profile(analyzed_data_id);
+        CREATE INDEX idx_co_personality ON chemical_observation(personality_id);
+        CREATE INDEX idx_co_analyzed ON chemical_observation(analyzed_data_id);
 
         -- ─────────────────────────────────────
         -- Relationship Types

@@ -10,7 +10,10 @@ namespace NeuroGateway.Service;
 /// Compares person's biochemical reasoning embeddings against 5-level shadow profiles
 /// to estimate activation levels, then aggregates across chemicals per dimension.
 /// </summary>
-public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService shadowAnchor)
+public class DimensionService(
+    ProfileRepository profileRepo,
+    ShadowAnchorService shadowAnchor,
+    DimensionDefinitionsService dimDefs)
 {
     private const float DecayLambda = 0.01f;       // half-life ~69 days
     private const float FloorPct = 15f;
@@ -20,20 +23,23 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
 
     public async Task<List<DimensionScore>> ScoreAsync(string person, ScoringMode mode = ScoringMode.Work)
     {
+        var all = await dimDefs.GetAllAsync();
         var entries = await profileRepo.GetProfileEntriesAsync(person);
         if (entries.Count == 0)
-            return DimensionDefinitions.All
+            return all
                 .Select(d => new DimensionScore(d.Name, d.Section, d.Category, 0, 0f, 0f, 0, []))
                 .ToList();
 
         var modeStr = mode == ScoringMode.Work ? "work" : "private";
 
         // Score all dimensions (raw levels)
-        var rawResults = new List<(DimensionScore Score, float RawLevel)>(DimensionDefinitions.All.Count);
+        var rawResults = new List<(DimensionScore Score, float RawLevel)>(all.Count);
 
-        foreach (var dim in DimensionDefinitions.All)
+        var chemicalToLayer = await dimDefs.GetChemicalToLayerAsync();
+
+        foreach (var dim in all)
         {
-            var result = await ScoreDimensionAsync(dim, entries, modeStr);
+            var result = await ScoreDimensionAsync(dim, entries, modeStr, chemicalToLayer);
             var modeMultiplier = dim.GetModeMultiplier(mode);
             rawResults.Add((result.Score, result.CombinedLevel * modeMultiplier));
         }
@@ -41,7 +47,7 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
         // Min-max rescale per section to 15-95 range
         var results = new List<DimensionScore>(rawResults.Count);
 
-        foreach (var section in new[] { "Behavioral", "Personal" })
+        foreach (var section in new[] { "work", "private" })
         {
             var sectionItems = rawResults.Where(r => r.Score.Section == section).ToList();
             if (sectionItems.Count == 0) continue;
@@ -79,9 +85,12 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
     {
         var modeStr = mode == ScoringMode.Work ? "work" : "private";
 
-        var dimensions = DimensionDefinitions.All.Select(d => d.Name).ToList();
-        var chemicals = ChemicalToLayer.Keys
-            .OrderBy(c => ChemicalToLayer[c] switch
+        var all = await dimDefs.GetAllAsync();
+        var chemicalToLayer = await dimDefs.GetChemicalToLayerAsync();
+
+        var dimensions = all.Select(d => d.Name).ToList();
+        var chemicals = chemicalToLayer.Keys
+            .OrderBy(c => chemicalToLayer[c] switch
             {
                 "neurotransmitter" => 0, "hormone" => 1, "peptide" => 2, _ => 3
             })
@@ -94,7 +103,7 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
         var cells = new List<ShadowMatrixCell>();
         var now = DateTime.UtcNow;
 
-        foreach (var dim in DimensionDefinitions.All)
+        foreach (var dim in all)
         {
             var shadowChemicals = ShadowProfileLoader.GetChemicalsForDimension(dim.Name, modeStr);
             var relevantChemicals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -108,7 +117,7 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
             foreach (var group in groups)
             {
                 var chemical = group.Key;
-                var layer = ChemicalToLayer.TryGetValue(chemical, out var l) ? l : "unknown";
+                var layer = chemicalToLayer.TryGetValue(chemical, out var l) ? l : "unknown";
 
                 float weightedSum = 0, weightTotal = 0;
                 foreach (var entry in group)
@@ -136,7 +145,8 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
     }
 
     private async Task<(DimensionScore Score, float CombinedLevel)> ScoreDimensionAsync(
-        DimensionDef dim, List<ProfileRepository.ProfileEntry> allEntries, string mode)
+        DimensionDef dim, List<ProfileRepository.ProfileEntry> allEntries, string mode,
+        IReadOnlyDictionary<string, string> chemicalToLayer)
     {
         // Get chemicals relevant to this dimension from shadow profiles
         var shadowChemicals = ShadowProfileLoader.GetChemicalsForDimension(dim.Name, mode);
@@ -178,7 +188,7 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
         {
             var chemical = group.Key;
             var chemEntries = group.ToList();
-            var layer = ChemicalToLayer.TryGetValue(chemical, out var l) ? l : "unknown";
+            var layer = chemicalToLayer.TryGetValue(chemical, out var l) ? l : "unknown";
             evidenceLayers.Add(layer);
 
             // Per-entry scoring
@@ -190,13 +200,13 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
                 // level_emb: cosine sim vs 5 shadow levels → continuous 1.0-5.0
                 var levelEmb = await shadowAnchor.EstimateLevelAsync(dim.Name, mode, chemical, entry.Embedding);
 
-                // level_mod: map modulation_factor (-1.0 to +1.0) → level (1 to 5)
-                var levelMod = MapModulationToLevel(entry.ModulationFactor);
+                // level_mod: map intensity_factor (-1.0 to +1.0) → level (1 to 5)
+                var levelMod = MapIntensityToLevel(entry.IntensityFactor);
 
-                // When modulation_factor is hardcoded 1.0 (maps to level 5.0),
+                // When intensity_factor is hardcoded 1.0 (maps to level 5.0),
                 // use embedding-only level to avoid inflating all scores.
                 float entryLevel;
-                if (MathF.Abs(entry.ModulationFactor - 1.0f) < 0.001f)
+                if (MathF.Abs(entry.IntensityFactor - 1.0f) < 0.001f)
                     entryLevel = levelEmb;
                 else
                     entryLevel = (levelMod + levelEmb) / 2f;
@@ -278,9 +288,9 @@ public class DimensionService(ProfileRepository profileRepo, ShadowAnchorService
         return (score, combinedLevel);
     }
 
-    /// <summary>Map modulation_factor (-1.0 to +1.0) → level (1.0 to 5.0)</summary>
-    private static float MapModulationToLevel(float modulationFactor)
-        => Math.Clamp((modulationFactor + 1f) * 2f + 1f, 1f, 5f);
+    /// <summary>Map intensity_factor (-1.0 to +1.0) → level (1.0 to 5.0)</summary>
+    private static float MapIntensityToLevel(float intensityFactor)
+        => Math.Clamp((intensityFactor + 1f) * 2f + 1f, 1f, 5f);
 
     /// <summary>Sigmoid: 1 / (1 + exp(-(count - threshold)))</summary>
     private static float Sigmoid(int count, float threshold)

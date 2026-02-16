@@ -49,7 +49,7 @@ public sealed record ChemicalEdge(
 
 /// <summary>
 /// One cell of the shadow level matrix: a single chemical × dimension pair.
-/// ShadowLevel is embedding-only (not averaged with modulation_factor).
+/// ShadowLevel is embedding-only (not averaged with intensity_factor).
 /// </summary>
 public sealed record ShadowMatrixCell(
     string Dimension,

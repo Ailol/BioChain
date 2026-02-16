@@ -8,7 +8,11 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
     public DbSet<PersonEntity> Persons => Set<PersonEntity>();
     public DbSet<PersonalityEntity> Personalities => Set<PersonalityEntity>();
     public DbSet<AnalyzedDataEntity> AnalyzedData => Set<AnalyzedDataEntity>();
-    public DbSet<BiochemicalProfileEntity> BiochemicalProfiles => Set<BiochemicalProfileEntity>();
+    public DbSet<ChemicalObservationEntity> ChemicalObservations => Set<ChemicalObservationEntity>();
+    public DbSet<ChemicalEntity> Chemicals => Set<ChemicalEntity>();
+    public DbSet<DimensionEntity> Dimensions => Set<DimensionEntity>();
+    public DbSet<DimensionChemicalAffinityEntity> DimensionChemicalAffinities => Set<DimensionChemicalAffinityEntity>();
+    public DbSet<ChemicalInteractionEntity> ChemicalInteractions => Set<ChemicalInteractionEntity>();
     public DbSet<RelationshipTypeEntity> RelationshipTypes => Set<RelationshipTypeEntity>();
     public DbSet<AgentTemplateEntity> AgentTemplates => Set<AgentTemplateEntity>();
     public DbSet<AgentGroupEntity> AgentGroups => Set<AgentGroupEntity>();
@@ -46,13 +50,45 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
             e.Property(x => x.Embedding).HasColumnType("vector(2560)");
         });
 
-        // BiochemicalProfile
-        modelBuilder.Entity<BiochemicalProfileEntity>(e =>
+        // ChemicalObservation (formerly biochemical_profile)
+        modelBuilder.Entity<ChemicalObservationEntity>(e =>
         {
-            e.ToTable("biochemical_profile");
+            e.ToTable("chemical_observation");
             e.HasKey(x => x.Id);
             e.Property(x => x.Embedding).HasColumnType("vector(2560)");
             e.HasIndex(x => new { x.PersonalityId, x.AnalyzedDataId, x.Chemical }).IsUnique();
+        });
+
+        // Chemical
+        modelBuilder.Entity<ChemicalEntity>(e =>
+        {
+            e.ToTable("chemical");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Key).IsUnique();
+        });
+
+        // Dimension
+        modelBuilder.Entity<DimensionEntity>(e =>
+        {
+            e.ToTable("dimension");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Name).IsUnique();
+        });
+
+        // DimensionChemicalAffinity
+        modelBuilder.Entity<DimensionChemicalAffinityEntity>(e =>
+        {
+            e.ToTable("dimension_chemical_affinity");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.DimensionId, x.ChemicalId }).IsUnique();
+        });
+
+        // ChemicalInteraction
+        modelBuilder.Entity<ChemicalInteractionEntity>(e =>
+        {
+            e.ToTable("chemical_interaction");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.SourceChemicalId, x.TargetChemicalId }).IsUnique();
         });
 
         // RelationshipType

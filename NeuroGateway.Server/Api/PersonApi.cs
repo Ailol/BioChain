@@ -61,7 +61,7 @@ public static class PersonApi
                 entries = entries.Select(e => new
                 {
                     e.Chemical,
-                    e.ModulationFactor,
+                    e.IntensityFactor,
                     createdAt = e.CreatedAt.ToString("o")
                 })
             });
@@ -80,8 +80,8 @@ public static class PersonApi
             {
                 person = name,
                 mode = scoringMode.ToString().ToLowerInvariant(),
-                behavioral = scores.Where(s => s.Section == "Behavioral"),
-                personal = scores.Where(s => s.Section == "Personal")
+                behavioral = scores.Where(s => s.Section == "work"),
+                personal = scores.Where(s => s.Section == "private")
             });
         });
 
