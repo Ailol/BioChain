@@ -102,6 +102,7 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<ChemicalRepository>();
     services.AddSingleton<DimensionRepository>();
     services.AddSingleton<ChemicalInteractionRepository>();
+    services.AddSingleton<ShadowEmbeddingRepository>();
 
     // ChatClient for analyzing agents (AgentAnalyzing — neuro LoRA, SKIP/ADD)
     var analyzingChatClient = new ChatClient(CreateChatClient(llm.AgentAnalyzing!));

@@ -80,7 +80,15 @@
       "WebFetch(domain:docs.anthropic.com)",
       "WebFetch(domain:docs.claude.com)",
       "Bash(cygpath:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(gh auth status:*)",
+      "Bash(where.exe:*)",
+      "Bash(git config:*)",
+      "Bash(test:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)"
     ]
   }
 }

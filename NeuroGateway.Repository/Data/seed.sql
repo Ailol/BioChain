@@ -1507,127 +1507,127 @@ INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELE
 -- ═════════════════════════════════════
 
 -- Dopamine interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='dopamine' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='dopamine' AND t.key='glutamate' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.85 FROM chemical s, chemical t WHERE s.key='dopamine' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='dopamine' AND t.key='glutamate' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.55 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.80 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.20 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='dopamine' ON CONFLICT DO NOTHING;
 
 -- Serotonin interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='serotonin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='serotonin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.75 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='serotonin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.75 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='serotonin' ON CONFLICT DO NOTHING;
 
 -- Norepinephrine interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='endocannabinoid' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.60 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.75 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.65 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.50 FROM chemical s, chemical t WHERE s.key='endocannabinoid' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
 
 -- GABA interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='glutamate' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.0 FROM chemical s, chemical t WHERE s.key='endocannabinoid' AND t.key='gaba' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='progesterone' AND t.key='gaba' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.85 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='glutamate' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.45 FROM chemical s, chemical t WHERE s.key='endocannabinoid' AND t.key='gaba' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.80 FROM chemical s, chemical t WHERE s.key='progesterone' AND t.key='gaba' ON CONFLICT DO NOTHING;
 
 -- Acetylcholine interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='acetylcholine' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='acetylcholine' AND t.key='glutamate' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='acetylcholine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='acetylcholine' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='acetylcholine' AND t.key='glutamate' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.15 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='acetylcholine' ON CONFLICT DO NOTHING;
 
 -- Endocannabinoid interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.0 FROM chemical s, chemical t WHERE s.key='endocannabinoid' AND t.key='glutamate' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='endocannabinoid' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.40 FROM chemical s, chemical t WHERE s.key='endocannabinoid' AND t.key='glutamate' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='endocannabinoid' ON CONFLICT DO NOTHING;
 
 -- Glutamate interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='glutamate' AND t.key='bdnf' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='glutamate' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.75 FROM chemical s, chemical t WHERE s.key='glutamate' AND t.key='bdnf' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='glutamate' AND t.key='dopamine' ON CONFLICT DO NOTHING;
 
 -- Cortisol interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='testosterone' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='oxytocin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='bdnf' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='crh' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.0 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='cortisol' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.70 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='testosterone' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.60 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='oxytocin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.80 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='bdnf' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.70 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='crh' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.40 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='cortisol' ON CONFLICT DO NOTHING;
 
 -- Testosterone interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='vasopressin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.70 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='vasopressin' ON CONFLICT DO NOTHING;
 
 -- Estradiol interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='bdnf' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.70 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='bdnf' ON CONFLICT DO NOTHING;
 
 -- Progesterone interactions (GABA already covered)
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='progesterone' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='progesterone' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.45 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='progesterone' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='progesterone' ON CONFLICT DO NOTHING;
 
 -- Thyroid interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='thyroid' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.55 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='thyroid' ON CONFLICT DO NOTHING;
 
 -- Adrenaline interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='adrenaline' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='adrenaline' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.80 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='adrenaline' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.80 FROM chemical s, chemical t WHERE s.key='adrenaline' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
 
 -- Melatonin interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='melatonin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='melatonin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='melatonin' AND t.key='gaba' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.90 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='melatonin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.50 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='melatonin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='melatonin' AND t.key='gaba' ON CONFLICT DO NOTHING;
 
 -- DHEA interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='cortisol' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='testosterone' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='estradiol' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.40 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='cortisol' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='testosterone' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='dhea' AND t.key='estradiol' ON CONFLICT DO NOTHING;
 
 -- Prolactin interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='dopamine' AND t.key='prolactin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='prolactin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='prolactin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='prolactin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.90 FROM chemical s, chemical t WHERE s.key='dopamine' AND t.key='prolactin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.60 FROM chemical s, chemical t WHERE s.key='estradiol' AND t.key='prolactin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='prolactin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='prolactin' ON CONFLICT DO NOTHING;
 
 -- Oxytocin (H) interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='serotonin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='endorphins' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='oxytocin_h' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='oxytocin_h' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='serotonin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='endorphins' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.55 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='oxytocin_h' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.45 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='oxytocin_h' ON CONFLICT DO NOTHING;
 
 -- Oxytocin (P) interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='endorphins' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='vasopressin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='oxytocin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='endorphins' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.40 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='vasopressin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.50 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='oxytocin' ON CONFLICT DO NOTHING;
 
 -- Vasopressin interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='vasopressin' AND t.key='testosterone' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='vasopressin' AND t.key='testosterone' ON CONFLICT DO NOTHING;
 
 -- Endorphins interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='endorphins' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.60 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='endorphins' ON CONFLICT DO NOTHING;
 
 -- Enkephalins interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.0 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='enkephalins' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.25 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='enkephalins' ON CONFLICT DO NOTHING;
 
 -- Dynorphin interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='dynorphin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.0 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='crh' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='dynorphin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.30 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='crh' ON CONFLICT DO NOTHING;
 
 -- Substance P interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='substance_p' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='substance_p' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='endorphins' AND t.key='substance_p' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='substance_p' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='substance_p' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.75 FROM chemical s, chemical t WHERE s.key='endorphins' AND t.key='substance_p' ON CONFLICT DO NOTHING;
 
 -- CRH interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='cortisol' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='npy' AND t.key='crh' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='crh' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.90 FROM chemical s, chemical t WHERE s.key='crh' AND t.key='cortisol' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.70 FROM chemical s, chemical t WHERE s.key='npy' AND t.key='crh' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.60 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='crh' ON CONFLICT DO NOTHING;
 
 -- NPY interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='npy' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.50 FROM chemical s, chemical t WHERE s.key='npy' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
 
 -- BDNF interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='bdnf' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='bdnf' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='bdnf' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.60 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='bdnf' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='bdnf' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.55 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='bdnf' ON CONFLICT DO NOTHING;
 
 -- Orexin interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='orexin' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='orexin' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 1.0 FROM chemical s, chemical t WHERE s.key='orexin' AND t.key='crh' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -1.0 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='orexin' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.75 FROM chemical s, chemical t WHERE s.key='orexin' AND t.key='norepinephrine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.60 FROM chemical s, chemical t WHERE s.key='orexin' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='orexin' AND t.key='crh' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.55 FROM chemical s, chemical t WHERE s.key='gaba' AND t.key='orexin' ON CONFLICT DO NOTHING;

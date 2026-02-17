@@ -51,6 +51,21 @@ public static class ShadowProfileLoader
     /// <summary>All dimension names present in shadow profiles.</summary>
     public static IReadOnlyList<string> GetDimensions() => [.. Cache.Value.Keys];
 
+    /// <summary>
+    /// Get all (dimension, mode, chemical, level, text) entries for bulk embedding.
+    /// </summary>
+    public static List<(string Dim, string Mode, string Chem, int Level, string Text)> GetAllEntries()
+    {
+        var data = Cache.Value;
+        var entries = new List<(string, string, string, int, string)>();
+        foreach (var (dim, modes) in data)
+        foreach (var (mode, levels) in modes)
+        foreach (var (level, chemicals) in levels)
+        foreach (var (chem, text) in chemicals)
+            entries.Add((dim, mode, chem, level, text));
+        return entries;
+    }
+
     private static Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<string, string>>>> Load()
     {
         var path = FindYamlPath();

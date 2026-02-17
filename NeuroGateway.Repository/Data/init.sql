@@ -222,3 +222,20 @@
         );
         CREATE INDEX idx_layer_pipeline ON layer(pipeline_id);
 
+        -- ─────────────────────────────────────
+        -- Shadow Embedding Cache
+        -- Pre-computed embeddings of shadow profile level descriptions.
+        -- Eliminates cold-start embedding latency (~4 min → <1s).
+        -- ─────────────────────────────────────
+
+        CREATE TABLE shadow_embedding (
+            id SERIAL PRIMARY KEY,
+            dimension VARCHAR(50) NOT NULL,
+            mode VARCHAR(20) NOT NULL,
+            chemical VARCHAR(30) NOT NULL,
+            level INT NOT NULL CHECK (level BETWEEN 1 AND 5),
+            embedding vector(2560) NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (dimension, mode, chemical, level)
+        );
+

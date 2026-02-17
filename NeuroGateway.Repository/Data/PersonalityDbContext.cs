@@ -19,6 +19,7 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
     public DbSet<AgentEntity> Agents => Set<AgentEntity>();
     public DbSet<PipelineEntity> Pipelines => Set<PipelineEntity>();
     public DbSet<LayerEntity> Layers => Set<LayerEntity>();
+    public DbSet<ShadowEmbeddingEntity> ShadowEmbeddings => Set<ShadowEmbeddingEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -138,6 +139,15 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
             e.ToTable("layer");
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.PipelineId, x.SortOrder }).IsUnique();
+        });
+
+        // ShadowEmbedding
+        modelBuilder.Entity<ShadowEmbeddingEntity>(e =>
+        {
+            e.ToTable("shadow_embedding");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Embedding).HasColumnType("vector(2560)");
+            e.HasIndex(x => new { x.Dimension, x.Mode, x.Chemical, x.Level }).IsUnique();
         });
     }
 }

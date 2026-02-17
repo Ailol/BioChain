@@ -20,6 +20,8 @@ public class DimensionService(
     private const float CeilPct = 95f;
     private const int ChemicalWeightCap = 5;
     private const float SigmoidThreshold = 3f;
+    private const float EmbeddingCorrelationWeight = 0.4f;  // blend: 60% level + 40% embedding
+    private const float SemanticDriftThreshold = 0.7f;      // cosine sim below this = drift detected
 
     public async Task<List<DimensionScore>> ScoreAsync(string person, ScoringMode mode = ScoringMode.Work)
     {
@@ -179,10 +181,12 @@ public class DimensionService(
         var evidenceLayers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var evidence = new List<DimensionEvidence>();
 
-        // For temporal trajectory: (timestamp, level)
-        var temporalPoints = new List<(DateTime Time, float Level)>();
+        // For temporal trajectory: (timestamp, level, embedding)
+        var temporalPoints = new List<(DateTime Time, float Level, float[] Embedding)>();
         // For circuit coherence: chemical → list of entry levels
         var chemicalLevelMap = new Dictionary<string, List<float>>(StringComparer.OrdinalIgnoreCase);
+        // For circuit coherence: chemical → list of reasoning embeddings (for semantic correlation)
+        var chemicalEmbeddingMap = new Dictionary<string, List<float[]>>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var group in chemicalGroups)
         {
@@ -194,6 +198,7 @@ public class DimensionService(
             // Per-entry scoring
             var entryLevels = new List<(float Level, float Recency)>();
             var chemLevels = new List<float>();
+            var chemEmbeddings = new List<float[]>();
 
             foreach (var entry in chemEntries)
             {
@@ -215,9 +220,10 @@ public class DimensionService(
                 allAgreements.Add(agreement);
                 allEntryLevels.Add(entryLevel);
                 chemLevels.Add(entryLevel);
+                chemEmbeddings.Add(entry.Embedding);
 
-                // Track temporal data
-                temporalPoints.Add((entry.CreatedAt, entryLevel));
+                // Track temporal data (with embedding for semantic drift detection)
+                temporalPoints.Add((entry.CreatedAt, entryLevel, entry.Embedding));
 
                 // Recency weight for aggregation
                 var daysSince = (float)(now - entry.CreatedAt).TotalDays;
@@ -228,6 +234,7 @@ public class DimensionService(
             }
 
             chemicalLevelMap[chemical] = chemLevels;
+            chemicalEmbeddingMap[chemical] = chemEmbeddings;
 
             // chemical_level: recency-weighted mean of entry levels
             float chemLevelSum = 0, chemWeightSum = 0;
@@ -277,8 +284,8 @@ public class DimensionService(
         // Temporal trajectory
         var trajectory = ComputeTrajectory(temporalPoints);
 
-        // Circuit coherence
-        var circuit = ComputeCircuitCoherence(chemicalLevelMap);
+        // Circuit coherence (blended: level agreement + embedding cosine similarity)
+        var circuit = ComputeCircuitCoherence(chemicalLevelMap, chemicalEmbeddingMap);
 
         var score = new DimensionScore(
             dim.Name, dim.Section, dim.Category, 0,
@@ -297,10 +304,11 @@ public class DimensionService(
         => 1f / (1f + MathF.Exp(-(count - threshold)));
 
     /// <summary>
-    /// Linear regression over timestamped activation levels.
-    /// Returns slope (level-change/day), direction label, R², and boundary levels.
+    /// Linear regression over timestamped activation levels + semantic drift detection.
+    /// Returns slope (level-change/day), direction label, R², boundary levels,
+    /// and whether the reasoning content shifted semantically even if levels stayed stable.
     /// </summary>
-    private static TemporalTrajectory? ComputeTrajectory(List<(DateTime Time, float Level)> points)
+    private static TemporalTrajectory? ComputeTrajectory(List<(DateTime Time, float Level, float[] Embedding)> points)
     {
         if (points.Count < 3) return null;
 
@@ -336,12 +344,14 @@ public class DimensionService(
         var r2 = ssTot > 0 ? Math.Clamp(1f - ssRes / ssTot, 0f, 1f) : 0f;
 
         // Direction label based on slope magnitude
-        // Slope is level-change per day; 0.01 = ~0.3 levels/month
         var direction = MathF.Abs(slope) < 0.005f ? "Stable"
             : slope > 0.02f ? "Rising Sharply"
             : slope > 0 ? "Rising"
             : slope < -0.02f ? "Declining Sharply"
             : "Declining";
+
+        // Semantic drift detection: compare early vs late embedding centroids
+        var (driftDetected, driftMagnitude) = DetectSemanticDrift(sorted);
 
         return new TemporalTrajectory(
             MathF.Round(slope, 5),
@@ -349,15 +359,59 @@ public class DimensionService(
             MathF.Round(r2, 3),
             n,
             ys[0],
-            ys[^1]);
+            ys[^1],
+            driftDetected,
+            MathF.Round(driftMagnitude, 3));
+    }
+
+    /// <summary>
+    /// Split entries into two halves (early vs late) and compare their mean-pooled embeddings.
+    /// If cosine similarity drops below threshold, reasoning content has semantically shifted.
+    /// </summary>
+    private static (bool Detected, float Magnitude) DetectSemanticDrift(
+        List<(DateTime Time, float Level, float[] Embedding)> sorted)
+    {
+        if (sorted.Count < 4) return (false, 0f);
+
+        var mid = sorted.Count / 2;
+        var earlyEmbeddings = sorted.Take(mid).Select(p => p.Embedding).ToList();
+        var lateEmbeddings = sorted.Skip(mid).Select(p => p.Embedding).ToList();
+
+        var earlyCentroid = MeanPool(earlyEmbeddings);
+        var lateCentroid = MeanPool(lateEmbeddings);
+
+        if (earlyCentroid is null || lateCentroid is null)
+            return (false, 0f);
+
+        var similarity = ShadowAnchorService.CosineSimilarity(earlyCentroid, lateCentroid);
+        var driftMagnitude = 1f - similarity; // 0 = identical, 1 = completely different
+        var driftDetected = similarity < SemanticDriftThreshold;
+
+        return (driftDetected, driftMagnitude);
+    }
+
+    /// <summary>Mean-pool a list of embeddings into a single centroid vector.</summary>
+    private static float[]? MeanPool(List<float[]> embeddings)
+    {
+        if (embeddings.Count == 0) return null;
+        var dim = embeddings[0].Length;
+        var result = new float[dim];
+        foreach (var vec in embeddings)
+            for (var i = 0; i < dim; i++)
+                result[i] += vec[i];
+        for (var i = 0; i < dim; i++)
+            result[i] /= embeddings.Count;
+        return result;
     }
 
     /// <summary>
     /// Compute chemical interaction graph for a dimension.
-    /// Measures pairwise correlation between chemicals' mean levels.
+    /// Blends level-based agreement (60%) with embedding cosine similarity (40%)
+    /// to detect chemicals that are semantically related vs only coincidentally at the same level.
     /// </summary>
     private static CircuitCoherence? ComputeCircuitCoherence(
-        Dictionary<string, List<float>> chemicalLevelMap)
+        Dictionary<string, List<float>> chemicalLevelMap,
+        Dictionary<string, List<float[]>> chemicalEmbeddingMap)
     {
         var chemicals = chemicalLevelMap.Keys.ToList();
         if (chemicals.Count < 2) return null;
@@ -367,44 +421,51 @@ public class DimensionService(
             c => c, c => chemicalLevelMap[c].Average(),
             StringComparer.OrdinalIgnoreCase);
 
+        // Compute mean-pooled embedding centroid per chemical
+        var centroids = new Dictionary<string, float[]?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var chem in chemicals)
+        {
+            centroids[chem] = chemicalEmbeddingMap.TryGetValue(chem, out var embs) && embs.Count > 0
+                ? MeanPool(embs) : null;
+        }
+
         var edges = new List<ChemicalEdge>();
         var coherenceValues = new List<float>();
 
-        // Pairwise: compare whether chemicals agree on level direction
         for (var i = 0; i < chemicals.Count; i++)
         {
             for (var j = i + 1; j < chemicals.Count; j++)
             {
                 var a = chemicals[i];
                 var b = chemicals[j];
-                var levelsA = chemicalLevelMap[a];
-                var levelsB = chemicalLevelMap[b];
 
-                // Compute correlation if both have multiple entries
-                float correlation;
-                if (levelsA.Count >= 2 && levelsB.Count >= 2)
+                // Level-based correlation: mean-level agreement
+                var levelDiff = MathF.Abs(means[a] - means[b]);
+                var levelCorrelation = 1f - levelDiff / 4f;
+
+                // Embedding-based correlation: cosine similarity of reasoning centroids
+                float blendedCorrelation;
+                if (centroids[a] is not null && centroids[b] is not null)
                 {
-                    // Use mean-level agreement: how similar their activation levels are
-                    var diff = MathF.Abs(means[a] - means[b]);
-                    correlation = 1f - diff / 4f; // -1 to 1 range mapped from 0-4 diff
+                    var embeddingCorrelation = ShadowAnchorService.CosineSimilarity(centroids[a]!, centroids[b]!);
+                    blendedCorrelation = (1f - EmbeddingCorrelationWeight) * levelCorrelation
+                                       + EmbeddingCorrelationWeight * embeddingCorrelation;
                 }
                 else
                 {
-                    // Single entries: simple level agreement
-                    var diff = MathF.Abs(means[a] - means[b]);
-                    correlation = 1f - diff / 4f;
+                    blendedCorrelation = levelCorrelation;
                 }
 
-                coherenceValues.Add(correlation);
+                coherenceValues.Add(blendedCorrelation);
 
-                var relationship = correlation > 0.7f ? "Synergistic"
-                    : correlation > 0.3f ? "Cooperative"
-                    : correlation > -0.3f ? "Independent"
-                    : correlation > -0.7f ? "Opposing"
+                var relationship = blendedCorrelation > 0.7f ? "Synergistic"
+                    : blendedCorrelation > 0.3f ? "Cooperative"
+                    : blendedCorrelation > -0.3f ? "Independent"
+                    : blendedCorrelation > -0.7f ? "Opposing"
                     : "Antagonistic";
 
                 edges.Add(new ChemicalEdge(a, b,
-                    MathF.Round(correlation, 3), relationship));
+                    MathF.Round(blendedCorrelation, 3), relationship));
             }
         }
 

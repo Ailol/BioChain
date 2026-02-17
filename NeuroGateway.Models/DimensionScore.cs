@@ -29,7 +29,9 @@ public sealed record TemporalTrajectory(
     float R2,
     int DataPoints,
     float EarliestLevel,
-    float LatestLevel);
+    float LatestLevel,
+    bool SemanticDriftDetected = false,
+    float DriftMagnitude = 0f);
 
 /// <summary>
 /// Chemical interaction graph for a dimension.
