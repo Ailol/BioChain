@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
-using NeuroGateway.AnalysisFramework;
 using Spectre.Console;
 using YamlDotNet.Serialization;
 
@@ -11,57 +10,56 @@ public class ShadowProfileGenerator(PromptBuilder promptBuilder, IChatClient? ch
 {
     private static readonly string OutputDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "NeuroGateway.Calibration", "Outputs");
 
-    private static readonly Dictionary<string, string> DimensionNameMap = BuildDimensionNameMap();
+    private Dictionary<string, string>? _dimensionNameMap;
 
-    private static Dictionary<string, string> BuildDimensionNameMap()
+    private async Task<Dictionary<string, string>> GetDimensionNameMapAsync()
     {
+        if (_dimensionNameMap is not null) return _dimensionNameMap;
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var dim in DimensionDefinitions.All)
+        var chemicals = await promptBuilder.GetAllChemicalsAsync();
+        foreach (var chemical in chemicals)
         {
-            var name = dim.Name;
-            map[name] = name;
-            map[name.ToLowerInvariant()] = name;
-            map[name.Replace(" ", "_").ToLowerInvariant()] = name;
-            // Handle & variants: "Purpose & Meaning" → also match "Purpose And Meaning", "Purpose Meaning"
-            if (name.Contains('&'))
+            var dims = await promptBuilder.GetDimensionsForChemicalAsync(chemical);
+            foreach (var dim in dims)
             {
-                map[name.Replace("&", "And")] = name;
-                map[name.Replace("& ", "").Replace("  ", " ")] = name;
-                map[name.Replace("&", "And").ToLowerInvariant()] = name;
-                map[name.Replace("&", "And").Replace(" ", "_").ToLowerInvariant()] = name;
-                map[name.Replace("& ", "").Replace("  ", " ").ToLowerInvariant()] = name;
-            }
-            // Handle hyphen variants: "Work-Life Balance" → also match "Work Life Balance"
-            if (name.Contains('-'))
-            {
-                map[name.Replace("-", " ")] = name;
-                map[name.Replace("-", " ").ToLowerInvariant()] = name;
-                map[name.Replace("-", "_").ToLowerInvariant()] = name;
-                map[name.Replace("-", "").ToLowerInvariant()] = name;
+                var name = dim.Name;
+                if (map.ContainsKey(name)) continue;
+                map[name] = name;
+                map[name.ToLowerInvariant()] = name;
+                map[name.Replace(" ", "_").ToLowerInvariant()] = name;
+                if (name.Contains('&'))
+                {
+                    map.TryAdd(name.Replace("&", "And"), name);
+                    map.TryAdd(name.Replace("& ", "").Replace("  ", " "), name);
+                    map.TryAdd(name.Replace("&", "And").ToLowerInvariant(), name);
+                    map.TryAdd(name.Replace("&", "And").Replace(" ", "_").ToLowerInvariant(), name);
+                    map.TryAdd(name.Replace("& ", "").Replace("  ", " ").ToLowerInvariant(), name);
+                }
+                if (name.Contains('-'))
+                {
+                    map.TryAdd(name.Replace("-", " "), name);
+                    map.TryAdd(name.Replace("-", " ").ToLowerInvariant(), name);
+                    map.TryAdd(name.Replace("-", "_").ToLowerInvariant(), name);
+                    map.TryAdd(name.Replace("-", "").ToLowerInvariant(), name);
+                }
             }
         }
+        _dimensionNameMap = map;
         return map;
     }
 
+    // Static fallback for parsing (used in tight-loop parsing where async is impractical)
     internal static string NormalizeDimensionName(string raw)
     {
-        if (DimensionNameMap.TryGetValue(raw, out var canonical))
-            return canonical;
-        var spacified = raw.Replace("_", " ");
-        if (DimensionNameMap.TryGetValue(spacified, out canonical))
-            return canonical;
-        // Try stripping hyphens/special chars
-        var stripped = spacified.Replace("-", " ").Replace("&", "And");
-        if (DimensionNameMap.TryGetValue(stripped, out canonical))
-            return canonical;
-        return System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(spacified);
+        return System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
+            raw.Replace("_", " "));
     }
 
     // ── Export prompts as JSONL for batch API ──
 
     public async Task ExportPromptsAsync(string? filterDimension, string? filterMode, string? filterChemical, string modelId)
     {
-        var requests = BuildRequests(filterDimension, filterMode, filterChemical);
+        var requests = await BuildRequestsAsync(filterDimension, filterMode, filterChemical);
         if (requests.Count == 0)
         {
             AnsiConsole.MarkupLine("[yellow]No requests to export.[/]");
@@ -119,8 +117,6 @@ public class ShadowProfileGenerator(PromptBuilder promptBuilder, IChatClient? ch
         foreach (var file in files.OrderBy(f => f))
         {
             var fileName = Path.GetFileNameWithoutExtension(file);
-            // Files use __ separator: dopamine__work.txt, oxytocin_h__private.txt
-            // Fall back to last _ for legacy files: dopamine_work.txt
             string chemical, mode;
             var dblIdx = fileName.IndexOf("__", StringComparison.Ordinal);
             if (dblIdx > 0)
@@ -130,7 +126,6 @@ public class ShadowProfileGenerator(PromptBuilder promptBuilder, IChatClient? ch
             }
             else
             {
-                // Legacy: split on last underscore
                 var lastUnderscore = fileName.LastIndexOf('_');
                 if (lastUnderscore <= 0) { failed++; continue; }
                 chemical = fileName[..lastUnderscore];
@@ -157,7 +152,7 @@ public class ShadowProfileGenerator(PromptBuilder promptBuilder, IChatClient? ch
 
     public async Task GenerateAsync(string? filterDimension, string? filterMode, bool dryRun, string? filterChemical)
     {
-        var requests = BuildRequests(filterDimension, filterMode, filterChemical);
+        var requests = await BuildRequestsAsync(filterDimension, filterMode, filterChemical);
 
         if (dryRun)
         {
@@ -220,9 +215,9 @@ public class ShadowProfileGenerator(PromptBuilder promptBuilder, IChatClient? ch
 
     private record GenerationRequest(string CustomId, string Chemical, string Mode, string SystemPrompt, string UserPrompt);
 
-    private List<GenerationRequest> BuildRequests(string? filterDimension, string? filterMode, string? filterChemical)
+    private async Task<List<GenerationRequest>> BuildRequestsAsync(string? filterDimension, string? filterMode, string? filterChemical)
     {
-        var chemicals = promptBuilder.GetAllChemicals();
+        var chemicals = await promptBuilder.GetAllChemicalsAsync();
         if (filterChemical != null)
             chemicals = chemicals.Where(c => c.Equals(filterChemical, StringComparison.OrdinalIgnoreCase)).ToList();
 
@@ -233,15 +228,15 @@ public class ShadowProfileGenerator(PromptBuilder promptBuilder, IChatClient? ch
         var requests = new List<GenerationRequest>();
         foreach (var chemical in chemicals)
         {
-            var dims = promptBuilder.GetDimensionsForChemical(chemical);
+            var dims = await promptBuilder.GetDimensionsForChemicalAsync(chemical);
             if (filterDimension != null)
                 dims = dims.Where(d => d.Name.Equals(filterDimension, StringComparison.OrdinalIgnoreCase)).ToList();
             if (dims.Count == 0) continue;
 
-            var systemPrompt = promptBuilder.BuildSystemPrompt(chemical);
+            var systemPrompt = await promptBuilder.BuildSystemPromptAsync(chemical);
             foreach (var mode in modes)
             {
-                var userPrompt = promptBuilder.BuildUserPrompt(chemical, mode, filterDimension);
+                var userPrompt = await promptBuilder.BuildUserPromptAsync(chemical, mode, filterDimension);
                 requests.Add(new GenerationRequest($"{chemical}__{mode}", chemical, mode, systemPrompt, userPrompt));
             }
         }

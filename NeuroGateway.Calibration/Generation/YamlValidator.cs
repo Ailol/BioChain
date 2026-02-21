@@ -1,28 +1,30 @@
-using NeuroGateway.AnalysisFramework;
+using NeuroGateway.Service;
 using Spectre.Console;
 using YamlDotNet.Serialization;
 
 namespace NeuroGateway.Calibration.Generation;
 
-public class YamlValidator
+public class YamlValidator(DimensionDefinitionsService _dimDefs)
 {
     private static readonly string OutputDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "NeuroGateway.Calibration", "Outputs");
-    private static readonly HashSet<string> KnownChemicals = new(DimensionDefinitions.ChemicalToLayer.Keys, StringComparer.OrdinalIgnoreCase);
-    private static readonly HashSet<string> KnownDimensions = new(DimensionDefinitions.All.Select(d => d.Name));
 
-    public Task ValidateAsync(string? path = null)
+    public async Task ValidateAsync(string? path = null)
     {
+        var chemToLayer = await _dimDefs.GetChemicalToLayerAsync();
+        var allDims = await _dimDefs.GetAllAsync();
+        var knownChemicals = new HashSet<string>(chemToLayer.Keys, StringComparer.OrdinalIgnoreCase);
+        var knownDimensions = new HashSet<string>(allDims.Select(d => d.Name));
+
         path ??= Path.Combine(OutputDir, "ShadowProfiles.yaml");
         if (!File.Exists(path))
         {
-            // Try AnalysisFramework location
             var altPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "NeuroGateway.AnalysisFramework", "Constants", "ShadowProfiles.yaml");
             if (File.Exists(altPath))
                 path = altPath;
             else
             {
                 AnsiConsole.MarkupLine($"[red]File not found: {path}[/]");
-                return Task.CompletedTask;
+                return;
             }
         }
 
@@ -36,10 +38,9 @@ public class YamlValidator
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[red]Cannot read file: {ex.Message}[/]");
-            return Task.CompletedTask;
+            return;
         }
 
-        // Parse
         Dictionary<string, object>? parsed;
         try
         {
@@ -49,13 +50,13 @@ public class YamlValidator
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[red]YAML parse error: {ex.Message}[/]");
-            return Task.CompletedTask;
+            return;
         }
 
         if (parsed == null)
         {
             AnsiConsole.MarkupLine("[red]YAML parsed as null.[/]");
-            return Task.CompletedTask;
+            return;
         }
 
         var dimensionsPresent = 0;
@@ -67,7 +68,7 @@ public class YamlValidator
         var missingDimensions = new List<string>();
         var missingModes = new List<string>();
 
-        foreach (var dimName in KnownDimensions)
+        foreach (var dimName in knownDimensions)
         {
             if (!parsed.ContainsKey(dimName))
             {
@@ -107,7 +108,7 @@ public class YamlValidator
                         foreach (var (chemKey, chemValue) in chemDict)
                         {
                             var chemName = chemKey.ToString() ?? "";
-                            if (!KnownChemicals.Contains(chemName))
+                            if (!knownChemicals.Contains(chemName))
                                 invalidChemicals.Add($"{dimName}.{modeName}.{levelKey}.{chemName}");
 
                             var text = chemValue?.ToString() ?? "";
@@ -122,7 +123,7 @@ public class YamlValidator
 
         // Report
         AnsiConsole.WriteLine();
-        var total24 = KnownDimensions.Count;
+        var total24 = knownDimensions.Count;
         var check = dimensionsPresent == total24 ? "[green]OK[/]" : "[yellow]PARTIAL[/]";
         AnsiConsole.MarkupLine($"{check} {dimensionsPresent}/{total24} dimensions present");
 
@@ -166,7 +167,5 @@ public class YamlValidator
             AnsiConsole.MarkupLine("[green]Validation passed.[/]");
         else
             AnsiConsole.MarkupLine("[yellow]Validation completed with warnings.[/]");
-
-        return Task.CompletedTask;
     }
 }

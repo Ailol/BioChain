@@ -20,6 +20,11 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
     public DbSet<PipelineEntity> Pipelines => Set<PipelineEntity>();
     public DbSet<LayerEntity> Layers => Set<LayerEntity>();
     public DbSet<ShadowEmbeddingEntity> ShadowEmbeddings => Set<ShadowEmbeddingEntity>();
+    public DbSet<QuestionnaireItemEntity> QuestionnaireItems => Set<QuestionnaireItemEntity>();
+    public DbSet<QuestionnaireEntity> Questionnaires => Set<QuestionnaireEntity>();
+    public DbSet<QuestionnaireAnswerEntity> QuestionnaireAnswers => Set<QuestionnaireAnswerEntity>();
+    public DbSet<PersonShareEntity> PersonShares => Set<PersonShareEntity>();
+    public DbSet<UserRoleEntity> UserRoles => Set<UserRoleEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +38,23 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
             e.ToTable("person");
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasDefaultValueSql("uuid_generate_v4()");
+            e.HasIndex(x => new { x.OwnerId, x.FirstName }).IsUnique();
+        });
+
+        // PersonShare
+        modelBuilder.Entity<PersonShareEntity>(e =>
+        {
+            e.ToTable("person_share");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.PersonId, x.SharedWithEmail }).IsUnique();
+        });
+
+        // UserRole
+        modelBuilder.Entity<UserRoleEntity>(e =>
+        {
+            e.ToTable("user_role");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UserId, x.Role }).IsUnique();
         });
 
         // Personality
@@ -48,7 +70,7 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
         {
             e.ToTable("analyzed_data");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Embedding).HasColumnType("vector(2560)");
+            e.Property(x => x.Embedding).HasColumnType("vector(1536)");
         });
 
         // ChemicalObservation (formerly biochemical_profile)
@@ -56,7 +78,7 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
         {
             e.ToTable("chemical_observation");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Embedding).HasColumnType("vector(2560)");
+            e.Property(x => x.Embedding).HasColumnType("vector(1536)");
             e.HasIndex(x => new { x.PersonalityId, x.AnalyzedDataId, x.Chemical }).IsUnique();
         });
 
@@ -146,8 +168,33 @@ public class PersonalityDbContext(DbContextOptions<PersonalityDbContext> options
         {
             e.ToTable("shadow_embedding");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Embedding).HasColumnType("vector(2560)");
+            e.Property(x => x.Embedding).HasColumnType("vector(1536)");
             e.HasIndex(x => new { x.Dimension, x.Mode, x.Chemical, x.Level }).IsUnique();
+        });
+
+        // QuestionnaireItem (seed data)
+        modelBuilder.Entity<QuestionnaireItemEntity>(e =>
+        {
+            e.ToTable("questionnaire_item");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.SortOrder, x.Label }).IsUnique();
+        });
+
+        // Questionnaire (runtime instance)
+        modelBuilder.Entity<QuestionnaireEntity>(e =>
+        {
+            e.ToTable("questionnaire");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasDefaultValueSql("uuid_generate_v4()");
+            e.HasIndex(x => x.Token).IsUnique();
+        });
+
+        // QuestionnaireAnswer (runtime answer)
+        modelBuilder.Entity<QuestionnaireAnswerEntity>(e =>
+        {
+            e.ToTable("questionnaire_answer");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.QuestionnaireId, x.ItemId }).IsUnique();
         });
     }
 }

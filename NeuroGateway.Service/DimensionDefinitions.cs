@@ -3,14 +3,17 @@ using static NeuroGateway.AnalysisFramework.DimensionDefinitions;
 
 namespace NeuroGateway.Service;
 
-/// <summary>
-/// DB-backed dimension definitions service. Loads chemicals and dimensions from the database
-/// on first access, caches in memory. Call <see cref="InvalidateCache"/> after CRUD mutations.
-/// </summary>
-public class DimensionDefinitionsService(DimensionRepository dimRepo, ChemicalRepository chemRepo)
+// DB-backed dimension definitions service. Loads chemicals, dimensions, and interactions
+// from the database on first access, caches in memory.
+// Call InvalidateCache() after CRUD mutations.
+public class DimensionDefinitionsService(
+    DimensionRepository dimRepo,
+    ChemicalRepository chemRepo,
+    ChemicalInteractionRepository interactionRepo)
 {
     private IReadOnlyList<DimensionDef>? _all;
     private IReadOnlyDictionary<string, string>? _chemicalToLayer;
+    private IReadOnlyDictionary<(string Source, string Target), (float ModFactor, string? Mechanism)>? _interactions;
 
     public async Task<IReadOnlyList<DimensionDef>> GetAllAsync()
     {
@@ -27,7 +30,9 @@ public class DimensionDefinitionsService(DimensionRepository dimRepo, ChemicalRe
                 a => a.Weight,
                 StringComparer.OrdinalIgnoreCase),
             d.Dimension.WorkRelevance,
-            d.Dimension.PrivateRelevance
+            d.Dimension.PrivateRelevance,
+            d.Dimension.ArchetypeName,
+            d.Dimension.ArchetypeEssence
         )).ToList();
 
         return _all;
@@ -44,9 +49,24 @@ public class DimensionDefinitionsService(DimensionRepository dimRepo, ChemicalRe
         return _chemicalToLayer;
     }
 
+    // Returns cached lookup: (sourceChemicalKey, targetChemicalKey) -> (modFactor, mechanism).
+    // Keys are lowercased for consistent lookup.
+    public async Task<IReadOnlyDictionary<(string Source, string Target), (float ModFactor, string? Mechanism)>> GetInteractionsAsync()
+    {
+        if (_interactions is not null) return _interactions;
+
+        var raw = await interactionRepo.ListAsync();
+        _interactions = raw.ToDictionary(
+            i => (i.SourceKey.ToLowerInvariant(), i.TargetKey.ToLowerInvariant()),
+            i => (i.ModFactor, i.Mechanism));
+
+        return _interactions;
+    }
+
     public void InvalidateCache()
     {
         _all = null;
         _chemicalToLayer = null;
+        _interactions = null;
     }
 }

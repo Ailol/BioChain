@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NeuroGateway.Repository;
 
-public class PersonalityRepository(IDbContextFactory<PersonalityDbContext> factory)
+public class PersonalityRepository(IDbContextFactory<PersonalityDbContext> factory, IUserContext userContext)
 {
     public async Task<int> EnsureExistsAsync(Guid personId)
     {
@@ -28,9 +28,15 @@ public class PersonalityRepository(IDbContextFactory<PersonalityDbContext> facto
     public async Task<string?> GetCommunicationStyleAsync(string person)
     {
         await using var db = await factory.CreateDbContextAsync();
+        var userId = userContext.UserId;
+        var email = userContext.Email;
         return await db.Personalities
             .Join(db.Persons, pers => pers.PersonId, p => p.Id, (pers, p) => new { pers, p })
             .Where(x => x.p.FirstName.ToLower() == person.ToLower())
+            .Where(x => x.p.OwnerId == userId
+                || db.PersonShares.Any(s => s.PersonId == x.p.Id
+                    && (s.SharedWithUserId == userId
+                        || (email != null && s.SharedWithEmail == email))))
             .Select(x => x.pers.CommunicationStyle)
             .FirstOrDefaultAsync();
     }
@@ -38,9 +44,15 @@ public class PersonalityRepository(IDbContextFactory<PersonalityDbContext> facto
     public async Task UpdateCommunicationStyleAsync(string person, string style)
     {
         await using var db = await factory.CreateDbContextAsync();
+        var userId = userContext.UserId;
+        var email = userContext.Email;
         var personality = await db.Personalities
             .Join(db.Persons, pers => pers.PersonId, p => p.Id, (pers, p) => new { pers, p })
             .Where(x => x.p.FirstName.ToLower() == person.ToLower())
+            .Where(x => x.p.OwnerId == userId
+                || db.PersonShares.Any(s => s.PersonId == x.p.Id
+                    && (s.SharedWithUserId == userId
+                        || (email != null && s.SharedWithEmail == email))))
             .Select(x => x.pers)
             .FirstOrDefaultAsync();
 

@@ -187,6 +187,10 @@ static IHost BuildHost(bool requireEmbeddings = false)
             services.AddSingleton<AnalyzedDataRepository>();
             services.AddSingleton<ProfileRepository>();
             services.AddSingleton<ProfileService>();
+            services.AddSingleton<DimensionRepository>();
+            services.AddSingleton<ChemicalRepository>();
+            services.AddSingleton<ChemicalInteractionRepository>();
+            services.AddSingleton<DimensionDefinitionsService>();
 
             services.AddTransient<IpipNeoProcessor>();
             services.AddTransient<OnetProcessor>();

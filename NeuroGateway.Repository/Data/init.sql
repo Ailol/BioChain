@@ -13,6 +13,7 @@
 
         CREATE TABLE person (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            owner_id TEXT NOT NULL,                    -- Keycloak sub claim
             first_name VARCHAR(50) NOT NULL,
             last_name VARCHAR(50),
             phone VARCHAR(20),
@@ -24,6 +25,32 @@
             city VARCHAR(100),
             created_at TIMESTAMP DEFAULT NOW()
         );
+        CREATE INDEX idx_person_owner ON person(owner_id);
+        CREATE UNIQUE INDEX idx_person_owner_name ON person(owner_id, lower(first_name));
+
+        CREATE TABLE person_share (
+            id SERIAL PRIMARY KEY,
+            person_id UUID NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+            shared_with_email TEXT NOT NULL,
+            shared_with_user_id TEXT,                  -- resolved when recipient logs in
+            shared_by_user_id TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (person_id, shared_with_email)
+        );
+        CREATE INDEX idx_person_share_user ON person_share(shared_with_user_id);
+        CREATE INDEX idx_person_share_email ON person_share(shared_with_email);
+
+        CREATE TABLE user_role (
+            id SERIAL PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            email TEXT,
+            role VARCHAR(20) NOT NULL,              -- work | private | both | worker | admin
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (user_id, role)
+        );
+        CREATE INDEX idx_user_role_user ON user_role(user_id);
 
         CREATE TABLE personality (
             id SERIAL PRIMARY KEY,
@@ -44,7 +71,7 @@
             content TEXT NOT NULL,
             source_type VARCHAR(30),                   -- document | chat | manual
             source_uri VARCHAR,
-            embedding vector(2560),
+            embedding vector(1536),
             created_at TIMESTAMP DEFAULT NOW()
         );
         CREATE INDEX idx_analyzed_data_person ON analyzed_data(person_id);
@@ -76,6 +103,8 @@
             description TEXT NOT NULL,
             work_relevance FLOAT NOT NULL DEFAULT 1.0,
             private_relevance FLOAT NOT NULL DEFAULT 1.0,
+            archetype_name VARCHAR(50),
+            archetype_essence VARCHAR(100),
             sort_order INT NOT NULL DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
@@ -124,7 +153,7 @@
             analyzed_data_id INT REFERENCES analyzed_data(id) ON DELETE SET NULL,
             chemical VARCHAR(30) NOT NULL,
             reasoning TEXT NOT NULL,
-            embedding vector(2560),
+            embedding vector(1536),
             intensity_factor FLOAT NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE (personality_id, analyzed_data_id, chemical)
@@ -233,9 +262,51 @@
             dimension VARCHAR(50) NOT NULL,
             mode VARCHAR(20) NOT NULL,
             chemical VARCHAR(30) NOT NULL,
-            level INT NOT NULL CHECK (level BETWEEN 1 AND 5),
-            embedding vector(2560) NOT NULL,
+            level INT NOT NULL CHECK (level BETWEEN 1 AND 100),
+            embedding vector(1536) NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE (dimension, mode, chemical, level)
         );
+
+        -- ─────────────────────────────────────
+        -- Questionnaire System
+        -- ─────────────────────────────────────
+
+        -- Seed table: each row is one option for one question.
+        -- Questions grouped by sort_order (1-18), 3 options per question (A/B/C).
+        CREATE TABLE questionnaire_item (
+            id SERIAL PRIMARY KEY,
+            sort_order INT NOT NULL,
+            scenario TEXT NOT NULL,
+            label CHAR(1) NOT NULL,
+            option_text TEXT NOT NULL,
+            primary_chemical VARCHAR(30) NOT NULL,
+            secondary_chemical VARCHAR(30),
+            is_inverted BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (sort_order, label)
+        );
+        CREATE INDEX idx_qi_sort ON questionnaire_item(sort_order);
+
+        -- Runtime: a questionnaire instance sent to / created for a person
+        CREATE TABLE questionnaire (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            person_id UUID NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+            token VARCHAR(64) NOT NULL UNIQUE,
+            status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT NOW(),
+            completed_at TIMESTAMP
+        );
+        CREATE INDEX idx_questionnaire_person ON questionnaire(person_id);
+        CREATE INDEX idx_questionnaire_token ON questionnaire(token);
+
+        -- Runtime: one selected option per question per questionnaire
+        CREATE TABLE questionnaire_answer (
+            id SERIAL PRIMARY KEY,
+            questionnaire_id UUID NOT NULL REFERENCES questionnaire(id) ON DELETE CASCADE,
+            item_id INT NOT NULL REFERENCES questionnaire_item(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (questionnaire_id, item_id)
+        );
+        CREATE INDEX idx_qa_questionnaire ON questionnaire_answer(questionnaire_id);
 

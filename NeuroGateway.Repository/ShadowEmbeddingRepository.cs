@@ -26,6 +26,24 @@ public class ShadowEmbeddingRepository(IDbContextFactory<PersonalityDbContext> f
         return result;
     }
 
+    // Load only rows matching a specific mode and level
+    public async Task<Dictionary<(string Dim, string Chem), float[]>> LoadByModeAsync(string mode, int level)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT dimension, chemical, embedding::text FROM shadow_embedding WHERE mode = @m AND level = @l";
+        AddParam(cmd, "m", mode);
+        AddParam(cmd, "l", level);
+
+        var result = new Dictionary<(string, string), float[]>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            result[(reader.GetString(0), reader.GetString(1))] = ParseVector(reader.GetString(2));
+        return result;
+    }
+
     /// <summary>
     /// Persist a batch of shadow embeddings. Skips duplicates via ON CONFLICT DO NOTHING.
     /// </summary>
@@ -77,6 +95,43 @@ public class ShadowEmbeddingRepository(IDbContextFactory<PersonalityDbContext> f
     {
         await using var db = await factory.CreateDbContextAsync();
         return await db.ShadowEmbeddings.CountAsync();
+    }
+
+    // Delete all rows for a specific mode (e.g. "mbti_chem", "bigfive_chem")
+    public async Task<int> DeleteByModeAsync(string mode)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM shadow_embedding WHERE mode = @m";
+        AddParam(cmd, "m", mode);
+        return await cmd.ExecuteNonQueryAsync();
+    }
+
+    // Widen the level CHECK constraint to allow prototype version numbers > 5.
+    // The original init.sql had CHECK (level BETWEEN 1 AND 5) which blocks
+    // MBTI/BigFive prototype embeddings that use version as the level value.
+    public async Task MigrateLevelConstraintAsync()
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.check_constraints
+                    WHERE constraint_name = 'shadow_embedding_level_check'
+                      AND check_clause LIKE '%5%'
+                ) THEN
+                    ALTER TABLE shadow_embedding DROP CONSTRAINT shadow_embedding_level_check;
+                    ALTER TABLE shadow_embedding ADD CONSTRAINT shadow_embedding_level_check CHECK (level BETWEEN 1 AND 100);
+                END IF;
+            END $$;
+            """;
+        await cmd.ExecuteNonQueryAsync();
     }
 
     private static void AddParam(System.Data.Common.DbCommand cmd, string name, object value)

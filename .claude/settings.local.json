@@ -88,7 +88,12 @@
       "Bash(git init:*)",
       "Bash(git add:*)",
       "Bash(git remote add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(dotnet package search:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(node:*)",
+      "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
+      "WebFetch(domain:www.frontiersin.org)"
     ]
   }
 }

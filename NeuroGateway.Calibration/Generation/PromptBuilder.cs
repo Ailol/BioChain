@@ -1,29 +1,32 @@
 using System.Text;
 using System.Text.Json;
 using NeuroGateway.AnalysisFramework;
+using NeuroGateway.Service;
+using static NeuroGateway.AnalysisFramework.DimensionDefinitions;
 
 namespace NeuroGateway.Calibration.Generation;
 
-public class PromptBuilder
+public class PromptBuilder(DimensionDefinitionsService _dimDefs)
 {
-    private readonly Dictionary<string, Dictionary<string, CorrelationEntry>> _correlationMatrix;
-    private readonly Dictionary<string, object>? _percentileBoundaries;
-    private readonly string _systemTemplate;
-    private readonly string _workTemplate;
-    private readonly string _privateTemplate;
+    private readonly Dictionary<string, Dictionary<string, CorrelationEntry>> _correlationMatrix = LoadCorrelationMatrix();
+    private readonly Dictionary<string, object>? _percentileBoundaries = LoadJsonArtifact<Dictionary<string, object>>("percentile_boundaries.json");
+    private readonly string _systemTemplate = LoadPromptTemplate("chemical_system.txt");
+    private readonly string _workTemplate = LoadPromptTemplate("shadow_work.txt");
+    private readonly string _privateTemplate = LoadPromptTemplate("shadow_private.txt");
 
-    public PromptBuilder()
-    {
-        _correlationMatrix = LoadCorrelationMatrix();
-        _percentileBoundaries = LoadJsonArtifact<Dictionary<string, object>>("percentile_boundaries.json");
-        _systemTemplate = LoadPromptTemplate("chemical_system.txt");
-        _workTemplate = LoadPromptTemplate("shadow_work.txt");
-        _privateTemplate = LoadPromptTemplate("shadow_private.txt");
-    }
+    private IReadOnlyList<DimensionDef>? _dims;
+    private IReadOnlyDictionary<string, string>? _chemToLayer;
 
-    public string BuildSystemPrompt(string chemical)
+    private async Task<IReadOnlyList<DimensionDef>> GetDimsAsync()
+        => _dims ??= await _dimDefs.GetAllAsync();
+
+    private async Task<IReadOnlyDictionary<string, string>> GetChemToLayerAsync()
+        => _chemToLayer ??= await _dimDefs.GetChemicalToLayerAsync();
+
+    public async Task<string> BuildSystemPromptAsync(string chemical)
     {
-        var layer = DimensionDefinitions.ChemicalToLayer.TryGetValue(chemical, out var l) ? l : "unknown";
+        var chemToLayer = await GetChemToLayerAsync();
+        var layer = chemToLayer.TryGetValue(chemical, out var l) ? l : "unknown";
         var correlations = BuildCorrelationBlock(chemical);
 
         return _systemTemplate
@@ -32,12 +35,12 @@ public class PromptBuilder
             .Replace("{chemical_correlations}", correlations);
     }
 
-    public string BuildUserPrompt(string chemical, string mode, string? filterDimension = null)
+    public async Task<string> BuildUserPromptAsync(string chemical, string mode, string? filterDimension = null)
     {
         var template = mode.Equals("private", StringComparison.OrdinalIgnoreCase)
             ? _privateTemplate : _workTemplate;
 
-        var dims = GetDimensionsForChemical(chemical);
+        var dims = await GetDimensionsForChemicalAsync(chemical);
         if (filterDimension != null)
             dims = dims.Where(d => d.Name.Equals(filterDimension, StringComparison.OrdinalIgnoreCase)).ToList();
 
@@ -69,12 +72,16 @@ public class PromptBuilder
             .Replace("{dimension_blocks}", sb.ToString());
     }
 
-    public IReadOnlyList<string> GetAllChemicals() =>
-        DimensionDefinitions.ChemicalToLayer.Keys.ToList();
-
-    public List<DimensionDefinitions.DimensionDef> GetDimensionsForChemical(string chemical)
+    public async Task<IReadOnlyList<string>> GetAllChemicalsAsync()
     {
-        return DimensionDefinitions.All
+        var chemToLayer = await GetChemToLayerAsync();
+        return chemToLayer.Keys.ToList();
+    }
+
+    public async Task<List<DimensionDef>> GetDimensionsForChemicalAsync(string chemical)
+    {
+        var dims = await GetDimsAsync();
+        return dims
             .Where(d => d.ChemicalAffinity.ContainsKey(chemical))
             .ToList();
     }

@@ -1,12 +1,16 @@
 using System.ClientModel;
 using Anthropic;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 // ReSharper disable AccessToDisposedClosure
 using Microsoft.Extensions.AI;
 using NeuroGateway.AgentFramework;
 using NeuroGateway.Models;
 using NeuroGateway.Repository;
+using NeuroGateway.Repository.Roles;
+using NeuroGateway.Server;
 using NeuroGateway.Server.Api;
+using NeuroGateway.Server.Auth;
 using NeuroGateway.Service;
 using OllamaSharp;
 using OpenAI;
@@ -82,7 +86,7 @@ static IEmbeddingGenerator<string, Embedding<float>>? CreateEmbeddingGenerator(L
 
 // ── Registration ─────────────────────────────────────────────────────────────
 
-static void RegisterAll(IServiceCollection services, AgentConfiguration llm, string db)
+static void RegisterAll(IServiceCollection services, AgentConfiguration llm, string db, bool isHttp)
 {
     services.AddSingleton(llm);
 
@@ -90,6 +94,19 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddPooledDbContextFactory<PersonalityDbContext>(options =>
         options.UseNpgsql(db, npgsql => npgsql.UseVector())
                .UseSnakeCaseNamingConvention());
+
+    // User context — HTTP reads JWT claims; stdio uses env var
+    if (isHttp)
+    {
+        services.AddHttpContextAccessor();
+        services.AddSingleton<IUserContext, HttpUserContext>();
+    }
+    else
+    {
+        var userId = Environment.GetEnvironmentVariable("MCP_USER_ID") ?? "stdio-user";
+        var email = Environment.GetEnvironmentVariable("MCP_USER_EMAIL");
+        services.AddSingleton<IUserContext>(new FixedUserContext(userId, email));
+    }
 
     // Repositories
     services.AddSingleton<PersonRepository>();
@@ -103,6 +120,12 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<DimensionRepository>();
     services.AddSingleton<ChemicalInteractionRepository>();
     services.AddSingleton<ShadowEmbeddingRepository>();
+    services.AddSingleton<QuestionnaireRepository>();
+    services.AddSingleton<PersonShareRepository>();
+    services.AddSingleton<UserRoleRepository>();
+
+    // RBAC
+    services.AddSingleton<IRoleService, RoleService>();
 
     // ChatClient for analyzing agents (AgentAnalyzing — neuro LoRA, SKIP/ADD)
     var analyzingChatClient = new ChatClient(CreateChatClient(llm.AgentAnalyzing!));
@@ -121,24 +144,34 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     // ChatClient for orchestrator (document chunking — Qwen3-32B-AWQ, 16K context)
     var orchestratorClient = new ChatClient(CreateChatClient(llm.Orchestrator!));
 
-    // Embedding generator (optional — null if not configured)
-    var embedGen = CreateEmbeddingGenerator(llm.Embedding);
-    // DimensionDefinitionsService — DB-backed chemical/dimension lookup
+    // Embedding generator — required
+    var embedGen = CreateEmbeddingGenerator(llm.Embedding)
+        ?? throw new InvalidOperationException("Llm:Embedding must be configured");
     services.AddSingleton<DimensionDefinitionsService>();
-
-    if (embedGen is not null)
-    {
-        services.AddSingleton(embedGen);
-        services.AddSingleton<EmbeddingService>();
-        services.AddSingleton<ShadowAnchorService>();
-        services.AddSingleton<DimensionService>();
-        services.AddSingleton<CalibrationService>();
-    }
+    services.AddSingleton(embedGen);
+    services.AddSingleton<EmbeddingService>();
+    services.AddSingleton<ShadowAnchorService>();
+    services.AddSingleton<DimensionService>();
+    services.AddSingleton<CalibrationService>();
 
     // Services
     services.AddSingleton<PersonService>();
     services.AddSingleton<AnalyzeService>();
     services.AddSingleton<ProfileService>();
+    services.AddSingleton<MbtiService>();
+    services.AddSingleton<BigFiveService>();
+    services.AddSingleton(sp => new ProfileAnalysisService(
+        sp.GetRequiredService<ProfileRepository>(),
+        sp.GetRequiredService<DimensionDefinitionsService>(),
+        sp.GetRequiredService<ShadowAnchorService>(),
+        sp.GetRequiredService<AnalyzeService>(),
+        reasoningChatClient,
+        sp.GetRequiredService<EmbeddingService>(),
+        sp.GetRequiredService<MbtiService>(),
+        sp.GetRequiredService<BigFiveService>()));
+    services.AddSingleton<AnalysisQueueService>();
+    services.AddHostedService<AnalysisBackgroundWorker>();
+    services.AddSingleton<QuestionnaireService>();
     services.AddSingleton(sp => new NeuroService(
         orchestratorClient,
         reasoningChatClient,
@@ -173,13 +206,33 @@ static async Task RunHttpMode(string[] args)
     builder.AddServiceDefaults();
 
     var (llm, db) = LoadConfig(builder.Configuration);
-    RegisterAll(builder.Services, llm, db);
+    RegisterAll(builder.Services, llm, db, isHttp: true);
 
     builder.Services.AddCors(options =>
         options.AddDefaultPolicy(policy =>
-            policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+            policy.SetIsOriginAllowed(origin =>
+                    new Uri(origin).Host == "localhost")
                   .AllowAnyHeader()
                   .AllowAnyMethod()));
+
+    // Keycloak JWT bearer auth
+    builder.Services.AddAuthentication()
+        .AddKeycloakJwtBearer("keycloak", "neurogateway", options =>
+        {
+            options.Audience = "neurogateway-api";
+            if (builder.Environment.IsDevelopment())
+                options.RequireHttpsMetadata = false;
+        });
+    builder.Services.AddSingleton<IRoleProvider, KeycloakRoleProvider>();
+    builder.Services.AddTransient<IClaimsTransformation, DbRolesClaimsTransformation>();
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("Admin", policy => policy.RequireRole("admin"));
+        options.AddPolicy("Work", policy => policy.RequireRole("admin", "work", "both"));
+        options.AddPolicy("Private", policy => policy.RequireRole("admin", "private", "both"));
+        options.AddPolicy("Worker", policy => policy.RequireRole("admin", "worker"));
+        options.AddPolicy("HasRole", policy => policy.RequireRole("admin", "work", "private", "both", "worker"));
+    });
 
     builder.Services
         .AddMcpServer()
@@ -187,32 +240,85 @@ static async Task RunHttpMode(string[] args)
         .WithToolsFromAssembly();
 
     var app = builder.Build();
+    if (app.Environment.IsDevelopment())
+        app.UseDeveloperExceptionPage();
     app.UseCors();
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.MapDefaultEndpoints();
 
-    // REST API
-    var personGroup = app.MapPersonApi();
-    app.MapAnalyzeApi();
-    app.MapRelationshipApi();
-    app.MapChemicalApi();
-    app.MapChemicalInteractionApi();
-    app.MapDimensionMasterApi();
-    if (app.Services.GetService<EmbeddingService>() is not null)
-        app.MapEmbeddingApi();
-    if (app.Services.GetService<DimensionService>() is not null)
+    // REST API — in Development allow anonymous (Aspire rewrites Keycloak issuer URL)
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapAuthApi().AllowAnonymous();
+        var personGroup = app.MapPersonApi().AllowAnonymous();
+        app.MapAnalyzeApi().AllowAnonymous();
+        app.MapRelationshipApi().AllowAnonymous();
+        app.MapChemicalApi().AllowAnonymous();
+        app.MapChemicalInteractionApi().AllowAnonymous();
+        app.MapDimensionMasterApi().AllowAnonymous();
+        app.MapEmbeddingApi().AllowAnonymous();
         personGroup.MapDimensionApi();
+        app.MapInsightsApi().AllowAnonymous();
+        app.MapMbtiApi().AllowAnonymous();
+        app.MapBigFiveApi().AllowAnonymous();
+        app.MapQuestionnaireApi().AllowAnonymous();
+    }
+    else
+    {
+        app.MapAuthApi().RequireAuthorization();
+        var personGroup = app.MapPersonApi().RequireAuthorization("Work");
+        app.MapAnalyzeApi().RequireAuthorization("HasRole");
+        app.MapRelationshipApi().RequireAuthorization("HasRole");
+        app.MapChemicalApi().RequireAuthorization("HasRole");
+        app.MapChemicalInteractionApi().RequireAuthorization("HasRole");
+        app.MapDimensionMasterApi().RequireAuthorization("Admin");
+        app.MapEmbeddingApi().RequireAuthorization("Admin");
+        personGroup.MapDimensionApi();
+        app.MapInsightsApi().RequireAuthorization("HasRole");
+        app.MapMbtiApi().RequireAuthorization("HasRole");
+        app.MapBigFiveApi().RequireAuthorization("HasRole");
+        // Questionnaire has mixed auth (create requires auth, rest is public)
+        app.MapQuestionnaireApi();
+    }
 
     // MCP protocol
     app.MapMcp("/mcp");
 
-    // Verify DB connectivity at startup
-    var dbFactory = app.Services.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<PersonalityDbContext>>();
-    await using var testDb = await dbFactory.CreateDbContextAsync();
-    var personCount = await testDb.Persons.CountAsync();
-    Console.WriteLine($"DB connected — {personCount} person(s) found");
+    // Diagnostic endpoint
+    app.MapGet("/ping", () => "pong");
 
-    var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://localhost:18080";
-    Console.WriteLine($"MCP Server running in HTTP mode on {urls} at /mcp");
+    // Verify DB connectivity and wire auto-embedding after startup
+    var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+    lifetime.ApplicationStarted.Register(() =>
+    {
+        _ = Task.Run(async () =>
+        {
+            var factory = app.Services.GetRequiredService<IDbContextFactory<PersonalityDbContext>>();
+            for (var attempt = 1; attempt <= 30; attempt++)
+            {
+                try
+                {
+                    await using var testDb = await factory.CreateDbContextAsync();
+                    await testDb.Persons.CountAsync();
+
+                    // Run schema migrations before services start using the DB
+                    await app.Services.GetRequiredService<ShadowEmbeddingRepository>()
+                        .MigrateLevelConstraintAsync();
+
+                    // Wire auto-embedding now that DB is confirmed ready
+                    app.Services.GetRequiredService<AnalyzeService>().Embedder =
+                        app.Services.GetRequiredService<EmbeddingService>();
+                    return;
+                }
+                catch (Exception ex) when (attempt < 30)
+                {
+                    Console.WriteLine($"DB not ready (attempt {attempt}/30): {ex.Message}");
+                    await Task.Delay(2000);
+                }
+            }
+        });
+    });
 
     await app.RunAsync();
 }
@@ -230,7 +336,7 @@ static async Task RunStdioMode(string[] args)
         .ConfigureServices((ctx, services) =>
         {
             var (llm, db) = LoadConfig(ctx.Configuration);
-            RegisterAll(services, llm, db);
+            RegisterAll(services, llm, db, isHttp: false);
 
             services
                 .AddMcpServer()

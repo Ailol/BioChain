@@ -47,7 +47,18 @@ public sealed record ChemicalEdge(
     string ChemicalA,
     string ChemicalB,
     float Correlation,
-    string Relationship);
+    string Relationship,
+    float? KnownModFactor = null,
+    string? KnownMechanism = null);
+
+// Input data for the scoring algorithm: one chemical observation with its embedding.
+// Maps from ProfileRepository.ProfileEntry to decouple algorithm from persistence.
+public sealed record ChemicalObservation(
+    string Chemical,
+    string Reasoning,
+    float[] Embedding,
+    float IntensityFactor,
+    DateTime CreatedAt);
 
 /// <summary>
 /// One cell of the shadow level matrix: a single chemical × dimension pair.

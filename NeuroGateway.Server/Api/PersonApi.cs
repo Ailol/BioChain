@@ -67,6 +67,33 @@ public static class PersonApi
             });
         });
 
+        // Share a person with another user by email
+        group.MapPost("/{name}/share", async (string name, SharePersonRequest req, PersonRepository personRepo, PersonShareRepository shareRepo) =>
+        {
+            var personId = await personRepo.GetIdAsync(name);
+            if (personId is null) return Results.NotFound(new { error = "Person not found" });
+            await shareRepo.ShareAsync(personId.Value, req.Email);
+            return Results.Ok(new { shared = true });
+        });
+
+        // Unshare a person (email as query param — DELETE doesn't support inferred body)
+        group.MapDelete("/{name}/share", async (string name, string email, PersonRepository personRepo, PersonShareRepository shareRepo) =>
+        {
+            var personId = await personRepo.GetIdAsync(name);
+            if (personId is null) return Results.NotFound(new { error = "Person not found" });
+            await shareRepo.UnshareAsync(personId.Value, email);
+            return Results.Ok(new { unshared = true });
+        });
+
+        // List shares for a person
+        group.MapGet("/{name}/shares", async (string name, PersonRepository personRepo, PersonShareRepository shareRepo) =>
+        {
+            var personId = await personRepo.GetIdAsync(name);
+            if (personId is null) return Results.NotFound(new { error = "Person not found" });
+            var shares = await shareRepo.ListSharesAsync(personId.Value);
+            return Results.Ok(new { shares = shares.Select(s => new { s.Email, sharedAt = s.SharedAt.ToString("o") }) });
+        });
+
         return group;
     }
 
@@ -97,3 +124,4 @@ public static class PersonApi
 }
 
 public record CreatePersonRequest(string Name);
+public record SharePersonRequest(string Email);

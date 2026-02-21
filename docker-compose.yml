@@ -25,8 +25,7 @@ services:
       - Llm__AgentAnalyzing__Endpoint=http://100.104.149.87:8000
       - Llm__AgentReasoning__Endpoint=http://100.104.149.87:8000
       - Llm__AgentLayer__Endpoint=http://100.104.149.87:8000
-      - Llm__Embedding__Endpoint=http://host.docker.internal:11434
-      - Llm__Embedding__Model=qwen3-embedding:4b
+      # Embedding config comes from .env (switchable local/api profiles)
       # API keys come from .env via env_file above
     depends_on:
       postgres:
@@ -52,7 +51,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./NeuroGateway.Repository/Data/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./NeuroGateway.Repository/Data/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ./NeuroGateway.Repository/Data/seed-core.sql:/docker-entrypoint-initdb.d/02-seed-core.sql
+      - ./NeuroGateway.Repository/Data/seed-agents.sql:/docker-entrypoint-initdb.d/03-seed-agents.sql
+      - ./NeuroGateway.Repository/Data/seed-chemicals.sql:/docker-entrypoint-initdb.d/04-seed-chemicals.sql
+      - ./NeuroGateway.Repository/Data/seed-questionnaire.sql:/docker-entrypoint-initdb.d/05-seed-questionnaire.sql
     ports:
       - "5434:5432"
     healthcheck:
