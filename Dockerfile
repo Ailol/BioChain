@@ -6,7 +6,7 @@ WORKDIR /src
 COPY . .
 
 # Restore and publish
-RUN dotnet publish NeuroGateway.Server/NeuroGateway.Server.csproj -c Release -o /app/publish
+RUN dotnet publish src/NeuroGateway.Server/NeuroGateway.Server.csproj -c Release -o /app/publish
 
 # Runtime stage - Alpine (small ~100MB)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime

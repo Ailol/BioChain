@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NeuroGateway.Server\NeuroGateway.Server.csproj" />
+    <ProjectReference Include="..\..\NeuroGateway.Server\NeuroGateway.Server.csproj" />
   </ItemGroup>
 
 </Project>

@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NeuroGateway.Models\NeuroGateway.Models.csproj" />
+    <ProjectReference Include="..\..\Libraries\NeuroGateway.Models\NeuroGateway.Models.csproj" />
   </ItemGroup>
 
 </Project>

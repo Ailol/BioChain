@@ -12,12 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj" />
-    <ProjectReference Include="..\NeuroGateway.AnalysisFramework\NeuroGateway.AnalysisFramework.csproj" />
+    <ProjectReference Include="..\..\Frameworks\NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj" />
+    <ProjectReference Include="..\..\Frameworks\NeuroGateway.AnalysisFramework\NeuroGateway.AnalysisFramework.csproj" />
     <ProjectReference Include="..\NeuroGateway.Repository\NeuroGateway.Repository.csproj" />
     <ProjectReference Include="..\NeuroGateway.Models\NeuroGateway.Models.csproj" />
     <ProjectReference Include="..\NeuroGateway.Utils\NeuroGateway.Utils.csproj" />
-    <ProjectReference Include="..\NeuroGateway.ML\NeuroGateway.ML.csproj" />
+    <ProjectReference Include="..\..\Frameworks\NeuroGateway.ML\NeuroGateway.ML.csproj" />
   </ItemGroup>
 
 </Project>

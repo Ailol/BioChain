@@ -3,21 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.2.11408.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Server", "NeuroGateway.Server\NeuroGateway.Server.csproj", "{FF9B596D-B6B9-8050-3BCE-B70A40A37CA9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Server", "src\NeuroGateway.Server\NeuroGateway.Server.csproj", "{FF9B596D-B6B9-8050-3BCE-B70A40A37CA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Models", "NeuroGateway.Models\NeuroGateway.Models.csproj", "{A6F628C1-DCC2-4202-807C-C844AEE58EB5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Models", "src\Libraries\NeuroGateway.Models\NeuroGateway.Models.csproj", "{A6F628C1-DCC2-4202-807C-C844AEE58EB5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Repository", "NeuroGateway.Repository\NeuroGateway.Repository.csproj", "{05B701F9-11DD-4005-BF5C-865FFF18B806}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Repository", "src\Libraries\NeuroGateway.Repository\NeuroGateway.Repository.csproj", "{05B701F9-11DD-4005-BF5C-865FFF18B806}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Utils", "NeuroGateway.Utils\NeuroGateway.Utils.csproj", "{04910F38-86BA-4B5F-A9FB-A9FA6EC4832B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Utils", "src\Libraries\NeuroGateway.Utils\NeuroGateway.Utils.csproj", "{04910F38-86BA-4B5F-A9FB-A9FA6EC4832B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Service", "NeuroGateway.Service\NeuroGateway.Service.csproj", "{068BCA11-C4D7-4E16-A978-74C35953F9EC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.Service", "src\Libraries\NeuroGateway.Service\NeuroGateway.Service.csproj", "{068BCA11-C4D7-4E16-A978-74C35953F9EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.AgentFramework", "NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj", "{AF6F0AEC-0ED3-4A54-934E-048BC44CF2A1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.AgentFramework", "src\Frameworks\NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj", "{AF6F0AEC-0ED3-4A54-934E-048BC44CF2A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.AppHost", "NeuroGateway.AppHost\NeuroGateway.AppHost.csproj", "{B1C2D3E4-F5A6-7890-ABCD-EF1234567890}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.AppHost", "src\Aspire\NeuroGateway.AppHost\NeuroGateway.AppHost.csproj", "{B1C2D3E4-F5A6-7890-ABCD-EF1234567890}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.ServiceDefaults", "NeuroGateway.ServiceDefaults\NeuroGateway.ServiceDefaults.csproj", "{C2D3E4F5-A6B7-8901-CDEF-234567890ABC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.ServiceDefaults", "src\Aspire\NeuroGateway.ServiceDefaults\NeuroGateway.ServiceDefaults.csproj", "{C2D3E4F5-A6B7-8901-CDEF-234567890ABC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{FB50535F-304C-48A2-8F63-2C7646928713}"
 EndProject
@@ -25,9 +25,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frameworks", "Frameworks", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{D1E2F3A4-B5C6-7890-1234-567890ABCDEF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.AnalysisFramework", "NeuroGateway.AnalysisFramework\NeuroGateway.AnalysisFramework.csproj", "{7F1B960A-446A-468F-A489-EA417CCE8B2B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.AnalysisFramework", "src\Frameworks\NeuroGateway.AnalysisFramework\NeuroGateway.AnalysisFramework.csproj", "{7F1B960A-446A-468F-A489-EA417CCE8B2B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.ML", "NeuroGateway.ML\NeuroGateway.ML.csproj", "{B2A3C4D5-E6F7-8901-AB23-456789ABCDEF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroGateway.ML", "src\Frameworks\NeuroGateway.ML\NeuroGateway.ML.csproj", "{B2A3C4D5-E6F7-8901-AB23-456789ABCDEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

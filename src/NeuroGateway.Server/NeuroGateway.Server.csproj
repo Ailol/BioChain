@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>NeuroGateway.Server</RootNamespace>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..</DockerfileContext>
+    <DockerfileContext>../..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,12 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj" />
-    <ProjectReference Include="..\NeuroGateway.Models\NeuroGateway.Models.csproj" />
-    <ProjectReference Include="..\NeuroGateway.ServiceDefaults\NeuroGateway.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\NeuroGateway.Repository\NeuroGateway.Repository.csproj" />
-    <ProjectReference Include="..\NeuroGateway.Service\NeuroGateway.Service.csproj" />
-    <ProjectReference Include="..\NeuroGateway.Utils\NeuroGateway.Utils.csproj" />
+    <ProjectReference Include="..\Frameworks\NeuroGateway.AgentFramework\NeuroGateway.AgentFramework.csproj" />
+    <ProjectReference Include="..\Libraries\NeuroGateway.Models\NeuroGateway.Models.csproj" />
+    <ProjectReference Include="..\Aspire\NeuroGateway.ServiceDefaults\NeuroGateway.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Libraries\NeuroGateway.Repository\NeuroGateway.Repository.csproj" />
+    <ProjectReference Include="..\Libraries\NeuroGateway.Service\NeuroGateway.Service.csproj" />
+    <ProjectReference Include="..\Libraries\NeuroGateway.Utils\NeuroGateway.Utils.csproj" />
   </ItemGroup>
 
 </Project>

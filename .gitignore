@@ -92,3 +92,4 @@ NeuroGateway.Calibration/RawData/*
 node_modules/
 dist/
 *.tsbuildinfo
+.claude

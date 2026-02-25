@@ -1,5 +1,5 @@
 // Load ../.env into process environment (same file docker-compose uses)
-var envFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".env");
+var envFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", ".env");
 if (File.Exists(envFile))
 {
     foreach (var line in File.ReadAllLines(envFile))
@@ -28,11 +28,11 @@ var pgPassword = builder.AddParameter("pg-password", secret: true);
 var postgres = builder.AddPostgres("postgres", port: 5434, password: pgPassword)
     .WithEnvironment("POSTGRES_DB", "personality")
     .WithDataVolume("pgdata-v6")
-    .WithBindMount("../NeuroGateway.Repository/Data/init.sql", "/docker-entrypoint-initdb.d/01-init.sql")
-    .WithBindMount("../NeuroGateway.Repository/Data/seed-core.sql", "/docker-entrypoint-initdb.d/02-seed-core.sql")
-    .WithBindMount("../NeuroGateway.Repository/Data/seed-agents.sql", "/docker-entrypoint-initdb.d/03-seed-agents.sql")
-    .WithBindMount("../NeuroGateway.Repository/Data/seed-chemicals.sql", "/docker-entrypoint-initdb.d/04-seed-chemicals.sql")
-    .WithBindMount("../NeuroGateway.Repository/Data/seed-questionnaire.sql", "/docker-entrypoint-initdb.d/05-seed-questionnaire.sql")
+    .WithBindMount("../../Libraries/NeuroGateway.Repository/Data/init.sql", "/docker-entrypoint-initdb.d/01-init.sql")
+    .WithBindMount("../../Libraries/NeuroGateway.Repository/Data/seed-core.sql", "/docker-entrypoint-initdb.d/02-seed-core.sql")
+    .WithBindMount("../../Libraries/NeuroGateway.Repository/Data/seed-agents.sql", "/docker-entrypoint-initdb.d/03-seed-agents.sql")
+    .WithBindMount("../../Libraries/NeuroGateway.Repository/Data/seed-chemicals.sql", "/docker-entrypoint-initdb.d/04-seed-chemicals.sql")
+    .WithBindMount("../../Libraries/NeuroGateway.Repository/Data/seed-questionnaire.sql", "/docker-entrypoint-initdb.d/05-seed-questionnaire.sql")
     .WithImageRegistry("docker.io")
     .WithImage("pgvector/pgvector")
     .WithImageTag("pg16")
@@ -54,7 +54,7 @@ var mcpServer = builder.AddProject<Projects.NeuroGateway_Server>("mcp-server")
     .WithEnvironment("Llm__Embedding__Model", "text-embedding-3-small");
 
 // React frontend (Aspire-managed Vite dev server)
-builder.AddViteApp("neuroreact", "../neuroreact", "dev")
+builder.AddViteApp("neuroreact", "../../NeuroGateway.App", "dev")
     .WithEndpoint("http", e => e.Port = 5173)
     .WithReference(mcpServer)
     .WithReference(keycloak)

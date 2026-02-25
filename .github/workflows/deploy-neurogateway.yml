@@ -4,14 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'NeuroGateway.Server/**'
-      - 'NeuroGateway.Service/**'
-      - 'NeuroGateway.Models/**'
-      - 'NeuroGateway.Repository/**'
-      - 'NeuroGateway.Utils/**'
-      - 'NeuroGateway.AgentFramework/**'
-      - 'NeuroGateway.PipelineFramework/**'
-      - 'NeuroGateway.AnalysisFramework/**'
+      - 'src/**'
       - 'Dockerfile'
       - 'k8s/charts/neurogateway/**'
 
