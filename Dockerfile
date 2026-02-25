@@ -6,7 +6,7 @@ WORKDIR /src
 COPY . .
 
 # Restore and publish
-RUN dotnet publish src/NeuroGateway.Server/NeuroGateway.Server.csproj -c Release -o /app/publish
+RUN dotnet publish src/BioChain.Server/BioChain.Server.csproj -c Release -o /app/publish
 
 # Runtime stage - Alpine (small ~100MB)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
@@ -20,4 +20,4 @@ EXPOSE 13370
 
 ENV ASPNETCORE_URLS=http://+:13370
 
-ENTRYPOINT ["dotnet", "NeuroGateway.Server.dll"]
+ENTRYPOINT ["dotnet", "BioChain.Server.dll"]

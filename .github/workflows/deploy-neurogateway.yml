@@ -1,4 +1,4 @@
-name: Build and Deploy NeuroGateway Server
+name: Build and Deploy BioChain Server
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     paths:
       - 'src/**'
       - 'Dockerfile'
-      - 'k8s/charts/neurogateway/**'
+      - 'k8s/charts/biochain/**'
 
 jobs:
   build-and-deploy:
@@ -25,7 +25,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ailol/neurogateway:latest,ailol/neurogateway:${{ github.sha }}
+          tags: ailol/biochain:latest,ailol/biochain:${{ github.sha }}
 
       - name: Install Helm
         uses: azure/setup-helm@v3
@@ -37,6 +37,6 @@ jobs:
 
       - name: Deploy to AKS
         run: |
-          helm upgrade --install neurogateway ./k8s/charts/neurogateway \
+          helm upgrade --install biochain ./k8s/charts/biochain \
             --set image.tag=${{ github.sha }} \
             --set secrets.postgresConnectionString="${{ secrets.POSTGRES_CONNECTION_STRING }}"

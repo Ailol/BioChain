@@ -1,37 +1,28 @@
 # BioChain Docker Compose
 # Usage:
-#   docker-compose up -d                    # Start all services
-#   docker-compose up -d --build            # Rebuild and start
-#   docker-compose logs -f mcp              # View logs
-#   docker-compose down                     # Stop all
+#   Development (local postgres):  docker compose --profile dev up -d
+#   Production  (Supabase):        docker compose --profile prod up -d
+#   Rebuild:                       docker compose --profile dev up -d --build
+#   Logs:                          docker compose logs -f mcp
 
 services:
   # MCP Server - Multi-Agent AI
   mcp:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     container_name: biochain-server
+    profiles: ["dev", "prod"]
     ports:
       - "13370:13370"
     env_file:
-      - .env
+      - ../.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:13370
-      - PERSONALITY_DB=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
-      # Per-purpose endpoints (override appsettings.json for Docker networking)
-      - Llm__Orchestrator__Model=claude-sonnet-4-20250514
-      - Llm__AgentAnalyzing__Endpoint=http://host.docker.internal:7000
-      - Llm__AgentAnalyzing__Model=med-4b-finetuned-hf
-      - Llm__AgentLayer__Endpoint=http://host.docker.internal:7000
-      - Llm__AgentLayer__Model=qwen3-4b-4bit+layer
-      - Llm__Embedding__Model=text-embedding-3-small
-      # Embedding config comes from .env (switchable local/api profiles)
-      # API keys come from .env via env_file above
     depends_on:
       postgres:
         condition: service_healthy
+        required: false
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -42,23 +33,20 @@ services:
       retries: 3
       start_period: 10s
 
-  # PostgreSQL - Personality Storage
+  # PostgreSQL - Personality Storage (dev only)
   postgres:
     image: pgvector/pgvector:pg16
     container_name: biochain-postgres
+    profiles: ["dev"]
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=personality
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/Libraries/BioChain.Repository/Data/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-core.sql:/docker-entrypoint-initdb.d/02-seed-core.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-agents.sql:/docker-entrypoint-initdb.d/03-seed-agents.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-chemicals.sql:/docker-entrypoint-initdb.d/04-seed-chemicals.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-questionnaire.sql:/docker-entrypoint-initdb.d/05-seed-questionnaire.sql
+      - ../BioChain.Repository/Data/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5434:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
