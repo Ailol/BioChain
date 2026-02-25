@@ -65,17 +65,17 @@ public class QuestionnaireService(
         var questionItems = await questionnaireRepo.GetSingleQuestionItemsAsync(q.Id, itemId);
         var text = FormatSingleQuestionForAnalysis(personName, targetItem.SortOrder, questionItems);
 
-        // Run only targeted agents (primary + secondary chemicals)
-        var targetChemicals = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { targetItem.PrimaryChemical };
+        // Run only targeted agents (primary + secondary signals)
+        var targetSignals = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { targetItem.PrimaryChemical };
         if (targetItem.SecondaryChemical is not null)
-            targetChemicals.Add(targetItem.SecondaryChemical);
+            targetSignals.Add(targetItem.SecondaryChemical);
 
         // Enqueue for background processing — returns immediately
         await analysisQueue.EnqueueAsync(new AnalysisWorkItem(
             personName, text,
             SourceType: "questionnaire",
             Save: true,
-            TargetChemicals: targetChemicals));
+            TargetSignals: targetSignals));
 
         return new SingleAnswerResult(answeredCount, 18, isComplete, targetItem.SortOrder);
     }
@@ -114,7 +114,7 @@ public class QuestionnaireService(
             personName, text,
             SourceType: "questionnaire",
             Save: true,
-            TargetChemicals: null));
+            TargetSignals: null));
     }
 
     // Format a single question + answer for targeted agent analysis.

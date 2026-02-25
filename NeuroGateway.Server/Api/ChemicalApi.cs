@@ -2,50 +2,38 @@ using NeuroGateway.Repository;
 
 namespace NeuroGateway.Server.Api;
 
-public static class ChemicalApi
+public static class SignalApi
 {
-    public static RouteGroupBuilder MapChemicalApi(this IEndpointRouteBuilder app)
+    public static RouteGroupBuilder MapSignalApi(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/chemicals").WithTags("Chemicals");
+        var group = app.MapGroup("/api/signals").WithTags("Signals");
 
-        group.MapGet("/", async (ChemicalRepository repo) =>
+        group.MapGet("/", async (SignalRepository repo) =>
         {
-            var chemicals = await repo.ListAsync();
-            return Results.Ok(chemicals.Select(c => new
+            var signals = await repo.ListAsync();
+            return Results.Ok(signals.Select(s => new
             {
-                c.Id, c.Key, c.Label, c.Layer
+                s.Id, s.Key, s.Label, s.Layer, s.Code, s.Unit
             }));
         });
 
-        group.MapGet("/{key}", async (string key, ChemicalRepository repo) =>
+        group.MapGet("/by-layer/{layer}", async (string layer, SignalRepository repo) =>
         {
-            var chemical = await repo.GetByKeyAsync(key);
-            return chemical is null
+            var signals = await repo.ListByLayerAsync(layer);
+            return Results.Ok(signals.Select(s => new
+            {
+                s.Id, s.Key, s.Label, s.Layer, s.Code, s.Unit
+            }));
+        });
+
+        group.MapGet("/{key}", async (string key, SignalRepository repo) =>
+        {
+            var signal = await repo.GetByKeyAsync(key);
+            return signal is null
                 ? Results.NotFound()
-                : Results.Ok(new { chemical.Id, chemical.Key, chemical.Label, chemical.Layer });
-        });
-
-        group.MapPost("/", async (ChemicalCreateRequest req, ChemicalRepository repo) =>
-        {
-            var entity = await repo.CreateAsync(req.Key, req.Label, req.Layer);
-            return Results.Created($"/api/chemicals/{entity.Key}",
-                new { entity.Id, entity.Key, entity.Label, entity.Layer });
-        });
-
-        group.MapPut("/{id:int}", async (int id, ChemicalCreateRequest req, ChemicalRepository repo) =>
-        {
-            var ok = await repo.UpdateAsync(id, req.Key, req.Label, req.Layer);
-            return ok ? Results.NoContent() : Results.NotFound();
-        });
-
-        group.MapDelete("/{id:int}", async (int id, ChemicalRepository repo) =>
-        {
-            var ok = await repo.DeleteAsync(id);
-            return ok ? Results.NoContent() : Results.NotFound();
+                : Results.Ok(new { signal.Id, signal.Key, signal.Label, signal.Layer, signal.Code, signal.Unit });
         });
 
         return group;
     }
-
-    public record ChemicalCreateRequest(string Key, string Label, string Layer);
 }

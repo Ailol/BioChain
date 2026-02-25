@@ -49,7 +49,7 @@ public class AnalyzeTools(NeuroService neuroService)
             person,
             source_type = "work",
             decisions_count = result.Decisions.Count,
-            decisions = result.Decisions.Select(d => new { d.Chemical, d.Reasoning }),
+            decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
             synthesis = result.Synthesis
         }, IndentedJson);
     }
@@ -90,7 +90,7 @@ public class AnalyzeTools(NeuroService neuroService)
             person,
             source_type = "journal",
             decisions_count = result.Decisions.Count,
-            decisions = result.Decisions.Select(d => new { d.Chemical, d.Reasoning }),
+            decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
             synthesis = result.Synthesis
         }, IndentedJson);
     }

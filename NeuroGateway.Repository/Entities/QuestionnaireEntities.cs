@@ -12,6 +12,7 @@ public class QuestionnaireItemEntity
     public string? SecondaryChemical { get; set; }
     public bool IsInverted { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string Config { get; set; } = "{}";
 }
 
 // Runtime: a questionnaire instance sent to / created for a person.
@@ -23,6 +24,7 @@ public class QuestionnaireEntity
     public string Status { get; set; } = "pending";
     public DateTime CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+    public string Config { get; set; } = "{}";
 }
 
 // Runtime: one selected option per question per questionnaire.

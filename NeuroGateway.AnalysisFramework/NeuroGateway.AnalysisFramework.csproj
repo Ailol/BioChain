@@ -8,15 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <Compile Remove="OLD\**" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\NeuroGateway.Models\NeuroGateway.Models.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Constants\ShadowProfiles.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

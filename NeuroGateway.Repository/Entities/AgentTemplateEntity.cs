@@ -15,4 +15,5 @@ public class AgentTemplateEntity
     public int SortOrder { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public string Config { get; set; } = "{}";
 }

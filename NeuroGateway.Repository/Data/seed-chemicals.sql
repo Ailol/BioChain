@@ -6,34 +6,33 @@
 -- Chemical Master Data (27)
 -- ═════════════════════════════════════
 
-INSERT INTO chemical (key, label, layer) VALUES
-('dopamine',        'Dopamine',        'neurotransmitter'),
-('serotonin',       'Serotonin',       'neurotransmitter'),
-('norepinephrine',  'Norepinephrine',  'neurotransmitter'),
-('gaba',            'GABA',            'neurotransmitter'),
-('acetylcholine',   'Acetylcholine',   'neurotransmitter'),
-('endocannabinoid', 'Endocannabinoid', 'neurotransmitter'),
-('glutamate',       'Glutamate',       'neurotransmitter'),
-('cortisol',        'Cortisol',        'hormone'),
-('testosterone',    'Testosterone',    'hormone'),
-('estradiol',       'Estradiol',       'hormone'),
-('progesterone',    'Progesterone',    'hormone'),
-('thyroid',         'Thyroid',         'hormone'),
-('adrenaline',      'Adrenaline',      'hormone'),
-('melatonin',       'Melatonin',       'hormone'),
-('dhea',            'DHEA',            'hormone'),
-('prolactin',       'Prolactin',       'hormone'),
-('oxytocin_h',      'Oxytocin (H)',    'hormone'),
-('oxytocin',        'Oxytocin',        'peptide'),
-('vasopressin',     'Vasopressin',     'peptide'),
-('endorphins',      'Endorphins',      'peptide'),
-('enkephalins',     'Enkephalins',     'peptide'),
-('dynorphin',       'Dynorphin',       'peptide'),
-('substance_p',     'Substance P',     'peptide'),
-('crh',             'CRH',             'peptide'),
-('npy',             'NPY',             'peptide'),
-('bdnf',            'BDNF',            'peptide'),
-('orexin',          'Orexin',          'peptide')
+INSERT INTO chemical (key, label, layer, ncn_code) VALUES
+('dopamine',        'Dopamine',        'neurotransmitter',  'NT:DA'),
+('serotonin',       'Serotonin',       'neurotransmitter',  'NT:5HT'),
+('norepinephrine',  'Norepinephrine',  'neurotransmitter',  'NT:NE'),
+('gaba',            'GABA',            'neurotransmitter',  'NT:GABA'),
+('acetylcholine',   'Acetylcholine',   'neurotransmitter',  'NT:ACh'),
+('endocannabinoid', 'Endocannabinoid', 'endocannabinoid',   'eCB:ANA'),
+('glutamate',       'Glutamate',       'neurotransmitter',  'NT:GLU'),
+('cortisol',        'Cortisol',        'hormone',           'H:CORT'),
+('testosterone',    'Testosterone',    'hormone',           'H:T'),
+('estradiol',       'Estradiol',       'hormone',           'H:E2'),
+('progesterone',    'Progesterone',    'hormone',           'H:PROG'),
+('thyroid',         'Thyroid',         'hormone',           'H:THY'),
+('adrenaline',      'Adrenaline',      'hormone',           'H:ADR'),
+('melatonin',       'Melatonin',       'hormone',           'H:MEL'),
+('dhea',            'DHEA',            'hormone',           'H:DHEA'),
+('prolactin',       'Prolactin',       'hormone',           'H:PRL'),
+('oxytocin',        'Oxytocin',        'peptide',           'P:OXT'),
+('vasopressin',     'Vasopressin',     'peptide',           'P:AVP'),
+('endorphins',      'Endorphins',      'peptide',           'P:βEND'),
+('enkephalins',     'Enkephalins',     'peptide',           'P:ENK'),
+('dynorphin',       'Dynorphin',       'peptide',           'P:DYN'),
+('substance_p',     'Substance P',     'peptide',           'P:SP'),
+('crh',             'CRH',             'peptide',           'P:CRH'),
+('npy',             'NPY',             'peptide',           'P:NPY'),
+('bdnf',            'BDNF',            'peptide',           'P:BDNF'),
+('orexin',          'Orexin',          'peptide',           'P:ORX')
 ON CONFLICT (key) DO NOTHING;
 
 -- ═════════════════════════════════════
@@ -93,7 +92,6 @@ INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELE
 INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELECT d.id, c.id, 0.4 FROM dimension d, chemical c WHERE d.name='Persistence' AND c.key='dhea' ON CONFLICT DO NOTHING;
 -- Team Orientation
 INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELECT d.id, c.id, 1.0 FROM dimension d, chemical c WHERE d.name='Team Orientation' AND c.key='oxytocin' ON CONFLICT DO NOTHING;
-INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELECT d.id, c.id, 0.9 FROM dimension d, chemical c WHERE d.name='Team Orientation' AND c.key='oxytocin_h' ON CONFLICT DO NOTHING;
 INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELECT d.id, c.id, 0.7 FROM dimension d, chemical c WHERE d.name='Team Orientation' AND c.key='vasopressin' ON CONFLICT DO NOTHING;
 INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELECT d.id, c.id, 0.6 FROM dimension d, chemical c WHERE d.name='Team Orientation' AND c.key='prolactin' ON CONFLICT DO NOTHING;
 INSERT INTO dimension_chemical_affinity (dimension_id, chemical_id, weight) SELECT d.id, c.id, 0.4 FROM dimension d, chemical c WHERE d.name='Team Orientation' AND c.key='serotonin' ON CONFLICT DO NOTHING;
@@ -301,15 +299,11 @@ INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_fa
 INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='serotonin' AND t.key='prolactin' ON CONFLICT DO NOTHING;
 INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='prolactin' ON CONFLICT DO NOTHING;
 
--- Oxytocin (H) interactions
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='dopamine' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='serotonin' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='oxytocin_h' AND t.key='endorphins' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.55 FROM chemical s, chemical t WHERE s.key='cortisol' AND t.key='oxytocin_h' ON CONFLICT DO NOTHING;
-INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.45 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='oxytocin_h' ON CONFLICT DO NOTHING;
-
--- Oxytocin (P) interactions
+-- Oxytocin interactions (merged from oxytocin + oxytocin_h)
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.50 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='dopamine' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.45 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='serotonin' ON CONFLICT DO NOTHING;
 INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.55 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='endorphins' ON CONFLICT DO NOTHING;
+INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.45 FROM chemical s, chemical t WHERE s.key='testosterone' AND t.key='oxytocin' ON CONFLICT DO NOTHING;
 INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, 0.40 FROM chemical s, chemical t WHERE s.key='oxytocin' AND t.key='vasopressin' ON CONFLICT DO NOTHING;
 INSERT INTO chemical_interaction (source_chemical_id, target_chemical_id, mod_factor) SELECT s.id, t.id, -0.50 FROM chemical s, chemical t WHERE s.key='dynorphin' AND t.key='oxytocin' ON CONFLICT DO NOTHING;
 

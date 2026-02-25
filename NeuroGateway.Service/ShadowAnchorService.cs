@@ -5,61 +5,54 @@ using NeuroGateway.Repository;
 
 namespace NeuroGateway.Service;
 
-// Manages the embedding cache for shadow profile level descriptions.
-// PostgreSQL-backed: loads on first use, embeds missing entries via Ollama, persists to DB.
-// Delegates pure math to LevelEstimator and EmbeddingMath in AnalysisFramework.
+// Manages embedding-based level estimation using cached reference embeddings.
+// PostgreSQL-backed via embedding_cache table (replaces shadow profiles YAML).
 public class ShadowAnchorService(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
-    ShadowEmbeddingRepository shadowRepo)
+    EmbeddingCacheRepository cacheRepo)
 {
-    // In-process cache loaded from PostgreSQL on first use
-    private readonly ConcurrentDictionary<(string Dim, string Mode, string Chem, int Level), float[]> _cache = new();
-
-    // Per-dimension centroid: mean of shadow level embeddings (for relevance filtering)
-    private readonly ConcurrentDictionary<(string Dim, string Mode), float[]> _centroids = new();
-
+    private readonly ConcurrentDictionary<string, float[]> _cache = new();
+    private readonly ConcurrentDictionary<string, float[]> _centroids = new();
     private int _initialized;
 
-    // Resolve cached embeddings for a dimension/mode/chemical, then delegate to LevelEstimator.
-    public async Task<float> EstimateLevelAsync(string dimension, string mode, string chemical, float[] reasoningEmbedding)
+    // Estimate level for a signal within a dimension context using embedding similarity
+    // to cached reference embeddings. Returns 1-5 scale.
+    public async Task<float> EstimateLevelAsync(string dimension, string mode, string signal, float[] embedding)
     {
         await EnsureInitializedAsync();
 
-        var levelTexts = ShadowProfileLoader.GetLevelTexts(dimension, mode, chemical);
-        if (levelTexts is null || levelTexts.Count == 0)
-            return 3.0f;
-
+        // Look for cached level embeddings for this dim/mode/signal combination
         var shadowLevels = new List<(int Level, float[] Embedding)>();
-        foreach (var (level, _) in levelTexts)
+        for (var level = 1; level <= 5; level++)
         {
-            if (_cache.TryGetValue((dimension, mode, chemical, level), out var levelEmb))
+            var key = $"{dimension}|{mode}|{signal}|{level}";
+            if (_cache.TryGetValue(key, out var levelEmb))
                 shadowLevels.Add((level, levelEmb));
         }
 
         if (shadowLevels.Count == 0)
-            return 3.0f;
+            return 3.0f; // neutral default
 
-        return LevelEstimator.EstimateLevel(reasoningEmbedding, shadowLevels);
+        return LevelEstimator.EstimateLevel(embedding, shadowLevels);
     }
 
-    // Quick relevance check using dimension centroid.
-    public async Task<bool> IsRelevantAsync(string dimension, string mode, float[] reasoningEmbedding, float threshold = 0.3f)
+    // Quick relevance check using dimension centroid
+    public async Task<bool> IsRelevantAsync(string dimension, string mode, float[] embedding, float threshold = 0.3f)
     {
         await EnsureInitializedAsync();
-        if (!_centroids.TryGetValue((dimension, mode), out var centroid))
+        var centroidKey = $"{dimension}|{mode}";
+        if (!_centroids.TryGetValue(centroidKey, out var centroid))
             return true;
-        return LevelEstimator.IsRelevant(reasoningEmbedding, centroid, threshold);
+        return LevelEstimator.IsRelevant(embedding, centroid, threshold);
     }
 
-    // Get the pre-computed dimension centroid (mean-pooled shadow embeddings).
     public async Task<float[]?> GetDimensionCentroidAsync(string dimension, string mode)
     {
         await EnsureInitializedAsync();
-        return _centroids.TryGetValue((dimension, mode), out var centroid) ? centroid : null;
+        var centroidKey = $"{dimension}|{mode}";
+        return _centroids.TryGetValue(centroidKey, out var centroid) ? centroid : null;
     }
 
-    // Load all embeddings from PostgreSQL cache, embed any missing entries, persist them.
-    // Thread-safe: runs exactly once, subsequent calls are no-ops.
     private async Task EnsureInitializedAsync()
     {
         if (Interlocked.CompareExchange(ref _initialized, 1, 0) == 1)
@@ -71,50 +64,14 @@ public class ShadowAnchorService(
 
         try
         {
-            var existing = await shadowRepo.LoadAllAsync();
+            // Load all shadow-level embeddings from embedding_cache
+            var existing = await cacheRepo.LoadByTypeAsync("shadow_level");
             foreach (var (key, vec) in existing)
                 _cache.TryAdd(key, vec);
 
-            Console.WriteLine($"[ShadowAnchor] Loaded {existing.Count} embeddings from PostgreSQL");
-
-            var allEntries = ShadowProfileLoader.GetAllEntries();
-            var missing = allEntries
-                .Where(e => !_cache.ContainsKey((e.Dim, e.Mode, e.Chem, e.Level)))
-                .ToList();
-
-            if (missing.Count > 0)
-            {
-                Console.WriteLine($"[ShadowAnchor] Embedding {missing.Count} missing shadow descriptions...");
-
-                var toSave = new List<(string Dim, string Mode, string Chem, int Level, float[] Embedding)>();
-
-                const int batchSize = 10;
-                for (var i = 0; i < missing.Count; i += batchSize)
-                {
-                    var batch = missing.Skip(i).Take(batchSize).ToList();
-                    var texts = batch.Select(e => e.Text).ToList();
-
-                    var embeddings = await embeddingGenerator.GenerateAsync(texts);
-
-                    for (var j = 0; j < batch.Count; j++)
-                    {
-                        var entry = batch[j];
-                        var vector = embeddings[j].Vector.ToArray();
-                        var key = (entry.Dim, entry.Mode, entry.Chem, entry.Level);
-                        _cache.TryAdd(key, vector);
-                        toSave.Add((entry.Dim, entry.Mode, entry.Chem, entry.Level, vector));
-                    }
-
-                    if ((i + batchSize) % 100 == 0 || i + batchSize >= missing.Count)
-                        Console.WriteLine($"[ShadowAnchor] Embedded {Math.Min(i + batchSize, missing.Count)}/{missing.Count}");
-                }
-
-                await shadowRepo.SaveBatchAsync(toSave);
-                Console.WriteLine($"[ShadowAnchor] Persisted {toSave.Count} new embeddings to PostgreSQL");
-            }
+            Console.WriteLine($"[ShadowAnchor] Loaded {existing.Count} embeddings from embedding_cache");
 
             BuildCentroids();
-
             Console.WriteLine($"[ShadowAnchor] Ready — {_cache.Count} cached, {_centroids.Count} centroids");
         }
         catch (Exception ex)
@@ -127,8 +84,13 @@ public class ShadowAnchorService(
 
     private void BuildCentroids()
     {
+        // Group by dimension|mode prefix
         var groups = _cache
-            .GroupBy(kv => (kv.Key.Dim, kv.Key.Mode))
+            .GroupBy(kv =>
+            {
+                var parts = kv.Key.Split('|');
+                return parts.Length >= 2 ? $"{parts[0]}|{parts[1]}" : kv.Key;
+            })
             .ToList();
 
         foreach (var group in groups)

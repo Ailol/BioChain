@@ -87,3 +87,8 @@ cv/
 # Calibration raw datasets (large, downloaded separately)
 NeuroGateway.Calibration/RawData/*
 !NeuroGateway.Calibration/RawData/.gitkeep
+
+# Node / Frontend
+node_modules/
+dist/
+*.tsbuildinfo

@@ -16,7 +16,7 @@ public static class AnalyzeApi
             {
                 person = req.Person,
                 sourceType = "chat",
-                decisions = result.Decisions.Select(d => new { d.Chemical, d.Reasoning }),
+                decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
                 synthesis = result.Synthesis,
                 layerResponses = result.LayerResponses,
                 suggestedResponse = result.SuggestedResponse
@@ -31,7 +31,7 @@ public static class AnalyzeApi
                 person = req.Person,
                 sourceType = "work",
                 decisionsCount = result.Decisions.Count,
-                decisions = result.Decisions.Select(d => new { d.Chemical, d.Reasoning }),
+                decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
                 synthesis = result.Synthesis
             });
         });
@@ -44,7 +44,7 @@ public static class AnalyzeApi
                 person = req.Person,
                 sourceType = "journal",
                 decisionsCount = result.Decisions.Count,
-                decisions = result.Decisions.Select(d => new { d.Chemical, d.Reasoning }),
+                decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
                 synthesis = result.Synthesis
             });
         });

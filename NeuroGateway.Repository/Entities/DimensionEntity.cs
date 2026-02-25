@@ -3,6 +3,7 @@ namespace NeuroGateway.Repository.Entities;
 public class DimensionEntity
 {
     public int Id { get; set; }
+    public int? DomainId { get; set; }
     public string Name { get; set; } = "";
     public string Section { get; set; } = "";
     public string Category { get; set; } = "";
@@ -12,6 +13,7 @@ public class DimensionEntity
     public string? ArchetypeName { get; set; }
     public string? ArchetypeEssence { get; set; }
     public int SortOrder { get; set; }
+    public string Config { get; set; } = "{}";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

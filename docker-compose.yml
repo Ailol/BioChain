@@ -17,14 +17,16 @@ services:
     env_file:
       - .env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:13370
       - PERSONALITY_DB=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
       # Per-purpose endpoints (override appsettings.json for Docker networking)
       - Llm__Orchestrator__Model=claude-sonnet-4-20250514
-      - Llm__AgentAnalyzing__Endpoint=http://100.104.149.87:8000
-      - Llm__AgentReasoning__Endpoint=http://100.104.149.87:8000
-      - Llm__AgentLayer__Endpoint=http://100.104.149.87:8000
+      - Llm__AgentAnalyzing__Endpoint=http://host.docker.internal:7000
+      - Llm__AgentAnalyzing__Model=med-4b-finetuned-hf
+      - Llm__AgentLayer__Endpoint=http://host.docker.internal:7000
+      - Llm__AgentLayer__Model=qwen3-4b-4bit+layer
+      - Llm__Embedding__Model=text-embedding-3-small
       # Embedding config comes from .env (switchable local/api profiles)
       # API keys come from .env via env_file above
     depends_on:

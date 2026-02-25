@@ -1,46 +1,23 @@
 namespace NeuroGateway.AnalysisFramework;
 
-// Pure math for shadow-anchored level estimation.
-// No async, no cache — takes pre-resolved embeddings as input.
 public static class LevelEstimator
 {
-    private const float SoftmaxTemperature = 0.1f;
-
-    // Softmax-weighted interpolation over shadow level embeddings.
-    // Returns a continuous level estimate (1.0 - 5.0).
-    public static float EstimateLevel(float[] reasoningEmbedding, IReadOnlyList<(int Level, float[] Embedding)> shadowLevels)
+    public static float EstimateLevel(float[] reasoningEmbedding, List<(int Level, float[] Embedding)> shadowLevels)
     {
-        if (shadowLevels.Count == 0)
-            return 3.0f;
-
-        var similarities = new List<(int Level, float Sim)>(shadowLevels.Count);
-        foreach (var (level, emb) in shadowLevels)
-        {
-            var sim = EmbeddingMath.CosineSimilarity(reasoningEmbedding, emb);
-            similarities.Add((level, sim));
-        }
-
+        if (shadowLevels.Count == 0) return 3.0f;
+        var similarities = shadowLevels
+            .Select(sl => (sl.Level, Sim: EmbeddingMath.CosineSimilarity(reasoningEmbedding, sl.Embedding)))
+            .ToList();
         var maxSim = similarities.Max(s => s.Sim);
-        float weightedSum = 0, weightSum = 0;
-        foreach (var (level, sim) in similarities)
-        {
-            var w = MathF.Exp((sim - maxSim) / SoftmaxTemperature);
-            weightedSum += level * w;
-            weightSum += w;
-        }
-
-        return weightSum > 0 ? Math.Clamp(weightedSum / weightSum, 1f, 5f) : 3.0f;
+        var expSims = similarities.Select(s => (s.Level, Exp: MathF.Exp((s.Sim - maxSim) * 10f))).ToList();
+        var sumExp = expSims.Sum(s => s.Exp);
+        if (sumExp <= 0) return 3.0f;
+        return expSims.Sum(s => s.Level * (s.Exp / sumExp));
     }
 
-    // Quick relevance check: is the reasoning embedding close enough to the dimension's shadow space?
-    public static bool IsRelevant(float[] reasoningEmbedding, float[] dimensionCentroid, float threshold = 0.3f)
-        => EmbeddingMath.CosineSimilarity(reasoningEmbedding, dimensionCentroid) >= threshold;
+    public static bool IsRelevant(float[] reasoningEmbedding, float[] centroid, float threshold = 0.3f)
+        => EmbeddingMath.CosineSimilarity(reasoningEmbedding, centroid) >= threshold;
 
-    // Map intensity_factor (-1.0 to +1.0) to level (1.0 to 5.0)
-    public static float MapIntensityToLevel(float intensityFactor)
-        => Math.Clamp((intensityFactor + 1f) * 2f + 1f, 1f, 5f);
-
-    // Sigmoid confidence: 1 / (1 + exp(-(count - threshold)))
-    public static float Sigmoid(int count, float threshold)
+    public static float Sigmoid(int count, float threshold = 3f)
         => 1f / (1f + MathF.Exp(-(count - threshold)));
 }

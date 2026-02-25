@@ -11,4 +11,5 @@ public class AnalyzedDataEntity
     public string? SourceUri { get; set; }
     public Vector? Embedding { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string Metadata { get; set; } = "{}";
 }

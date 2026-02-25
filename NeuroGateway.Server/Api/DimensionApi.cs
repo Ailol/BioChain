@@ -21,7 +21,7 @@ public static class DimensionMasterApi
                 d.Dimension.WorkRelevance,
                 d.Dimension.PrivateRelevance,
                 d.Dimension.SortOrder,
-                Affinities = d.Affinities.Select(a => new { ChemicalKey = a.ChemicalKey, a.Weight })
+                Affinities = d.Affinities.Select(a => new { a.SignalKey, a.Weight })
             }));
         });
 
@@ -48,14 +48,14 @@ public static class DimensionMasterApi
 
         group.MapPut("/{id:int}/affinities", async (int id, AffinityRequest req, DimensionRepository repo) =>
         {
-            await repo.SetAffinityAsync(id, req.ChemicalId, req.Weight);
+            await repo.SetAffinityAsync(id, req.SignalId, req.Weight);
             return Results.NoContent();
         });
 
-        group.MapDelete("/{dimensionId:int}/affinities/{chemicalId:int}",
-            async (int dimensionId, int chemicalId, DimensionRepository repo) =>
+        group.MapDelete("/{dimensionId:int}/affinities/{signalId:int}",
+            async (int dimensionId, int signalId, DimensionRepository repo) =>
             {
-                var ok = await repo.RemoveAffinityAsync(dimensionId, chemicalId);
+                var ok = await repo.RemoveAffinityAsync(dimensionId, signalId);
                 return ok ? Results.NoContent() : Results.NotFound();
             });
 
@@ -65,5 +65,5 @@ public static class DimensionMasterApi
     public record DimensionCreateRequest(string Name, string Section, string Category,
         string Description, float WorkRelevance, float PrivateRelevance, int SortOrder);
 
-    public record AffinityRequest(int ChemicalId, float Weight);
+    public record AffinityRequest(int SignalId, float Weight);
 }

@@ -15,14 +15,14 @@ public class AnalysisBackgroundWorker(
             try
             {
                 Console.WriteLine($"[AnalysisWorker] Processing: {item.PersonName}, " +
-                    $"source={item.SourceType}, chemicals={item.TargetChemicals?.Count ?? 0}");
+                    $"source={item.SourceType}, signals={item.TargetSignals?.Count ?? 0}");
 
                 await _analyzeService.AnalyzeAsync(
                     item.PersonName,
                     item.Text,
                     sourceType: item.SourceType,
                     save: item.Save,
-                    targetChemicals: item.TargetChemicals);
+                    targetSignals: item.TargetSignals);
 
                 Console.WriteLine($"[AnalysisWorker] Completed: {item.PersonName}");
             }

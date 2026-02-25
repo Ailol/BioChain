@@ -7,9 +7,9 @@ namespace NeuroGateway.Service;
 public class EmbeddingService(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     AnalyzedDataRepository analyzedDataRepo,
-    ProfileRepository profileRepo)
+    ObservationRepository observationRepo)
 {
-    public async Task<(int AnalyzedData, int Profiles)> BackfillAsync(string? person = null)
+    public async Task<(int AnalyzedData, int Observations)> BackfillAsync(string? person = null)
     {
         // 1. Backfill analyzed_data embeddings
         var adEntries = await analyzedDataRepo.GetWithoutEmbeddingsAsync(person);
@@ -22,18 +22,18 @@ public class EmbeddingService(
             adCount++;
         }
 
-        // 2. Backfill biochemical_profile embeddings (from reasoning text)
-        var profileEntries = await profileRepo.GetWithoutEmbeddingsAsync(person);
-        var profileCount = 0;
-        foreach (var (id, reasoning) in profileEntries)
+        // 2. Backfill observation embeddings (from formula text)
+        var observationEntries = await observationRepo.GetWithoutEmbeddingsAsync(person);
+        var observationCount = 0;
+        foreach (var (id, formula) in observationEntries)
         {
-            var embedding = await embeddingGenerator.GenerateAsync(reasoning);
+            var embedding = await embeddingGenerator.GenerateAsync(formula);
             var vector = FormatVector(embedding.Vector.Span);
-            await profileRepo.UpdateEmbeddingAsync(id, vector);
-            profileCount++;
+            await observationRepo.UpdateEmbeddingAsync(id, vector);
+            observationCount++;
         }
 
-        return (adCount, profileCount);
+        return (adCount, observationCount);
     }
 
     public async Task<string> GenerateVectorAsync(string text)

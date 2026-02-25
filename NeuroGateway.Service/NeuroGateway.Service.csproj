@@ -17,6 +17,7 @@
     <ProjectReference Include="..\NeuroGateway.Repository\NeuroGateway.Repository.csproj" />
     <ProjectReference Include="..\NeuroGateway.Models\NeuroGateway.Models.csproj" />
     <ProjectReference Include="..\NeuroGateway.Utils\NeuroGateway.Utils.csproj" />
+    <ProjectReference Include="..\NeuroGateway.ML\NeuroGateway.ML.csproj" />
   </ItemGroup>
 
 </Project>

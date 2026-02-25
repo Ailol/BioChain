@@ -26,7 +26,7 @@ public class ChatTools(NeuroService neuroService)
         {
             person,
             source_type = "chat",
-            decisions = result.Decisions.Select(d => new { d.Chemical, d.Reasoning }),
+            decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
             synthesis = result.Synthesis,
             layer_responses = result.LayerResponses,
             suggested_response = result.SuggestedResponse

@@ -1,24 +1,24 @@
 namespace NeuroGateway.Models;
 
-public sealed record ChemicalLevelDto(
-    string Chemical,
+public sealed record SignalLevelDto(
+    string Signal,
     string Layer,
     float Level,
     int ObservationCount,
     float Variance
 );
 
-public sealed record ChemicalProfileDto(
+public sealed record SignalProfileDto(
     string Person,
     float Maturity,
     int TotalObservations,
-    int UniqueChemicals,
-    List<ChemicalLevelDto> Levels,
-    List<ChemicalLevelDto> TopFive
+    int UniqueSignals,
+    List<SignalLevelDto> Levels,
+    List<SignalLevelDto> TopFive
 );
 
-public sealed record ChemicalForecastDto(
-    string Chemical,
+public sealed record SignalForecastDto(
+    string Signal,
     string Trend,
     float CurrentLevel,
     float ProjectedLevel,
@@ -29,14 +29,14 @@ public sealed record ChemicalForecastDto(
 );
 
 public sealed record CascadeAlertDto(
-    string TriggerChemical,
-    List<string> AffectedChemicals,
+    string TriggerSignal,
+    List<string> AffectedSignals,
     string Mechanism,
     string Severity
 );
 
 public sealed record PersonalForecastDto(
-    List<ChemicalForecastDto> Chemicals,
+    List<SignalForecastDto> Signals,
     List<CascadeAlertDto> ActiveCascades,
     List<string> StableFoundation,
     List<string> InFlux,
@@ -47,7 +47,7 @@ public sealed record PersonalForecastDto(
 public sealed record PrescriptionDto(
     string Modality,
     string Rationale,
-    List<string> TargetChemicals,
+    List<string> TargetSignals,
     float Priority
 );
 
@@ -63,8 +63,8 @@ public sealed record HealthIndicatorsDto(
 
 public sealed record TrajectoryPointDto(DateTime Date, float Level);
 
-public sealed record ChemicalTrajectoryDto(
-    string Chemical,
+public sealed record SignalTrajectoryDto(
+    string Signal,
     string Layer,
     List<TrajectoryPointDto> Points
 );
@@ -72,22 +72,22 @@ public sealed record ChemicalTrajectoryDto(
 public sealed record TrajectoryResultDto(
     string Person,
     int PeriodDays,
-    List<ChemicalTrajectoryDto> Chemicals
+    List<SignalTrajectoryDto> Signals
 );
 
 public sealed record CheckInResponse(bool AnalysisTriggered, int WordCount, string? Status);
 
 public sealed record DashboardResultDto(
-    ChemicalProfileDto Profile,
+    SignalProfileDto Profile,
     PersonalForecastDto Forecast,
     List<PrescriptionDto> Prescriptions,
     HealthIndicatorsDto Health
 );
 
-// ── Key Chemicals (computed, display-ready) ──
+// ── Key Signals (computed, display-ready) ──
 
-public sealed record KeyChemicalDto(
-    string Chemical,
+public sealed record KeySignalDto(
+    string Signal,
     string Label,
     string Layer,
     string LayerColor,
@@ -102,9 +102,9 @@ public sealed record KeyChemicalDto(
     int ObservationCount
 );
 
-public sealed record KeyChemicalsResultDto(
+public sealed record KeySignalsResultDto(
     string Person,
-    List<KeyChemicalDto> Chemicals,
+    List<KeySignalDto> Signals,
     string Narrative
 );
 
@@ -114,7 +114,7 @@ public sealed record StrengthChallengeItemDto(
     string Type,
     string Indicator,
     string Title,
-    string ChemicalKey,
+    string SignalKey,
     string Label,
     string Layer,
     string LayerColor,
@@ -125,7 +125,7 @@ public sealed record StrengthChallengeItemDto(
     string Explanation,
     string PracticalAdvice,
     string BrainExercise,
-    string[] RelatedChemicals,
+    string[] RelatedSignals,
     string[] RelatedLabels
 );
 
@@ -140,9 +140,9 @@ public sealed record StrengthsChallengesResultDto(
 // ── Cross-Profile: Strength x Challenge interactions with LLM-generated suggestions ──
 
 public sealed record CrossProfileItemDto(
-    string StrengthChemical,
+    string StrengthSignal,
     string StrengthLabel,
-    string ChallengeChemical,
+    string ChallengeSignal,
     string ChallengeLabel,
     float Similarity,
     string Affects,
@@ -158,64 +158,3 @@ public sealed record CrossProfileResultDto(
     string GeneratedAt
 );
 
-// ── Big Five / OCEAN (embedding-based classification) ──
-
-public sealed record BigFiveTraitScoreDto(
-    string Trait,
-    string Label,
-    float Score,
-    float HighSim,
-    float LowSim
-);
-
-public sealed record BigFiveResultDto(
-    string Person,
-    List<BigFiveTraitScoreDto> Traits,
-    string Note
-);
-
-// ── MBTI (embedding-based classification) ──
-
-public sealed record MbtiTypeScoreDto(
-    string TypeCode,
-    string TypeLabel,
-    float Similarity
-);
-
-public sealed record MbtiResultDto(
-    string Person,
-    string TypeCode,
-    string TypeLabel,
-    List<MbtiTypeScoreDto> RankedTypes,
-    string Note
-);
-
-// ── Personality Narrative (AI-generated, MBTI + Big Five + biochemistry) ──
-
-public sealed record TraitDriverDto(
-    string Trait,
-    string Label,
-    float Score,
-    string Narrative,
-    string Pattern,
-    string[] KeyChemicals
-);
-
-public sealed record MbtiInsightDto(
-    string CognitiveStack,
-    string StrengthsNarrative,
-    string BlindSpots,
-    string GrowthPath,
-    string[] DominantChemicals
-);
-
-public sealed record PersonalityNarrativeDto(
-    string Person,
-    string MbtiSummary,
-    string BigFiveSummary,
-    string TypeChemistry,
-    string OverallPattern,
-    MbtiInsightDto? MbtiInsight,
-    List<TraitDriverDto> TraitDrivers,
-    string GeneratedAt
-);

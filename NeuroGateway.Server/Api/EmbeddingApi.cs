@@ -23,22 +23,6 @@ public static class EmbeddingApi
             });
         });
 
-        // Delete all MBTI + Big Five prototype embeddings from DB and clear
-        // in-memory caches. Next classification call will regenerate them.
-        group.MapPost("/reembed-prototypes", async (MbtiService mbti, BigFiveService bigFive) =>
-        {
-            var mbtiDeleted = await mbti.ReembedAsync();
-            var bigFiveDeleted = await bigFive.ReembedAsync();
-            var total = mbtiDeleted + bigFiveDeleted;
-            return Results.Ok(new
-            {
-                mbti_deleted = mbtiDeleted,
-                bigfive_deleted = bigFiveDeleted,
-                total,
-                message = $"Cleared {mbtiDeleted} MBTI + {bigFiveDeleted} Big Five prototype embeddings. They will regenerate on next classification."
-            });
-        });
-
         return group;
     }
 }

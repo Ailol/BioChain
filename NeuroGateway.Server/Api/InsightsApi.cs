@@ -43,10 +43,10 @@ public static class InsightsApi
             return Results.Ok(trajectory);
         });
 
-        // Key chemicals: top 3-5 most significant chemicals, fully display-ready
-        group.MapGet("/{person}/key-chemicals", async (string person, ProfileAnalysisService svc) =>
+        // Key signals: top 3-5 most significant signals, fully display-ready
+        group.MapGet("/{person}/key-signals", async (string person, ProfileAnalysisService svc) =>
         {
-            var result = await svc.GetKeyChemicalsAsync(person);
+            var result = await svc.GetKeySignalsAsync(person);
             return Results.Ok(result);
         });
 
@@ -61,13 +61,6 @@ public static class InsightsApi
         group.MapGet("/{person}/cross-profile", async (string person, ProfileAnalysisService svc) =>
         {
             var result = await svc.GetCrossProfileAsync(person);
-            return Results.Ok(result);
-        });
-
-        // AI-generated personality narrative: MBTI + Big Five + biochemistry
-        group.MapGet("/{person}/personality-narrative", async (string person, ProfileAnalysisService svc) =>
-        {
-            var result = await svc.GetPersonalityNarrativeAsync(person);
             return Results.Ok(result);
         });
 

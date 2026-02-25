@@ -13,9 +13,9 @@ public sealed record DimensionScore(
     CircuitCoherence? Circuit = null);
 
 public sealed record DimensionEvidence(
-    string Chemical,
+    string Signal,
     string Layer,
-    string Reasoning,
+    string Formula,
     float Level,
     float Recency);
 
@@ -34,52 +34,55 @@ public sealed record TemporalTrajectory(
     float DriftMagnitude = 0f);
 
 /// <summary>
-/// Chemical interaction graph for a dimension.
-/// Shows which chemicals co-activate (positive edges) vs conflict (negative edges).
-/// CircuitCoherenceScore measures how consistently the chemical network agrees.
+/// Signal interaction graph for a dimension.
+/// Shows which signals co-activate (positive edges) vs conflict (negative edges).
+/// CircuitCoherenceScore measures how consistently the signal network agrees.
 /// </summary>
 public sealed record CircuitCoherence(
     float CoherenceScore,
-    List<ChemicalEdge> Edges,
-    string Pattern);
+    List<SignalEdge> Edges,
+    string Pattern,
+    List<string>? FailureModes = null);
 
-public sealed record ChemicalEdge(
-    string ChemicalA,
-    string ChemicalB,
+public sealed record SignalEdge(
+    string SignalA,
+    string SignalB,
     float Correlation,
     string Relationship,
     float? KnownModFactor = null,
     string? KnownMechanism = null);
 
-// Input data for the scoring algorithm: one chemical observation with its embedding.
-// Maps from ProfileRepository.ProfileEntry to decouple algorithm from persistence.
-public sealed record ChemicalObservation(
-    string Chemical,
-    string Reasoning,
+// Input data for the scoring algorithm: one signal observation with its embedding.
+// Maps from ObservationRepository.ObservationEntry to decouple algorithm from persistence.
+public sealed record SignalObservation(
+    string Signal,
+    string Formula,
+    string? State,
+    string? Circuits,
     float[] Embedding,
     float IntensityFactor,
     DateTime CreatedAt);
 
 /// <summary>
-/// One cell of the shadow level matrix: a single chemical × dimension pair.
+/// One cell of the shadow level matrix: a single signal × dimension pair.
 /// ShadowLevel is embedding-only (not averaged with intensity_factor).
 /// </summary>
 public sealed record ShadowMatrixCell(
     string Dimension,
     string Section,
-    string Chemical,
+    string Signal,
     string Layer,
     float ShadowLevel,
     float Confidence,
     int EntryCount);
 
 /// <summary>
-/// Full shadow matrix: sparse grid of chemical × dimension shadow levels.
-/// Dimensions and Chemicals lists provide ordered axis labels.
+/// Full shadow matrix: sparse grid of signal × dimension shadow levels.
+/// Dimensions and Signals lists provide ordered axis labels.
 /// </summary>
 public sealed record ShadowMatrixResponse(
     string Person,
     string Mode,
     List<ShadowMatrixCell> Cells,
     List<string> Dimensions,
-    List<string> Chemicals);
+    List<string> Signals);

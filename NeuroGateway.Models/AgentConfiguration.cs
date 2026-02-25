@@ -41,10 +41,9 @@ public class LlmProviderConfig
 }
 
 /// <summary>
-/// Root LLM configuration with five provider slots:
+/// Root LLM configuration with four provider slots:
 ///   Orchestrator   — VL model for MCP tool orchestrating, scan synthesis
 ///   AgentAnalyzing — LoRA model for 27 biochem analyzing agents (SKIP/ADD)
-///   AgentReasoning — reasoning model for synthesis (ReasoningSynthesizer)
 ///   AgentLayer     — layer model for neurochat layer agents + synthesizer
 ///   Embedding      — vector generation
 /// </summary>
@@ -52,7 +51,6 @@ public class AgentConfiguration
 {
     public LlmProviderConfig? Orchestrator { get; set; }
     public LlmProviderConfig? AgentAnalyzing { get; set; }
-    public LlmProviderConfig? AgentReasoning { get; set; }
     public LlmProviderConfig? AgentLayer { get; set; }
     public LlmProviderConfig? Embedding { get; set; }
     public int MaxParallelAgents { get; set; } = 3;
@@ -66,8 +64,6 @@ public class AgentConfiguration
 
         if (Orchestrator is not null)
             ValidateProvider(Orchestrator, "Orchestrator");
-        if (AgentReasoning is not null)
-            ValidateProvider(AgentReasoning, "AgentReasoning");
         if (AgentLayer is not null)
             ValidateProvider(AgentLayer, "AgentLayer");
         if (Embedding is not null)

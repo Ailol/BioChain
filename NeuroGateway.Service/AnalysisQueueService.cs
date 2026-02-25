@@ -8,7 +8,7 @@ public sealed record AnalysisWorkItem(
     string Text,
     string SourceType,
     bool Save,
-    IReadOnlySet<string>? TargetChemicals);
+    IReadOnlySet<string>? TargetSignals);
 
 public class AnalysisQueueService
 {

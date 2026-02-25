@@ -7,7 +7,6 @@ namespace NeuroGateway.Service;
 
 public class NeuroService(
     ChatClient orchestratorClient,
-    ChatClient reasoningClient,
     ChatClient layerClient,
     AgentTemplateRepository templateRepo,
     AnalyzeService analyzeService,
@@ -16,21 +15,21 @@ public class NeuroService(
 {
     private const int ChunkThreshold = 500; // chars — short messages skip chunking
 
-    private IReadOnlyDictionary<string, string>? _chemicalLayers;
-    private HashSet<string>? _allChemicals;
+    private IReadOnlyDictionary<string, string>? _signalLayers;
+    private HashSet<string>? _allSignals;
 
-    private async Task<IReadOnlyDictionary<string, string>> GetChemicalLayersAsync()
+    private async Task<IReadOnlyDictionary<string, string>> GetSignalLayersAsync()
     {
-        _chemicalLayers ??= await dimDefs.GetChemicalToLayerAsync();
-        return _chemicalLayers;
+        _signalLayers ??= await dimDefs.GetSignalToLayerAsync();
+        return _signalLayers;
     }
 
-    private async Task<HashSet<string>> GetAllChemicalsAsync()
+    private async Task<HashSet<string>> GetAllSignalsAsync()
     {
-        if (_allChemicals is not null) return _allChemicals;
-        var layers = await GetChemicalLayersAsync();
-        _allChemicals = new HashSet<string>(layers.Keys, StringComparer.OrdinalIgnoreCase);
-        return _allChemicals;
+        if (_allSignals is not null) return _allSignals;
+        var layers = await GetSignalLayersAsync();
+        _allSignals = new HashSet<string>(layers.Keys, StringComparer.OrdinalIgnoreCase);
+        return _allSignals;
     }
 
     // ── Chat: full 4-step pipeline with suggested response ───────────────────
@@ -56,7 +55,7 @@ public class NeuroService(
         return new ChatRespondResult(decisions, synthesis, layerResponses, suggestedResponse);
     }
 
-    // ── Work: 27 agents + reasoning synthesis (no layer agents) ──────────────
+    // ── Work: 26 agents + reasoning synthesis (no layer agents) ──────────────
 
     public async Task<AnalysisResult> WorkAnalyzeAsync(
         string person,
@@ -72,7 +71,7 @@ public class NeuroService(
         return new AnalysisResult(decisions, synthesis);
     }
 
-    // ── Journal: 27 agents + reasoning synthesis (no relationship) ───────────
+    // ── Journal: 26 agents + reasoning synthesis (no relationship) ───────────
 
     public async Task<AnalysisResult> JournalAnalyzeAsync(
         string person,
@@ -103,29 +102,30 @@ public class NeuroService(
             allDecisions.AddRange(decisions);
         }
 
-        // Deduplicate: keep the decision with longest reasoning per chemical
+        // Deduplicate: keep the decision with longest formula per signal
         var merged = allDecisions
-            .GroupBy(d => d.Chemical, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.OrderByDescending(d => d.Reasoning.Length).First())
+            .GroupBy(d => d.Signal, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderByDescending(d => d.Formula.Length).First())
             .ToList();
 
         var layerDecisions = new Dictionary<string, List<AnalysisDecision>>
         {
             ["neurotransmitter"] = [],
+            ["endocannabinoid"] = [],
             ["hormone"] = [],
             ["peptide"] = []
         };
 
-        var chemicalLayers = await GetChemicalLayersAsync();
+        var signalLayers = await GetSignalLayersAsync();
         foreach (var d in merged)
         {
-            if (chemicalLayers.TryGetValue(d.Chemical, out var layer))
+            if (signalLayers.TryGetValue(d.Signal, out var layer) && layerDecisions.ContainsKey(layer))
                 layerDecisions[layer].Add(d);
         }
 
-        var allChemicals = await GetAllChemicalsAsync();
-        var addedChemicals = new HashSet<string>(merged.Select(d => d.Chemical), StringComparer.OrdinalIgnoreCase);
-        var skipped = allChemicals.Where(c => !addedChemicals.Contains(c)).Order().ToList();
+        var allSignals = await GetAllSignalsAsync();
+        var addedSignals = new HashSet<string>(merged.Select(d => d.Signal), StringComparer.OrdinalIgnoreCase);
+        var skipped = allSignals.Where(c => !addedSignals.Contains(c)).Order().ToList();
 
         return (merged, layerDecisions, skipped);
     }
@@ -194,7 +194,13 @@ public class NeuroService(
             else
             {
                 foreach (var d in layerDecisionList)
-                    sb.AppendLine($"    - {d.Chemical}: {d.Reasoning}");
+                {
+                    sb.AppendLine($"    - {d.Signal}:");
+                    if (!string.IsNullOrEmpty(d.Formula))
+                        sb.AppendLine($"      FORMULAS: {d.Formula}");
+                    if (!string.IsNullOrEmpty(d.Circuits))
+                        sb.AppendLine($"      CIRCUITS: {d.Circuits}");
+                }
             }
         }
 
@@ -318,7 +324,7 @@ public class NeuroService(
     private static string BuildOrchestratorSystemPrompt(string person, List<DimensionScore> dims)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"You are a biochemical personality analyst. You have deep knowledge of {person}'s psychological profile based on 27-agent neurochemical analysis.");
+        sb.AppendLine($"You are a biochemical personality analyst. You have deep knowledge of {person}'s psychological profile based on 26-agent neurochemical analysis.");
         sb.AppendLine($"When the user asks about \"{person}\" or uses pronouns like \"their\"/\"them\", they are referring to this person.");
         sb.AppendLine();
         sb.AppendLine($"## {person}'s Dimension Profile");
@@ -341,9 +347,9 @@ public class NeuroService(
                     sb.Append($", circuit={c.Pattern} ({c.CoherenceScore:F2})");
                 sb.AppendLine();
 
-                // Include top 3 chemical evidence entries (reasoning is the most valuable signal)
+                // Include top 3 signal evidence entries (formulas are the most valuable signal)
                 foreach (var ev in d.Evidence.OrderByDescending(e => e.Recency).Take(3))
-                    sb.AppendLine($"  - [{ev.Layer}/{ev.Chemical}] L{ev.Level:F1}: {ev.Reasoning}");
+                    sb.AppendLine($"  - [{ev.Layer}/{ev.Signal}] L{ev.Level:F1}: {ev.Formula}");
             }
             sb.AppendLine();
         }
@@ -365,14 +371,20 @@ public class NeuroService(
         sb.AppendLine($"current_relationship: {relationship}");
         sb.AppendLine($"projected_relationship: {projectedRelationship}");
         sb.AppendLine($"message: {text}");
-        sb.AppendLine("chemical_profile:");
+        sb.AppendLine("signal_profile:");
 
         foreach (var (layer, decs) in layerDecisions)
         {
             if (decs.Count == 0) continue;
             sb.AppendLine($"  {layer}:");
             foreach (var d in decs)
-                sb.AppendLine($"    - {d.Chemical}: {d.Reasoning}");
+            {
+                sb.AppendLine($"    - {d.Signal}:");
+                if (!string.IsNullOrEmpty(d.Formula))
+                    sb.AppendLine($"        FORMULAS: {d.Formula}");
+                if (!string.IsNullOrEmpty(d.Circuits))
+                    sb.AppendLine($"        CIRCUITS: {d.Circuits}");
+            }
         }
 
         sb.AppendLine($"analysis: {synthesis}");

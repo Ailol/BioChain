@@ -45,11 +45,13 @@ var mcpServer = builder.AddProject<Projects.NeuroGateway_Server>("mcp-server")
     .WithEndpoint("http", e => e.Port = 13370)
     .WithReference(personalityDb)
     .WithReference(keycloak)
-    .WithEnvironment("Llm__Orchestrator__Endpoint", "http://localhost:11434")
     .WithEnvironment("Llm__Orchestrator__ApiKey", Environment.GetEnvironmentVariable("Llm__Orchestrator__ApiKey") ?? "")
-    .WithEnvironment("Llm__AgentAnalyzing__Endpoint", "http://100.104.149.87:8000")
+    .WithEnvironment("Llm__AgentAnalyzing__Endpoint", "http://host.docker.internal:7000")
+    .WithEnvironment("Llm__AgentAnalyzing__Model", "med-4b-finetuned")
+    .WithEnvironment("Llm__AgentLayer__Endpoint", "http://host.docker.internal:7000")
+    .WithEnvironment("Llm__AgentLayer__Model", "qwen3-4b-4bit+layer")
     .WithEnvironment("Llm__Embedding__ApiKey", Environment.GetEnvironmentVariable("Llm__Embedding__ApiKey") ?? "")
-    .WithEnvironment("Llm__Embedding__Model", Environment.GetEnvironmentVariable("Llm__Embedding__Model") ?? "text-embedding-3-small");
+    .WithEnvironment("Llm__Embedding__Model", "text-embedding-3-small");
 
 // React frontend (Aspire-managed Vite dev server)
 builder.AddViteApp("neuroreact", "../neuroreact", "dev")

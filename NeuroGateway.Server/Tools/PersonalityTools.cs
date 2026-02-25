@@ -31,14 +31,14 @@ public class PersonalityTools(PersonService personService, ProfileService profil
     public async Task<string> GetPersonality([Description("Person name")] string person)
     {
         var style = await profileService.GetCommunicationStyleAsync(person);
-        var counts = await profileService.GetChemicalCountsAsync(person);
+        var counts = await profileService.GetSignalCountsAsync(person);
         var profiles = await profileService.GetProfileAsync(person);
         return JsonSerializer.Serialize(new
         {
             person,
             communicationStyle = style,
-            chemicalCounts = counts.Select(c => new { c.Chemical, c.Count }),
-            profiles = profiles.Select(p => new { p.Chemical, p.Reasoning })
+            signalCounts = counts.Select(c => new { c.Signal, c.Count }),
+            profiles = profiles.Select(p => new { p.Signal, p.Formula })
         }, IndentedJson);
     }
 

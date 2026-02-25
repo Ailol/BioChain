@@ -5,16 +5,24 @@ using NeuroGateway.Models;
 
 public static class Orchestrator
 {
-    public static async Task<List<AgentResult>> RunAllAsync(
+    public static Task<List<AgentResult>> RunAllAsync(
         ChatClient client,
         IReadOnlyList<AgentDefinition> agents,
         string userMessage,
         int maxConcurrency = 0,
         CancellationToken ct = default)
+        => RunAllAsync(client, agents, _ => userMessage, maxConcurrency, ct);
+
+    public static async Task<List<AgentResult>> RunAllAsync(
+        ChatClient client,
+        IReadOnlyList<AgentDefinition> agents,
+        Func<AgentDefinition, string> messageBuilder,
+        int maxConcurrency = 0,
+        CancellationToken ct = default)
     {
         if (maxConcurrency <= 0)
         {
-            var tasks = agents.Select(a => RunOneAsync(client, a, userMessage, ct));
+            var tasks = agents.Select(a => RunOneAsync(client, a, messageBuilder(a), ct));
             return [.. await Task.WhenAll(tasks)];
         }
 
@@ -22,7 +30,7 @@ public static class Orchestrator
         var throttled = agents.Select(async a =>
         {
             await semaphore.WaitAsync(ct);
-            try { return await RunOneAsync(client, a, userMessage, ct); }
+            try { return await RunOneAsync(client, a, messageBuilder(a), ct); }
             finally { semaphore.Release(); }
         });
         return [.. await Task.WhenAll(throttled)];

@@ -115,11 +115,11 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<AgentGroupRepository>();
     services.AddSingleton<AgentTemplateRepository>();
     services.AddSingleton<RelationshipRepository>();
-    services.AddSingleton<ProfileRepository>();
-    services.AddSingleton<ChemicalRepository>();
+    services.AddSingleton<ObservationRepository>();
+    services.AddSingleton<SignalRepository>();
     services.AddSingleton<DimensionRepository>();
-    services.AddSingleton<ChemicalInteractionRepository>();
-    services.AddSingleton<ShadowEmbeddingRepository>();
+    services.AddSingleton<SignalInteractionRepository>();
+    services.AddSingleton<EmbeddingCacheRepository>();
     services.AddSingleton<QuestionnaireRepository>();
     services.AddSingleton<PersonShareRepository>();
     services.AddSingleton<UserRoleRepository>();
@@ -128,25 +128,35 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<IRoleService, RoleService>();
 
     // ChatClient for analyzing agents (AgentAnalyzing — neuro LoRA, SKIP/ADD)
-    var analyzingChatClient = new ChatClient(CreateChatClient(llm.AgentAnalyzing!));
+    // Optimal sampling params for med-opus 3B LoRA on vLLM:
+    //   temperature=0.3 prevents gibberish, repetition_penalty=1.1 suppresses loops,
+    //   stop=["</a>"] catches natural end, prefill "<t>" skips base model <think> blocks.
+    var analyzingOptions = new ChatOptions
+    {
+        Temperature = 0.3f,
+        StopSequences = ["</a>"],
+        AdditionalProperties = new AdditionalPropertiesDictionary
+        {
+            ["repetition_penalty"] = 1.1
+        }
+    };
+    var analyzingChatClient = new ChatClient(
+        CreateChatClient(llm.AgentAnalyzing!), analyzingOptions, assistantPrefill: "<t>");
     services.AddSingleton(analyzingChatClient);
 
-    // ChatClient for reasoning synthesis (AgentReasoning — falls back to analyzing if not configured)
-    var reasoningChatClient = llm.AgentReasoning is not null
-        ? new ChatClient(CreateChatClient(llm.AgentReasoning))
-        : analyzingChatClient;
-
-    // ChatClient for layer agents (AgentLayer — falls back to reasoning if not configured)
+    // ChatClient for layer agents — same backend but NO prefill/stop (different output format)
     var layerChatClient = llm.AgentLayer is not null
         ? new ChatClient(CreateChatClient(llm.AgentLayer))
-        : reasoningChatClient;
+        : new ChatClient(CreateChatClient(llm.AgentAnalyzing!));
 
-    // ChatClient for orchestrator (document chunking — Qwen3-32B-AWQ, 16K context)
-    var orchestratorClient = new ChatClient(CreateChatClient(llm.Orchestrator!));
+    // ChatClient for orchestrator — same backend but NO prefill/stop (free-form text)
+    var orchestratorClient = llm.Orchestrator is not null
+        ? new ChatClient(CreateChatClient(llm.Orchestrator))
+        : new ChatClient(CreateChatClient(llm.AgentAnalyzing!));
 
-    // Embedding generator — required
+    // Embedding generator — use no-op if not configured
     var embedGen = CreateEmbeddingGenerator(llm.Embedding)
-        ?? throw new InvalidOperationException("Llm:Embedding must be configured");
+        ?? (IEmbeddingGenerator<string, Embedding<float>>)new NoOpEmbeddingGenerator();
     services.AddSingleton<DimensionDefinitionsService>();
     services.AddSingleton(embedGen);
     services.AddSingleton<EmbeddingService>();
@@ -158,28 +168,31 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<PersonService>();
     services.AddSingleton<AnalyzeService>();
     services.AddSingleton<ProfileService>();
-    services.AddSingleton<MbtiService>();
-    services.AddSingleton<BigFiveService>();
+    services.AddSingleton<MlService>();
     services.AddSingleton(sp => new ProfileAnalysisService(
-        sp.GetRequiredService<ProfileRepository>(),
+        sp.GetRequiredService<ObservationRepository>(),
         sp.GetRequiredService<DimensionDefinitionsService>(),
         sp.GetRequiredService<ShadowAnchorService>(),
         sp.GetRequiredService<AnalyzeService>(),
-        reasoningChatClient,
-        sp.GetRequiredService<EmbeddingService>(),
-        sp.GetRequiredService<MbtiService>(),
-        sp.GetRequiredService<BigFiveService>()));
+        analyzingChatClient,
+        sp.GetRequiredService<EmbeddingService>()));
     services.AddSingleton<AnalysisQueueService>();
     services.AddHostedService<AnalysisBackgroundWorker>();
     services.AddSingleton<QuestionnaireService>();
     services.AddSingleton(sp => new NeuroService(
         orchestratorClient,
-        reasoningChatClient,
         layerChatClient,
         sp.GetRequiredService<AgentTemplateRepository>(),
         sp.GetRequiredService<AnalyzeService>(),
         sp.GetRequiredService<DimensionService>(),
         sp.GetRequiredService<DimensionDefinitionsService>()));
+    services.AddSingleton<BioSphereService>();
+    services.AddSingleton(sp => new PersonalSphereService(
+        sp.GetRequiredService<PersonService>(),
+        sp.GetRequiredService<NeuroService>(),
+        sp.GetRequiredService<ObservationRepository>(),
+        sp.GetRequiredService<DimensionService>(),
+        orchestratorClient));
 
     LogLlmConfig(llm);
 }
@@ -192,7 +205,6 @@ static void LogLlmConfig(AgentConfiguration config)
     Console.WriteLine("[LLM Config]");
     Console.WriteLine($"  Orchestrator:    {Fmt(config.Orchestrator)}");
     Console.WriteLine($"  AgentAnalyzing:  {Fmt(config.AgentAnalyzing)}");
-    Console.WriteLine($"  AgentReasoning:  {Fmt(config.AgentReasoning)}");
     Console.WriteLine($"  AgentLayer:      {Fmt(config.AgentLayer)}");
     Console.WriteLine($"  Embedding:       {Fmt(config.Embedding)}");
     Console.WriteLine($"  Max Parallel:    {config.MaxParallelAgents}");
@@ -254,14 +266,14 @@ static async Task RunHttpMode(string[] args)
         var personGroup = app.MapPersonApi().AllowAnonymous();
         app.MapAnalyzeApi().AllowAnonymous();
         app.MapRelationshipApi().AllowAnonymous();
-        app.MapChemicalApi().AllowAnonymous();
-        app.MapChemicalInteractionApi().AllowAnonymous();
+        app.MapSignalApi().AllowAnonymous();
+        app.MapSignalInteractionApi().AllowAnonymous();
         app.MapDimensionMasterApi().AllowAnonymous();
         app.MapEmbeddingApi().AllowAnonymous();
         personGroup.MapDimensionApi();
         app.MapInsightsApi().AllowAnonymous();
-        app.MapMbtiApi().AllowAnonymous();
-        app.MapBigFiveApi().AllowAnonymous();
+        app.MapBioSphereApi().AllowAnonymous();
+        app.MapPersonalSphereApi().AllowAnonymous();
         app.MapQuestionnaireApi().AllowAnonymous();
     }
     else
@@ -270,14 +282,14 @@ static async Task RunHttpMode(string[] args)
         var personGroup = app.MapPersonApi().RequireAuthorization("Work");
         app.MapAnalyzeApi().RequireAuthorization("HasRole");
         app.MapRelationshipApi().RequireAuthorization("HasRole");
-        app.MapChemicalApi().RequireAuthorization("HasRole");
-        app.MapChemicalInteractionApi().RequireAuthorization("HasRole");
+        app.MapSignalApi().RequireAuthorization("HasRole");
+        app.MapSignalInteractionApi().RequireAuthorization("HasRole");
         app.MapDimensionMasterApi().RequireAuthorization("Admin");
         app.MapEmbeddingApi().RequireAuthorization("Admin");
         personGroup.MapDimensionApi();
         app.MapInsightsApi().RequireAuthorization("HasRole");
-        app.MapMbtiApi().RequireAuthorization("HasRole");
-        app.MapBigFiveApi().RequireAuthorization("HasRole");
+        app.MapBioSphereApi().RequireAuthorization("Private");
+        app.MapPersonalSphereApi().RequireAuthorization("Private");
         // Questionnaire has mixed auth (create requires auth, rest is public)
         app.MapQuestionnaireApi();
     }
@@ -302,13 +314,10 @@ static async Task RunHttpMode(string[] args)
                     await using var testDb = await factory.CreateDbContextAsync();
                     await testDb.Persons.CountAsync();
 
-                    // Run schema migrations before services start using the DB
-                    await app.Services.GetRequiredService<ShadowEmbeddingRepository>()
-                        .MigrateLevelConstraintAsync();
-
                     // Wire auto-embedding now that DB is confirmed ready
-                    app.Services.GetRequiredService<AnalyzeService>().Embedder =
-                        app.Services.GetRequiredService<EmbeddingService>();
+                    var embedSvc = app.Services.GetService<EmbeddingService>();
+                    if (embedSvc is not null)
+                        app.Services.GetRequiredService<AnalyzeService>().Embedder = embedSvc;
                     return;
                 }
                 catch (Exception ex) when (attempt < 30)
@@ -346,4 +355,20 @@ static async Task RunStdioMode(string[] args)
         .Build();
 
     await host.RunAsync();
+}
+
+/// <summary>No-op embedding generator for testing without an embedding provider.</summary>
+sealed class NoOpEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
+{
+    public EmbeddingGeneratorMetadata Metadata { get; } = new("no-op");
+    public void Dispose() { }
+    public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+        IEnumerable<string> values, EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new GeneratedEmbeddings<Embedding<float>>(
+            values.Select(_ => new Embedding<float>(new float[1536])).ToList());
+        return Task.FromResult(result);
+    }
+    public object? GetService(Type serviceType, object? serviceKey = null) => null;
 }

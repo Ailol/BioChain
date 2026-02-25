@@ -9,4 +9,5 @@ public class LayerEntity
     public int SortOrder { get; set; }
     public bool IsSynthesizer { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string Config { get; set; } = "{}";
 }

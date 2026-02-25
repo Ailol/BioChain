@@ -1,6 +1,6 @@
+using NeuroGateway.AnalysisFramework;
 using NeuroGateway.Repository;
 using NeuroGateway.Service;
-using static NeuroGateway.AnalysisFramework.DimensionDefinitions;
 
 namespace NeuroGateway.Server.Api;
 
@@ -25,14 +25,14 @@ public static class PersonApi
         group.MapGet("/{name}/profile", async (string name, ProfileService profileSvc) =>
         {
             var style = await profileSvc.GetCommunicationStyleAsync(name);
-            var counts = await profileSvc.GetChemicalCountsAsync(name);
+            var counts = await profileSvc.GetSignalCountsAsync(name);
             var profiles = await profileSvc.GetProfileAsync(name);
             return Results.Ok(new
             {
                 person = name,
                 communicationStyle = style,
-                chemicalCounts = counts.Select(c => new { c.Chemical, c.Count }),
-                profiles = profiles.Select(p => new { p.Chemical, p.Reasoning })
+                signalCounts = counts.Select(c => new { c.Signal, c.Count }),
+                profiles = profiles.Select(p => new { p.Signal, p.Formula })
             });
         });
 
@@ -42,26 +42,26 @@ public static class PersonApi
             return Results.Ok(new { person = name, communicationStyle = style });
         });
 
-        group.MapGet("/{name}/chemicals", async (string name, ProfileService profileSvc) =>
+        group.MapGet("/{name}/signals", async (string name, ProfileService profileSvc) =>
         {
-            var counts = await profileSvc.GetChemicalCountsAsync(name);
+            var counts = await profileSvc.GetSignalCountsAsync(name);
             return Results.Ok(new
             {
                 person = name,
-                chemicals = counts.Select(c => new { c.Chemical, c.Count })
+                signals = counts.Select(c => new { c.Signal, c.Count })
             });
         });
 
-        group.MapGet("/{name}/profile/timeline", async (string name, ProfileRepository profileRepo) =>
+        group.MapGet("/{name}/profile/timeline", async (string name, ObservationRepository obsRepo) =>
         {
-            var entries = await profileRepo.GetTimelineAsync(name);
+            var entries = await obsRepo.GetTimelineAsync(name);
             return Results.Ok(new
             {
                 person = name,
                 entries = entries.Select(e => new
                 {
-                    e.Chemical,
-                    e.IntensityFactor,
+                    e.Signal,
+                    e.Intensity,
                     createdAt = e.CreatedAt.ToString("o")
                 })
             });

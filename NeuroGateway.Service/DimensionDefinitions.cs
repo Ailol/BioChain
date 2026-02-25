@@ -1,18 +1,18 @@
+using NeuroGateway.AnalysisFramework;
 using NeuroGateway.Repository;
-using static NeuroGateway.AnalysisFramework.DimensionDefinitions;
 
 namespace NeuroGateway.Service;
 
-// DB-backed dimension definitions service. Loads chemicals, dimensions, and interactions
+// DB-backed dimension definitions service. Loads signals, dimensions, and interactions
 // from the database on first access, caches in memory.
 // Call InvalidateCache() after CRUD mutations.
 public class DimensionDefinitionsService(
     DimensionRepository dimRepo,
-    ChemicalRepository chemRepo,
-    ChemicalInteractionRepository interactionRepo)
+    SignalRepository signalRepo,
+    SignalInteractionRepository interactionRepo)
 {
     private IReadOnlyList<DimensionDef>? _all;
-    private IReadOnlyDictionary<string, string>? _chemicalToLayer;
+    private IReadOnlyDictionary<string, string>? _signalToLayer;
     private IReadOnlyDictionary<(string Source, string Target), (float ModFactor, string? Mechanism)>? _interactions;
 
     public async Task<IReadOnlyList<DimensionDef>> GetAllAsync()
@@ -26,7 +26,7 @@ public class DimensionDefinitionsService(
             d.Dimension.Category,
             d.Dimension.Description,
             d.Affinities.ToDictionary(
-                a => a.ChemicalKey,
+                a => a.SignalKey,
                 a => a.Weight,
                 StringComparer.OrdinalIgnoreCase),
             d.Dimension.WorkRelevance,
@@ -38,18 +38,18 @@ public class DimensionDefinitionsService(
         return _all;
     }
 
-    public async Task<IReadOnlyDictionary<string, string>> GetChemicalToLayerAsync()
+    public async Task<IReadOnlyDictionary<string, string>> GetSignalToLayerAsync()
     {
-        if (_chemicalToLayer is not null) return _chemicalToLayer;
+        if (_signalToLayer is not null) return _signalToLayer;
 
-        var chemicals = await chemRepo.ListAsync();
-        _chemicalToLayer = chemicals.ToDictionary(
+        var signals = await signalRepo.ListAsync();
+        _signalToLayer = signals.ToDictionary(
             c => c.Key, c => c.Layer, StringComparer.OrdinalIgnoreCase);
 
-        return _chemicalToLayer;
+        return _signalToLayer;
     }
 
-    // Returns cached lookup: (sourceChemicalKey, targetChemicalKey) -> (modFactor, mechanism).
+    // Returns cached lookup: (sourceSignalKey, targetSignalKey) -> (modFactor, mechanism).
     // Keys are lowercased for consistent lookup.
     public async Task<IReadOnlyDictionary<(string Source, string Target), (float ModFactor, string? Mechanism)>> GetInteractionsAsync()
     {
@@ -58,7 +58,7 @@ public class DimensionDefinitionsService(
         var raw = await interactionRepo.ListAsync();
         _interactions = raw.ToDictionary(
             i => (i.SourceKey.ToLowerInvariant(), i.TargetKey.ToLowerInvariant()),
-            i => (i.ModFactor, i.Mechanism));
+            i => (i.ModFactor ?? 1f, i.Mechanism));
 
         return _interactions;
     }
@@ -66,7 +66,7 @@ public class DimensionDefinitionsService(
     public void InvalidateCache()
     {
         _all = null;
-        _chemicalToLayer = null;
+        _signalToLayer = null;
         _interactions = null;
     }
 }
