@@ -14,6 +14,7 @@ public class LlmProviderConfig
     public string? Endpoint { get; set; }
     public string Model { get; set; } = "";
     public string? ApiKey { get; set; }
+    public int? Dimensions { get; set; }
 
     public string ResolvedBackend
     {
@@ -55,8 +56,31 @@ public class AgentConfiguration
     public LlmProviderConfig? Embedding { get; set; }
     public int MaxParallelAgents { get; set; } = 3;
 
+    /// <summary>
+    /// If API keys are set via env vars / user-secrets, override the local vLLM defaults
+    /// with cloud providers (Anthropic / OpenAI). Called before Validate().
+    /// </summary>
+    public void ApplyApiKeyOverrides()
+    {
+        // Orchestrator: if API key present, use cloud — otherwise keep local vLLM endpoint
+        if (Orchestrator is not null && !string.IsNullOrWhiteSpace(Orchestrator.ApiKey))
+        {
+            Orchestrator.Endpoint = null; // cloud providers don't need endpoint
+        }
+
+        // Embedding: if API key present, use cloud OpenAI — otherwise keep local vLLM endpoint
+        if (Embedding is not null && !string.IsNullOrWhiteSpace(Embedding.ApiKey))
+        {
+            Embedding.Endpoint = null;
+            if (string.IsNullOrWhiteSpace(Embedding.Model))
+                Embedding.Model = "text-embedding-3-small";
+        }
+    }
+
     public void Validate()
     {
+        ApplyApiKeyOverrides();
+
         if (AgentAnalyzing is null)
             throw new InvalidOperationException("Llm:AgentAnalyzing section is required");
 

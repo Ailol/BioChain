@@ -24,16 +24,10 @@ else
 
 static (AgentConfiguration Llm, string Db) LoadConfig(IConfiguration appConfig)
 {
-    var environment = Environment.GetEnvironmentVariable("ENVIRONMENT") ?? "Development";
-    var dbEnvVar = environment.Equals("Production", StringComparison.OrdinalIgnoreCase)
-        ? "PRODUCTION_DB" : "DEVELOPMENT_DB";
+    var db = appConfig.GetConnectionString("personality")
+        ?? throw new InvalidOperationException("ConnectionStrings:personality is required");
 
-    var db = Environment.GetEnvironmentVariable(dbEnvVar)
-        ?? Environment.GetEnvironmentVariable("PERSONALITY_DB")
-        ?? appConfig.GetConnectionString("Personality")
-        ?? throw new InvalidOperationException($"{dbEnvVar} env var is required (ENVIRONMENT={environment})");
-
-    Console.WriteLine($"Environment: {environment} → DB: {db[..Math.Min(60, db.Length)]}...");
+    Console.WriteLine($"DB: {db[..Math.Min(60, db.Length)]}...");
 
     var llm = appConfig.GetSection("Llm").Get<AgentConfiguration>() ?? new AgentConfiguration();
     llm.Validate();
@@ -123,6 +117,8 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddSingleton<QuestionnaireRepository>();
     services.AddSingleton<PersonShareRepository>();
     services.AddSingleton<UserRoleRepository>();
+    services.AddSingleton<ActiveLoopRepository>();
+    services.AddSingleton<TrajectoryRepository>();
 
     // RBAC
     services.AddSingleton<IRoleService, RoleService>();
@@ -149,9 +145,20 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
         ? new ChatClient(CreateChatClient(llm.AgentLayer))
         : new ChatClient(CreateChatClient(llm.AgentAnalyzing!));
 
-    // ChatClient for orchestrator — same backend but NO prefill/stop (free-form text)
+    // ChatClient for orchestrator — nanbeige4.1-3b optimal sampling from HF discussion:
+    //   top_k=0 shortens thought chain, min_p=0.01, temp=0.6, top_p=0.95
+    var orchestratorOptions = new ChatOptions
+    {
+        Temperature = 0.6f,
+        TopP = 0.95f,
+        TopK = 0,
+        AdditionalProperties = new AdditionalPropertiesDictionary
+        {
+            ["min_p"] = 0.01
+        }
+    };
     var orchestratorClient = llm.Orchestrator is not null
-        ? new ChatClient(CreateChatClient(llm.Orchestrator))
+        ? new ChatClient(CreateChatClient(llm.Orchestrator), orchestratorOptions)
         : new ChatClient(CreateChatClient(llm.AgentAnalyzing!));
 
     // Embedding generator — use no-op if not configured

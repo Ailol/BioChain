@@ -66,9 +66,9 @@ public class QuestionnaireService(
         var text = FormatSingleQuestionForAnalysis(personName, targetItem.SortOrder, questionItems);
 
         // Run only targeted agents (primary + secondary signals)
-        var targetSignals = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { targetItem.PrimaryChemical };
-        if (targetItem.SecondaryChemical is not null)
-            targetSignals.Add(targetItem.SecondaryChemical);
+        var targetSignals = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { targetItem.PrimarySignal };
+        if (targetItem.SecondarySignal is not null)
+            targetSignals.Add(targetItem.SecondarySignal);
 
         // Enqueue for background processing — returns immediately
         await analysisQueue.EnqueueAsync(new AnalysisWorkItem(
@@ -132,7 +132,7 @@ public class QuestionnaireService(
         var rejected = questionItems.Where(a => !a.Selected).ToList();
 
         sb.AppendLine($"Q{sortOrder}: {question.Scenario}");
-        sb.AppendLine($"  Selected: {selected.Item.OptionText} (primary: {selected.Item.PrimaryChemical}, secondary: {selected.Item.SecondaryChemical ?? "none"})");
+        sb.AppendLine($"  Selected: {selected.Item.OptionText} (primary: {selected.Item.PrimarySignal}, secondary: {selected.Item.SecondarySignal ?? "none"})");
 
         if (rejected.Count > 0)
         {
@@ -166,7 +166,7 @@ public class QuestionnaireService(
             var rejected = group.Where(a => !a.Selected).ToList();
 
             sb.AppendLine($"Q{question.SortOrder}: {question.Scenario}");
-            sb.AppendLine($"  Selected: {selected.Item.OptionText} (primary: {selected.Item.PrimaryChemical}, secondary: {selected.Item.SecondaryChemical ?? "none"})");
+            sb.AppendLine($"  Selected: {selected.Item.OptionText} (primary: {selected.Item.PrimarySignal}, secondary: {selected.Item.SecondarySignal ?? "none"})");
 
             if (rejected.Count > 0)
             {

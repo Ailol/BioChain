@@ -9,7 +9,7 @@ public sealed record DimensionScore(
     float Consistency,
     int EvidenceCount,
     List<DimensionEvidence> Evidence,
-    TemporalTrajectory? Trajectory = null,
+    BayesianPosterior? Posterior = null,
     CircuitCoherence? Circuit = null);
 
 public sealed record DimensionEvidence(
@@ -20,18 +20,18 @@ public sealed record DimensionEvidence(
     float Recency);
 
 /// <summary>
-/// Temporal trajectory: linear trend of activation levels over time.
-/// Slope is level-change per day; direction summarizes the trend.
+/// Bayesian posterior over 5 activation levels (Dirichlet-Categorical).
+/// Works from observation #1 — no time-series required.
+/// Alpha = Dirichlet parameters; MAP = most probable level; Entropy = uncertainty.
 /// </summary>
-public sealed record TemporalTrajectory(
-    float Slope,
-    string Direction,
-    float R2,
-    int DataPoints,
-    float EarliestLevel,
-    float LatestLevel,
-    bool SemanticDriftDetected = false,
-    float DriftMagnitude = 0f);
+public sealed record BayesianPosterior(
+    float[] Alpha,
+    float MapLevel,
+    float MeanLevel,
+    float Entropy,
+    float Surprise,
+    float Confidence,
+    string Interpretation);
 
 /// <summary>
 /// Signal interaction graph for a dimension.

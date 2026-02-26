@@ -7,10 +7,14 @@ interface Props {
 }
 
 export function ProtectedRoute({ requiredRoles }: Props) {
-  const { isAuthenticated, effectiveRoles } = useAuthStore();
+  const { isAuthenticated, effectiveRoles, hasSelectedRole } = useAuthStore();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!hasSelectedRole || effectiveRoles.length === 0) {
+    return <Navigate to="/select-role" replace />;
   }
 
   if (requiredRoles && !hasAnyRole(effectiveRoles, requiredRoles)) {

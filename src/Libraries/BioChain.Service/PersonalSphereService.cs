@@ -106,8 +106,8 @@ public class PersonalSphereService(
         {
             sb.AppendLine($"  {dim.Name} ({dim.Section}/{dim.Category}): {dim.Score:F0} " +
                 $"[confidence={dim.Confidence:F2}, consistency={dim.Consistency:F2}]");
-            if (dim.Trajectory is not null)
-                sb.AppendLine($"    trajectory: {dim.Trajectory.Direction} (slope={dim.Trajectory.Slope:F3})");
+            if (dim.Posterior is not null)
+                sb.AppendLine($"    posterior: MAP={dim.Posterior.MapLevel:F1}, mean={dim.Posterior.MeanLevel:F1}, confidence={dim.Posterior.Confidence:F2} ({dim.Posterior.Interpretation})");
             if (dim.Circuit is not null)
                 sb.AppendLine($"    circuit: {dim.Circuit.Pattern} (coherence={dim.Circuit.CoherenceScore:F2})");
         }

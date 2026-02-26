@@ -1,20 +1,3 @@
-// Load ../.env into process environment (same file docker-compose uses)
-var envFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", ".env");
-if (File.Exists(envFile))
-{
-    foreach (var line in File.ReadAllLines(envFile))
-    {
-        var trimmed = line.Trim();
-        if (trimmed.Length == 0 || trimmed.StartsWith('#')) continue;
-        var idx = trimmed.IndexOf('=');
-        if (idx <= 0) continue;
-        var key = trimmed[..idx].Trim();
-        var val = trimmed[(idx + 1)..].Trim();
-        if (Environment.GetEnvironmentVariable(key) is null)
-            Environment.SetEnvironmentVariable(key, val);
-    }
-}
-
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Keycloak identity server (persistent — survives Aspire restarts, ~30s faster)
@@ -24,7 +7,7 @@ var keycloak = builder.AddKeycloak("keycloak")
     .WithLifetime(ContainerLifetime.Persistent);
 
 // PostgreSQL with pgvector for personality storage (persistent)
-var pgPassword = builder.AddParameter("pg-password", secret: true);
+var pgPassword = builder.AddParameter("postgres-password", secret: true);
 var postgres = builder.AddPostgres("postgres", port: 5434, password: pgPassword)
     .WithEnvironment("POSTGRES_DB", "personality")
     .WithDataVolume("pgdata-v6")
@@ -40,18 +23,11 @@ var postgres = builder.AddPostgres("postgres", port: 5434, password: pgPassword)
 
 var personalityDb = postgres.AddDatabase("personality");
 
-// MCP Agent Server — wait for DB and Keycloak to be healthy before starting
+// MCP Agent Server — LLM config comes from Server's own appsettings + user-secrets
 var mcpServer = builder.AddProject<Projects.BioChain_Server>("mcp-server")
     .WithEndpoint("http", e => e.Port = 13370)
     .WithReference(personalityDb)
-    .WithReference(keycloak)
-    .WithEnvironment("Llm__Orchestrator__ApiKey", Environment.GetEnvironmentVariable("Llm__Orchestrator__ApiKey") ?? "")
-    .WithEnvironment("Llm__AgentAnalyzing__Endpoint", "http://host.docker.internal:7000")
-    .WithEnvironment("Llm__AgentAnalyzing__Model", "med-4b-finetuned")
-    .WithEnvironment("Llm__AgentLayer__Endpoint", "http://host.docker.internal:7000")
-    .WithEnvironment("Llm__AgentLayer__Model", "qwen3-4b-4bit+layer")
-    .WithEnvironment("Llm__Embedding__ApiKey", Environment.GetEnvironmentVariable("Llm__Embedding__ApiKey") ?? "")
-    .WithEnvironment("Llm__Embedding__Model", "text-embedding-3-small");
+    .WithReference(keycloak);
 
 // React frontend (Aspire-managed Vite dev server)
 builder.AddViteApp("biochain-app", "../../BioChain.App", "dev")

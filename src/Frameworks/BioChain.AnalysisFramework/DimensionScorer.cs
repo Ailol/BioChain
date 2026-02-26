@@ -30,6 +30,22 @@ public static class DimensionScorer
         var now = DateTime.UtcNow;
         var scores = new List<DimensionScore>();
 
+        // ── Precompute attention components ──
+
+        // Signal rarity: 1 / log(1 + total observations for this signal)
+        var signalObsCounts = observations
+            .GroupBy(o => o.Signal, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+        // Specificity: how many dimensions does each signal contribute to?
+        var signalDimCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var dim in dimensions)
+        foreach (var (signal, aff) in dim.SignalAffinity)
+        {
+            if (aff > 0 && signalObsCounts.ContainsKey(signal))
+                signalDimCount[signal] = signalDimCount.GetValueOrDefault(signal) + 1;
+        }
+
         foreach (var dim in dimensions)
         {
             var relevanceWeight = mode == ScoringMode.Work
@@ -63,6 +79,10 @@ public static class DimensionScorer
                 var layer = signalToLayer.GetValueOrDefault(signal, "unknown");
                 var sorted = group.OrderByDescending(o => o.CreatedAt).ToList();
 
+                // Attention components for this signal
+                var specificity = 1f / MathF.Max(1f, signalDimCount.GetValueOrDefault(signal, 1));
+                var rarity = 1f / MathF.Log(1f + signalObsCounts.GetValueOrDefault(signal, 1));
+
                 float weightedSum = 0f, weightTotal = 0f;
 
                 for (var i = 0; i < sorted.Count; i++)
@@ -83,7 +103,10 @@ public static class DimensionScorer
                     var daysSince = (float)(now - obs.CreatedAt).TotalDays;
                     var recency = MathF.Exp(-DecayLambda * daysSince);
                     var halvingWt = ResistanceEngine.HalvingWeight(i);
-                    var combinedWeight = recency * halvingWt * affinity;
+
+                    // Attention = specificity × rarity (relevance is implicit via affinity)
+                    var attention = specificity * rarity;
+                    var combinedWeight = recency * halvingWt * affinity * attention;
 
                     weightedSum += level * combinedWeight;
                     weightTotal += combinedWeight;
@@ -129,10 +152,15 @@ public static class DimensionScorer
                 .Take(5)
                 .ToList();
 
+            // Bayesian posterior over 5 levels from all observed levels (newest first)
+            var posterior = allLevels.Count > 0
+                ? BayesianEstimator.EstimatePosterior(allLevels.ToArray())
+                : (BayesianPosterior?)null;
+
             scores.Add(new DimensionScore(
                 dim.Name, dim.Section, dim.Category,
                 score, MathF.Round(confidence, 3), MathF.Round(consistency, 3),
-                totalEvidence, topEvidence));
+                totalEvidence, topEvidence, Posterior: posterior));
         }
 
         return scores;

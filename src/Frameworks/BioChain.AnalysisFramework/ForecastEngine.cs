@@ -6,36 +6,68 @@ namespace BioChain.AnalysisFramework;
 /// </summary>
 public static class ForecastEngine
 {
+    private const int MaxHops = 3;
+    private const float HopDecay = 0.5f;
+
     /// <summary>
-    /// Propagate signal levels through the interaction graph.
-    /// Applies modulation factors from known interactions to adjust levels.
+    /// Propagate signal levels through the interaction graph with multi-hop support.
+    /// Applies modulation factors from known interactions, optionally blended with
+    /// empirical co-occurrence PMI from observation data.
     /// </summary>
+    /// <param name="levels">Current signal levels (0-1)</param>
+    /// <param name="interactions">Theoretical interactions with mod factors</param>
+    /// <param name="counts">Observation count per signal</param>
+    /// <param name="variances">Level variance per signal</param>
+    /// <param name="empiricalPmi">Optional: PMI from CooccurrenceAnalyzer (signal pair → PMI)</param>
     public static Dictionary<string, float> PropagateSignals(
         IReadOnlyDictionary<string, float> levels,
         IReadOnlyDictionary<(string Source, string Target), (float ModFactor, string? Mechanism)> interactions,
         IReadOnlyDictionary<string, int> counts,
-        IReadOnlyDictionary<string, float> variances)
+        IReadOnlyDictionary<string, float> variances,
+        IReadOnlyDictionary<(string, string), float>? empiricalPmi = null)
     {
         var result = new Dictionary<string, float>(levels, StringComparer.OrdinalIgnoreCase);
+        var deltas = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var ((source, target), (modFactor, _)) in interactions)
+        for (var hop = 0; hop < MaxHops; hop++)
         {
-            if (!levels.TryGetValue(source, out var sourceLevel)) continue;
-            if (!result.TryGetValue(target, out var targetLevel)) continue;
-            if (!counts.TryGetValue(source, out var sourceCount) || sourceCount < 2) continue;
+            deltas.Clear();
+            var hopDecay = MathF.Pow(HopDecay, hop);
 
-            // Deviation from center drives modulation
-            var sourceRange = SignalConstants.PopulationRanges.GetValueOrDefault(source);
-            var center = sourceRange?.Center ?? 0.5f;
-            var deviation = sourceLevel - center;
+            foreach (var ((source, target), (modFactor, _)) in interactions)
+            {
+                if (!result.TryGetValue(source, out var sourceLevel)) continue;
+                if (!result.ContainsKey(target)) continue;
+                if (!counts.TryGetValue(source, out var sourceCount) || sourceCount < 2) continue;
 
-            // Modulation is proportional to deviation and mod factor
-            // Dampened by target variance (high variance = unstable, less influence)
-            var targetVar = variances.GetValueOrDefault(target, 0f);
-            var dampening = 1f / (1f + targetVar * 10f);
-            var delta = deviation * modFactor * 0.1f * dampening;
+                var sourceRange = SignalConstants.PopulationRanges.GetValueOrDefault(source);
+                var center = sourceRange?.Center ?? 0.5f;
+                var deviation = sourceLevel - center;
 
-            result[target] = Math.Clamp(targetLevel + delta, 0f, 1f);
+                // Blend theoretical mod factor with empirical PMI
+                var theoreticalWeight = modFactor;
+                var empiricalWeight = 0f;
+                if (empiricalPmi is not null)
+                {
+                    // Try both orderings of the pair
+                    if (!empiricalPmi.TryGetValue((source, target), out empiricalWeight))
+                        empiricalPmi.TryGetValue((target, source), out empiricalWeight);
+                }
+
+                // Sigmoid activation on empirical PMI → [0, 1]
+                var empiricalActivation = 1f / (1f + MathF.Exp(-empiricalWeight));
+                var combinedWeight = theoreticalWeight * 0.6f + empiricalActivation * 0.4f;
+
+                var targetVar = variances.GetValueOrDefault(target, 0f);
+                var dampening = 1f / (1f + targetVar * 10f);
+                var delta = deviation * combinedWeight * 0.1f * dampening * hopDecay;
+
+                deltas[target] = deltas.GetValueOrDefault(target) + delta;
+            }
+
+            // Apply accumulated deltas
+            foreach (var (signal, delta) in deltas)
+                result[signal] = Math.Clamp(result[signal] + delta, 0f, 1f);
         }
 
         return result;

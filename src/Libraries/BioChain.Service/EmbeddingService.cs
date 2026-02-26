@@ -1,14 +1,21 @@
 using System.Globalization;
 using Microsoft.Extensions.AI;
+using BioChain.Models;
 using BioChain.Repository;
 
 namespace BioChain.Service;
 
 public class EmbeddingService(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
+    AgentConfiguration agentConfig,
     AnalyzedDataRepository analyzedDataRepo,
     ObservationRepository observationRepo)
 {
+    private readonly EmbeddingGenerationOptions? _options =
+        agentConfig.Embedding?.Dimensions is { } dim
+            ? new EmbeddingGenerationOptions { Dimensions = dim }
+            : null;
+
     public async Task<(int AnalyzedData, int Observations)> BackfillAsync(string? person = null)
     {
         // 1. Backfill analyzed_data embeddings
@@ -16,8 +23,7 @@ public class EmbeddingService(
         var adCount = 0;
         foreach (var (id, content) in adEntries)
         {
-            var embedding = await embeddingGenerator.GenerateAsync(content);
-            var vector = FormatVector(embedding.Vector.Span);
+            var vector = await EmbedAsync(content);
             await analyzedDataRepo.UpdateEmbeddingAsync(id, vector);
             adCount++;
         }
@@ -27,8 +33,7 @@ public class EmbeddingService(
         var observationCount = 0;
         foreach (var (id, formula) in observationEntries)
         {
-            var embedding = await embeddingGenerator.GenerateAsync(formula);
-            var vector = FormatVector(embedding.Vector.Span);
+            var vector = await EmbedAsync(formula);
             await observationRepo.UpdateEmbeddingAsync(id, vector);
             observationCount++;
         }
@@ -36,10 +41,12 @@ public class EmbeddingService(
         return (adCount, observationCount);
     }
 
-    public async Task<string> GenerateVectorAsync(string text)
+    public async Task<string> GenerateVectorAsync(string text) => await EmbedAsync(text);
+
+    private async Task<string> EmbedAsync(string text)
     {
-        var embedding = await embeddingGenerator.GenerateAsync(text);
-        return FormatVector(embedding.Vector.Span);
+        var result = await embeddingGenerator.GenerateAsync([text], _options);
+        return FormatVector(result[0].Vector.Span);
     }
 
     private static string FormatVector(ReadOnlySpan<float> values)

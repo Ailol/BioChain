@@ -8,8 +8,8 @@ public class QuestionnaireItemEntity
     public string Scenario { get; set; } = "";
     public string Label { get; set; } = "";
     public string OptionText { get; set; } = "";
-    public string PrimaryChemical { get; set; } = "";
-    public string? SecondaryChemical { get; set; }
+    public string PrimarySignal { get; set; } = "";
+    public string? SecondarySignal { get; set; }
     public bool IsInverted { get; set; }
     public DateTime CreatedAt { get; set; }
     public string Config { get; set; } = "{}";

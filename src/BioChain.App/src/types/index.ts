@@ -111,6 +111,21 @@ export interface SubmitSingleAnswerRequest {
   itemId: number;
 }
 
+export interface QuestionnaireState {
+  id: string;
+  personName: string;
+  status: string;
+  questions: QuestionnaireQuestion[];
+  answeredSortOrders: number[];
+}
+
+export interface SingleAnswerResult {
+  answeredCount: number;
+  totalQuestions: number;
+  isComplete: boolean;
+  questionSortOrder: number;
+}
+
 // ----------------------------------------------------------------------------
 // Response Models
 // ----------------------------------------------------------------------------
@@ -231,15 +246,14 @@ export interface DimensionEvidence {
   recency: number;
 }
 
-export interface TemporalTrajectory {
-  slope: number;
-  direction: string;
-  r2: number;
-  dataPoints: number;
-  earliestLevel: number;
-  latestLevel: number;
-  semanticDriftDetected?: boolean;
-  driftMagnitude?: number;
+export interface BayesianPosterior {
+  alpha: number[];
+  mapLevel: number;
+  meanLevel: number;
+  entropy: number;
+  surprise: number;
+  confidence: number;
+  interpretation: string;
 }
 
 export interface SignalEdge {
@@ -266,7 +280,7 @@ export interface DimensionScore {
   consistency: number;
   evidenceCount: number;
   evidence: DimensionEvidence[];
-  trajectory?: TemporalTrajectory;
+  posterior?: BayesianPosterior;
   circuit?: CircuitCoherence;
 }
 

@@ -14,6 +14,7 @@ import SignalsPage from '@/pages/admin/SignalsPage';
 import InteractionsPage from '@/pages/admin/InteractionsPage';
 import DimensionsPage from '@/pages/admin/DimensionsPage';
 import EmbeddingsPage from '@/pages/admin/EmbeddingsPage';
+import QuestionnairePage from '@/pages/personal/QuestionnairePage';
 
 export default function App() {
   return (
@@ -22,11 +23,15 @@ export default function App() {
       <Route path="/select-role" element={<RoleSelectionPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
+      {/* Public questionnaire (token-based, no auth, no layout) */}
+      <Route path="/questionnaire/:token" element={<QuestionnairePage />} />
+
       <Route element={<Layout />}>
         {/* Personal */}
         <Route element={<ProtectedRoute requiredRoles={['private']} />}>
           <Route path="/personal/biosphere" element={<BioSpherePage />} />
           <Route path="/personal/insight" element={<PersonalInsightPage />} />
+          <Route path="/personal/questionnaire" element={<QuestionnairePage />} />
         </Route>
 
         {/* Professional */}

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   Globe, FileSearch, Users, MessageSquare,
-  Shield, Zap, GitBranch, Layers, Database, Sparkles, X,
+  Shield, Zap, GitBranch, Layers, Database, Sparkles, ClipboardList, X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '@/stores/authStore';
@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   // Personal
   { label: 'BioSphere', path: '/personal/biosphere', icon: Globe, section: 'personal', requiredRoles: ['private'] },
   { label: 'Personal Insight', path: '/personal/insight', icon: Sparkles, section: 'personal', requiredRoles: ['private'] },
+  { label: 'Questionnaire', path: '/personal/questionnaire', icon: ClipboardList, section: 'personal', requiredRoles: ['private'] },
   // Professional
   { label: 'Analyze Document', path: '/professional/analyze', icon: FileSearch, section: 'professional', requiredRoles: ['work'] },
   { label: 'Candidates', path: '/professional/candidates', icon: Users, section: 'professional', requiredRoles: ['work'] },

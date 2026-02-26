@@ -341,8 +341,8 @@ public class NeuroService(
             foreach (var d in section.OrderByDescending(d => d.Score))
             {
                 sb.Append($"- **{d.Name}**: score={d.Score}/100, confidence={d.Confidence:F2}, consistency={d.Consistency:F2}, evidence={d.EvidenceCount}");
-                if (d.Trajectory is { } t)
-                    sb.Append($", trend={t.Direction} ({t.Slope:+0.00;-0.00}/day, R²={t.R2:F2})");
+                if (d.Posterior is { } p)
+                    sb.Append($", posterior=MAP:{p.MapLevel:F1} mean:{p.MeanLevel:F1} ({p.Interpretation})");
                 if (d.Circuit is { } c)
                     sb.Append($", circuit={c.Pattern} ({c.CoherenceScore:F2})");
                 sb.AppendLine();
@@ -354,7 +354,7 @@ public class NeuroService(
             sb.AppendLine();
         }
 
-        sb.AppendLine("Answer questions about this person's profile with specificity. Reference the biochemical evidence, dimension scores, trajectories, and circuit patterns. Be concise but insightful.");
+        sb.AppendLine("Answer questions about this person's profile with specificity. Reference the biochemical evidence, dimension scores, posteriors, and circuit patterns. Be concise but insightful.");
         return sb.ToString();
     }
 
