@@ -1,43 +1,39 @@
-using Microsoft.EntityFrameworkCore;
+using BioChain.Repository.Data;
 using BioChain.Repository.Entities;
+using Microsoft.EntityFrameworkCore;
 
-namespace BioChain.Repository;
+namespace BioChain.Repository.Repositories;
 
-public class SignalRepository(IDbContextFactory<PersonalityDbContext> factory)
+public class SignalRepository(BioChainDbContext db) : ISignalRepository
 {
-    public async Task<List<SignalEntity>> ListAsync()
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        return await db.Signals.OrderBy(s => s.Id).ToListAsync();
-    }
+    public Task<SignalEntity?> GetByIdAsync(int id, CancellationToken ct = default)
+        => db.Signals.FirstOrDefaultAsync(s => s.Id == id, ct);
 
-    public async Task<List<SignalEntity>> ListByLayerAsync(string layer)
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        return await db.Signals.Where(s => s.Layer == layer).OrderBy(s => s.Id).ToListAsync();
-    }
+    public Task<SignalEntity?> GetByCodeAsync(Guid personId, string code, string? region = null, CancellationToken ct = default)
+        => db.Signals.FirstOrDefaultAsync(s => s.PersonId == personId && s.Code == code && s.Region == region, ct);
 
-    public async Task<SignalEntity?> GetByKeyAsync(string key)
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        return await db.Signals.FirstOrDefaultAsync(s => s.Key == key);
-    }
+    public Task<List<SignalEntity>> GetByPersonAsync(Guid personId, CancellationToken ct = default)
+        => db.Signals.Where(s => s.PersonId == personId).OrderBy(s => s.Code).ToListAsync(ct);
 
-    public async Task<SignalEntity?> GetByCodeAsync(string code)
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        return await db.Signals.FirstOrDefaultAsync(s => s.Code == code);
-    }
+    public Task<List<SignalEntity>> GetByTypeAsync(Guid personId, string type, CancellationToken ct = default)
+        => db.Signals.Where(s => s.PersonId == personId && s.Type == type).OrderBy(s => s.Code).ToListAsync(ct);
 
-    public async Task<Dictionary<string, int>> GetKeyToIdMapAsync()
+    public async Task<SignalEntity> UpsertAsync(SignalEntity entity, CancellationToken ct = default)
     {
-        await using var db = await factory.CreateDbContextAsync();
-        return await db.Signals.ToDictionaryAsync(s => s.Key, s => s.Id);
-    }
-
-    public async Task<Dictionary<string, int>> GetCodeToIdMapAsync()
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        return await db.Signals.ToDictionaryAsync(s => s.Code, s => s.Id);
+        var existing = await GetByCodeAsync(entity.PersonId, entity.Code, entity.Region, ct);
+        if (existing is null)
+        {
+            db.Signals.Add(entity);
+            await db.SaveChangesAsync(ct);
+            return entity;
+        }
+        existing.State = entity.State;
+        existing.Baseline = entity.Baseline;
+        existing.TauMin = entity.TauMin;
+        existing.TauMax = entity.TauMax;
+        existing.Embedding = entity.Embedding;
+        existing.UpdatedOnUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+        return existing;
     }
 }

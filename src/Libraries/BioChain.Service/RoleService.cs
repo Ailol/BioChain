@@ -1,71 +1,63 @@
 using System.Security.Claims;
-using BioChain.Repository;
+using BioChain.Repository.Entities;
+using BioChain.Repository.Repositories;
 using BioChain.Repository.Roles;
 
 namespace BioChain.Service;
 
-public interface IRoleService
+public class RoleService(IUserRoleRepository repo) : IRoleService
 {
-    Task<List<string>> GetUserRolesAsync(string userId);
-    Task<HashSet<string>> GetEffectiveRolesAsync(string userId);
-    Task SetUserRoleAsync(string userId, string? email, string role);
-    Task SetUserRolesAsync(string userId, string? email, List<string> roles);
-    Task SyncFromProviderAsync(string userId, string? email, ClaimsPrincipal principal);
-    Task<bool> HasCompletedRoleSelectionAsync(string userId);
-    Task<List<UserRoleSummary>> GetAllUsersAsync();
-}
-
-public class RoleService(UserRoleRepository _roleRepo, IRoleProvider _provider) : IRoleService
-{
-    // Returns raw DB roles (not expanded)
-    public Task<List<string>> GetUserRolesAsync(string userId) =>
-        _roleRepo.GetRolesAsync(userId);
-
-    // Returns expanded effective roles (both → {work, private}, admin → all)
-    public async Task<HashSet<string>> GetEffectiveRolesAsync(string userId)
+    public async Task<IReadOnlyList<string>> GetUserRolesAsync(string userId, CancellationToken ct = default)
     {
-        var roles = await _roleRepo.GetRolesAsync(userId);
-        return AppRole.ExpandEffective(roles);
+        var entities = await repo.GetByUserAsync(userId, ct);
+        return entities.Select(r => r.Role).ToList();
     }
 
-    // Set a single role for the user (validates against AppRole.All)
-    public Task SetUserRoleAsync(string userId, string? email, string role)
+    public async Task SetUserRoleAsync(string userId, string? email, string role, CancellationToken ct = default)
     {
-        if (!AppRole.IsValid(role))
-            throw new ArgumentException($"Invalid role: {role}");
-        return _roleRepo.SetRoleAsync(userId, email, role);
+        // Revoke all existing, assign the new one
+        var existing = await repo.GetByUserAsync(userId, ct);
+        foreach (var e in existing.Where(e => e.Role != role))
+            await repo.RevokeAsync(userId, e.Role, ct);
+
+        await repo.AssignAsync(new UserRoleEntity { UserId = userId, Email = email, Role = role }, ct);
     }
 
-    // Set multiple roles at once (admin use — replaces all existing roles)
-    public Task SetUserRolesAsync(string userId, string? email, List<string> roles)
+    public async Task SetUserRolesAsync(string userId, string? email, List<string> roles, CancellationToken ct = default)
     {
-        var invalid = roles.Where(r => !AppRole.IsValid(r)).ToList();
-        if (invalid.Count > 0)
-            throw new ArgumentException($"Invalid roles: {string.Join(", ", invalid)}");
-        return _roleRepo.SetRolesAsync(userId, email, roles);
+        var existing = await repo.GetByUserAsync(userId, ct);
+
+        // Revoke roles not in the new set
+        foreach (var e in existing.Where(e => !roles.Contains(e.Role)))
+            await repo.RevokeAsync(userId, e.Role, ct);
+
+        // Assign new roles
+        foreach (var role in roles)
+            await repo.AssignAsync(new UserRoleEntity { UserId = userId, Email = email, Role = role }, ct);
     }
 
-    // Sync from IdP on first login only — if user has no DB roles yet,
-    // extract from claims and store. After that, DB takes precedence.
-    public async Task SyncFromProviderAsync(
-        string userId,
-        string? email,
-        ClaimsPrincipal principal
-    )
+    public async Task SyncFromProviderAsync(string userId, string? email, ClaimsPrincipal principal,
+        CancellationToken ct = default)
     {
-        var hasRoles = await _roleRepo.HasAnyRoleAsync(userId);
-        if (hasRoles) return; // DB already has roles, skip sync
+        var idpRoles = principal.FindAll(ClaimTypes.Role)
+            .Select(c => c.Value)
+            .Where(AppRole.IsValid)
+            .ToList();
 
-        var providerRoles = await _provider.ExtractRolesFromClaimsAsync(principal);
-        if (providerRoles.Count > 0)
-            await _roleRepo.SetRolesAsync(userId, email, providerRoles);
+        if (idpRoles.Count > 0)
+            await SetUserRolesAsync(userId, email, idpRoles, ct);
     }
 
-    // True if user has at least one active role in DB
-    public Task<bool> HasCompletedRoleSelectionAsync(string userId) =>
-        _roleRepo.HasAnyRoleAsync(userId);
-
-    // All users with roles (admin overview)
-    public Task<List<UserRoleSummary>> GetAllUsersAsync() =>
-        _roleRepo.GetAllUsersWithRolesAsync();
+    public async Task<List<UserOverview>> GetAllUsersAsync(CancellationToken ct = default)
+    {
+        var all = await repo.GetAllActiveAsync(ct);
+        return all
+            .GroupBy(r => r.UserId)
+            .Select(g => new UserOverview(
+                g.Key,
+                g.FirstOrDefault(r => r.Email is not null)?.Email,
+                g.Select(r => r.Role).ToList(),
+                g.Max(r => r.UpdatedAt)))
+            .ToList();
+    }
 }

@@ -46,10 +46,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./src/Libraries/BioChain.Repository/Data/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-core.sql:/docker-entrypoint-initdb.d/02-seed-core.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-agents.sql:/docker-entrypoint-initdb.d/03-seed-agents.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-chemicals.sql:/docker-entrypoint-initdb.d/04-seed-chemicals.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-questionnaire.sql:/docker-entrypoint-initdb.d/05-seed-questionnaire.sql
+      - ./src/Libraries/BioChain.Repository/Data/biochain_init.sql:/docker-entrypoint-initdb.d/biochain_init.sql
+      - ./src/Libraries/BioChain.Repository/Data/init_core.sql:/docker-entrypoint-initdb.d/init_core.sql
+      - ./src/Libraries/BioChain.Repository/Data/views.sql:/docker-entrypoint-initdb.d/views.sql
+      - ./src/Libraries/BioChain.Repository/Data/seed-questionnaire.sql:/docker-entrypoint-initdb.d/02-seed-questionnaire.sql
     ports:
       - "5434:5432"
     healthcheck:

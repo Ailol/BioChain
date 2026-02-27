@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using BioChain.Repository;
+using BioChain.Repository.Repositories;
 using BioChain.Repository.Roles;
 
 namespace BioChain.Server;
@@ -9,7 +10,7 @@ namespace BioChain.Server;
 public class HttpUserContext(
     IHttpContextAccessor httpContextAccessor,
     IHostEnvironment env,
-    UserRoleRepository roleRepo
+    IUserRoleRepository roleRepo
 ) : IUserContext
 {
     public string UserId

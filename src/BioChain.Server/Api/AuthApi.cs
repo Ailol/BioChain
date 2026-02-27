@@ -1,4 +1,5 @@
 using BioChain.Repository;
+using BioChain.Repository.Repositories;
 using BioChain.Repository.Roles;
 using BioChain.Service;
 
@@ -42,7 +43,7 @@ public static class AuthApi
         });
 
         // Resolve pending shares (moved from inline in Program.cs)
-        group.MapPost("/resolve-shares", async (PersonShareRepository shareRepo, IUserContext ctx) =>
+        group.MapPost("/resolve-shares", async (IPersonShareRepository shareRepo, IUserContext ctx) =>
         {
             var email = ctx.Email;
             if (email is not null)

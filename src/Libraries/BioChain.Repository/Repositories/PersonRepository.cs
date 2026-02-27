@@ -1,92 +1,44 @@
+using BioChain.Repository.Data;
+using BioChain.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BioChain.Repository;
+namespace BioChain.Repository.Repositories;
 
-public class PersonRepository(IDbContextFactory<PersonalityDbContext> factory, IUserContext userContext)
+public class PersonRepository(BioChainDbContext db) : IPersonRepository
 {
-    public async Task<Guid> CreateAsync(string firstName)
+    public Task<PersonEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => db.Persons.FirstOrDefaultAsync(p => p.Id == id, ct);
+
+    public Task<PersonEntity?> GetByOwnerAndNameAsync(string ownerId, string name, CancellationToken ct = default)
+        => db.Persons.FirstOrDefaultAsync(p => p.OwnerId == ownerId && p.Name == name, ct);
+
+    public Task<List<PersonEntity>> GetByOwnerAsync(string ownerId, CancellationToken ct = default)
+        => db.Persons.Where(p => p.OwnerId == ownerId).OrderBy(p => p.Name).ToListAsync(ct);
+
+    public async Task<bool> HasAccessAsync(Guid personId, string userId, CancellationToken ct = default)
     {
-        await using var db = await factory.CreateDbContextAsync();
-        var entity = new Entities.PersonEntity
-        {
-            OwnerId = userContext.UserId,
-            FirstName = firstName,
-            CreatedAt = DateTime.UtcNow
-        };
+        var isOwner = await db.Persons.AnyAsync(p => p.Id == personId && p.OwnerId == userId, ct);
+        if (isOwner) return true;
+        return await db.PersonShares.AnyAsync(s => s.PersonId == personId && s.SharedWithUserId == userId, ct);
+    }
+
+    public async Task<PersonEntity> CreateAsync(PersonEntity entity, CancellationToken ct = default)
+    {
         db.Persons.Add(entity);
-        await db.SaveChangesAsync();
-        return entity.Id;
+        await db.SaveChangesAsync(ct);
+        return entity;
     }
 
-    public async Task<Guid> EnsureExistsAsync(string firstName)
+    public async Task<PersonEntity> UpdateAsync(PersonEntity entity, CancellationToken ct = default)
     {
-        var id = await GetIdAsync(firstName);
-        return id ?? await CreateAsync(firstName);
+        entity.UpdatedOnUtc = DateTimeOffset.UtcNow;
+        db.Persons.Update(entity);
+        await db.SaveChangesAsync(ct);
+        return entity;
     }
 
-    public async Task<Guid?> GetIdAsync(string firstName)
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        await using var db = await factory.CreateDbContextAsync();
-        var userId = userContext.UserId;
-        var email = userContext.Email;
-        return await db.Persons
-            .Where(p => p.FirstName.ToLower() == firstName.ToLower())
-            .Where(p => p.OwnerId == userId
-                || db.PersonShares.Any(s => s.PersonId == p.Id
-                    && (s.SharedWithUserId == userId
-                        || (email != null && s.SharedWithEmail == email))))
-            .Select(p => (Guid?)p.Id)
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task<List<string>> ListAsync()
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        var userId = userContext.UserId;
-        var email = userContext.Email;
-        return await db.Persons
-            .Where(p => p.OwnerId == userId
-                || db.PersonShares.Any(s => s.PersonId == p.Id
-                    && (s.SharedWithUserId == userId
-                        || (email != null && s.SharedWithEmail == email))))
-            .Select(p => p.FirstName)
-            .OrderBy(n => n)
-            .ToListAsync();
-    }
-
-    public async Task<List<string>> FindSimilarAsync(string name)
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        var conn = db.Database.GetDbConnection();
-        await conn.OpenAsync();
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            SELECT p.first_name FROM person p
-            WHERE (p.owner_id = @userId
-                OR EXISTS (SELECT 1 FROM person_share ps
-                           WHERE ps.person_id = p.id
-                           AND (ps.shared_with_user_id = @userId
-                                OR ps.shared_with_email = @email)))
-              AND similarity(p.first_name, @name) > 0.3
-            ORDER BY similarity(p.first_name, @name) DESC
-            LIMIT 5
-            """;
-        AddParam(cmd, "userId", userContext.UserId);
-        AddParam(cmd, "email", (object?)userContext.Email ?? DBNull.Value);
-        AddParam(cmd, "name", name);
-
-        var results = new List<string>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            results.Add(reader.GetString(0));
-        return results;
-    }
-
-    private static void AddParam(System.Data.Common.DbCommand cmd, string name, object value)
-    {
-        var p = cmd.CreateParameter();
-        p.ParameterName = name;
-        p.Value = value;
-        cmd.Parameters.Add(p);
+        await db.Persons.Where(p => p.Id == id).ExecuteDeleteAsync(ct);
     }
 }

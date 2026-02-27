@@ -1,4 +1,7 @@
+using BioChain.Repository;
+using BioChain.Repository.Repositories;
 using BioChain.Service;
+using BioChain.Utils.Parsing;
 
 namespace BioChain.Server.Api;
 
@@ -8,83 +11,64 @@ public static class AnalyzeApi
     {
         var group = app.MapGroup("/api/analyze").WithTags("Analyze");
 
-        group.MapPost("/chat", async (ChatAnalyzeRequest req, NeuroService svc) =>
+        // Analyze text input
+        group.MapPost("/", async (AnalyzeRequest req, AnalyzeService svc, IUserContext ctx,
+            IPersonRepository persons) =>
         {
-            var result = await svc.ChatRespondAsync(
-                req.Person, req.Text, req.Relationship, req.ProjectedRelationship, req.Save);
+            if (!await persons.HasAccessAsync(req.PersonId, ctx.UserId))
+                return Results.Forbid();
+
+            var result = await svc.AnalyzeAsync(req.PersonId, req.Text, req.Kind);
             return Results.Ok(new
             {
-                person = req.Person,
-                sourceType = "chat",
-                decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
-                synthesis = result.Synthesis,
-                layerResponses = result.LayerResponses,
-                suggestedResponse = result.SuggestedResponse
+                result.DataId,
+                result.ProtocolsStored,
+                result.LinesTotal,
             });
         });
 
-        group.MapPost("/work", async (WorkAnalyzeRequest req, NeuroService svc) =>
+        // Analyze document (PDF/DOCX via base64)
+        group.MapPost("/document", async (AnalyzeDocumentRequest req, AnalyzeService svc,
+            IUserContext ctx, IPersonRepository persons) =>
         {
-            var result = await svc.WorkAnalyzeAsync(req.Person, req.Text, req.Relationship, req.Save);
+            if (!await persons.HasAccessAsync(req.PersonId, ctx.UserId))
+                return Results.Forbid();
+
+            var text = DocumentExtractor.ExtractText(req.Content, req.DocumentType);
+            if (string.IsNullOrWhiteSpace(text))
+                return Results.BadRequest(new { error = "Could not extract text from document" });
+
+            var result = await svc.AnalyzeAsync(req.PersonId, text, req.Kind);
             return Results.Ok(new
             {
-                person = req.Person,
-                sourceType = "work",
-                decisionsCount = result.Decisions.Count,
-                decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
-                synthesis = result.Synthesis
+                result.DataId,
+                result.ProtocolsStored,
+                result.LinesTotal,
             });
         });
 
-        group.MapPost("/journal", async (JournalAnalyzeRequest req, NeuroService svc) =>
+        // Get analysis history for a person
+        group.MapGet("/{personId:guid}", async (Guid personId, IUserContext ctx,
+            IPersonRepository persons, IProtocolRepository protocols) =>
         {
-            var result = await svc.JournalAnalyzeAsync(req.Person, req.Text, req.Save);
+            if (!await persons.HasAccessAsync(personId, ctx.UserId))
+                return Results.Forbid();
+
+            var list = await protocols.GetByPersonAsync(personId);
             return Results.Ok(new
             {
-                person = req.Person,
-                sourceType = "journal",
-                decisionsCount = result.Decisions.Count,
-                decisions = result.Decisions.Select(d => new { d.Signal, d.Formula }),
-                synthesis = result.Synthesis
+                count = list.Count,
+                protocols = list.Select(p => new
+                {
+                    p.Id, p.Tag, p.Formula, p.Status, p.Phase,
+                    createdAt = p.CreatedOnUtc,
+                }),
             });
-        });
-
-        group.MapPost("/orchestrator", async (OrchestratorChatRequest req, NeuroService svc, CancellationToken ct) =>
-        {
-            var messages = req.Messages.Select(m =>
-                new Microsoft.Extensions.AI.ChatMessage(
-                    m.Role.Equals("user", StringComparison.OrdinalIgnoreCase)
-                        ? Microsoft.Extensions.AI.ChatRole.User
-                        : m.Role.Equals("system", StringComparison.OrdinalIgnoreCase)
-                            ? Microsoft.Extensions.AI.ChatRole.System
-                            : Microsoft.Extensions.AI.ChatRole.Assistant,
-                    m.Content)).ToList();
-
-            var response = await svc.OrchestratorChatAsync(req.Person, messages, ct);
-            return Results.Ok(new { response });
         });
 
         return group;
     }
 }
 
-public record OrchestratorMessage(string Role, string Content);
-public record OrchestratorChatRequest(string Person, List<OrchestratorMessage> Messages);
-
-public record ChatAnalyzeRequest(
-    string Person,
-    string Text,
-    string? Relationship = null,
-    string? ProjectedRelationship = null,
-    bool Save = true);
-
-public record WorkAnalyzeRequest(
-    string Person,
-    string Text,
-    string? Relationship = null,
-    bool Save = true);
-
-public record JournalAnalyzeRequest(
-    string Person,
-    string Text,
-    bool Save = true);
+public record AnalyzeRequest(Guid PersonId, string Text, string Kind);
+public record AnalyzeDocumentRequest(Guid PersonId, string Content, string DocumentType, string Kind);

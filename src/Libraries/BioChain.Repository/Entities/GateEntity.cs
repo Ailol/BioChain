@@ -1,12 +1,21 @@
+using Pgvector;
+
 namespace BioChain.Repository.Entities;
 
 public class GateEntity
 {
     public int Id { get; set; }
-    public string GateType { get; set; } = "";       // AND, OR, NOT, XOR, NAND, NOR, THRESHOLD, GAIN, etc.
-    public string? Symbol { get; set; }              // ⊼, ⊽, ¬, ⊕, ⊨, ⊳, ▷, ⊡, Σ, etc.
-    public string Name { get; set; } = "";
-    public string? Description { get; set; }
-    public string Config { get; set; } = "{}";
-    public DateTime CreatedAt { get; set; }
+    public Guid PersonId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string? Threshold { get; set; }
+    public string? Expression { get; set; }
+    public int? ParentId { get; set; }
+    public string[]? History { get; set; }
+    public bool Latched { get; set; }
+    public Vector? Embedding { get; set; }
+
+    public PersonEntity Person { get; set; } = null!;
+    public GateEntity? Parent { get; set; }
+    public ICollection<GateEntity> Children { get; set; } = [];
 }

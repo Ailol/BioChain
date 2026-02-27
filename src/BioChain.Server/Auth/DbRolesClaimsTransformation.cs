@@ -1,13 +1,14 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using BioChain.Repository;
+using BioChain.Repository.Repositories;
 
 namespace BioChain.Server.Auth;
 
 // Reads roles from DB (source of truth) and adds them as standard Role claims
 // so ASP.NET RequireRole / policy-based authorization works automatically.
 // Replaces KeycloakRolesClaimsTransformation — DB takes precedence over JWT.
-public class DbRolesClaimsTransformation(UserRoleRepository _roleRepo) : IClaimsTransformation
+public class DbRolesClaimsTransformation(IUserRoleRepository _roleRepo) : IClaimsTransformation
 {
     public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
     {
