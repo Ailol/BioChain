@@ -10,6 +10,36 @@
 
 ---
 
+## Project Structure & Dependency Chain
+
+```
+BioChain.Server (Web SDK — entry point, DI, API endpoints)
+  → BioChain.Service (class library — BackgroundServices, business logic)
+      → BioChain.Repository (class library — EF Core entities, DbContext, repos, prompt .txt files, SQL)
+      → BioChain.AgentFramework (class library — ChatClient, IChatClient wrapping, Microsoft.Extensions.AI)
+      → BioChain.AnalysisFramework (class library — pure computation, algorithms)
+      → BioChain.Utils (class library — BioChainParser, document extraction)
+      → BioChain.Models (class library — shared DTOs)
+      → BioChain.ML (class library — ML models)
+  → BioChain.Repository (direct ref for DI registration)
+  → BioChain.AgentFramework (direct ref for DI registration)
+  → BioChain.Utils (direct ref)
+```
+
+**Key rules for file placement:**
+- **Entities, repositories, DbContext, prompt files, SQL** → `BioChain.Repository`
+- **BackgroundServices, business logic, service-layer models** → `BioChain.Service`
+- **LLM wrappers, agent orchestration** → `BioChain.AgentFramework`
+- **Parsing, document extraction** → `BioChain.Utils`
+- **DI wiring, API endpoints, Program.cs** → `BioChain.Server`
+- **Prompt .txt files** → `BioChain.Repository/Data/` with `<Content CopyToOutputDirectory="PreserveNewest" />` in `.csproj`
+
+**Package availability (transitive):**
+- `BioChain.Service` gets `Npgsql` transitively from Repository, `IChatClient` from AgentFramework, `Neo4j.Driver` directly
+- `BioChain.Service` has `Microsoft.Extensions.Hosting.Abstractions` for `BackgroundService` and `IServiceScopeFactory`
+
+---
+
 ## Reference Files
 
 Before starting, familiarize yourself with:
@@ -17,6 +47,8 @@ Before starting, familiarize yourself with:
 | File | Why |
 |------|-----|
 | `src/Libraries/BioChain.Service/GraphSyncService.cs` | Pattern to copy: LISTEN/NOTIFY, debounce, BackgroundService |
+| `src/Libraries/BioChain.Service/BioChain.Service.csproj` | Package refs + project refs for this layer |
+| `src/Libraries/BioChain.Repository/BioChain.Repository.csproj` | Content includes for prompt files |
 | `src/Libraries/BioChain.Repository/Repositories/IModuleRepository.cs` | Current interface — needs UpdatePropertiesAsync |
 | `src/Libraries/BioChain.Repository/Repositories/ModuleRepository.cs` | EF Core implementation to extend |
 | `src/Libraries/BioChain.Repository/Entities/ModuleEntity.cs` | Module entity with Properties JSONB |
@@ -265,12 +297,25 @@ git commit -m "feat: add PREDICTION tag handler in AnalyzeService"
 
 ## Phase 4: Evolution Prompt
 
-### Task 14: Create SIGNALS_EVOLUTION_PROMPT.txt
+### Task 14: Create SIGNALS_EVOLUTION_PROMPT.txt + add Content include to csproj
 
 This is the system prompt sent to the LLM when a MODULE's gate fires. It receives the module's context (definition, subgraph, prediction history) and outputs Signals Kernel DSL that goes through the existing parser pipeline.
 
 **Files:**
 - Create: `src/Libraries/BioChain.Repository/Data/SIGNALS_EVOLUTION_PROMPT.txt`
+- Modify: `src/Libraries/BioChain.Repository/BioChain.Repository.csproj` — add Content include
+
+**Important:** Prompt `.txt` files live in `BioChain.Repository/Data/` (the data layer) but must have `<Content CopyToOutputDirectory="PreserveNewest" />` entries in the `.csproj` so they're copied to the output directory at build time. The service layer (`BioChain.Service`) loads them at runtime via `Path.GetFullPath("Data/...", AppContext.BaseDirectory)`.
+
+Add to the existing `<ItemGroup>` in `BioChain.Repository.csproj` that already has the BIOCHAIN_ANALYZER_PROMPT:
+
+```xml
+<Content Include="Data\SIGNALS_EVOLUTION_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />
+<Content Include="Data\SIGNALS_ANALYZER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />
+<Content Include="Data\SIGNALS_AGENT_SPAWNER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />
+```
+
+(The existing v1.5 migration created SIGNALS_ANALYZER_PROMPT.txt and SIGNALS_AGENT_SPAWNER_PROMPT.txt but missed adding their Content includes — fix them here too.)
 
 ```text
 You are a Signals Kernel evolution agent. You analyze signal graphs, make predictions, and evolve the model.
@@ -344,8 +389,8 @@ Feedback: ⟳⁺ (positive/amplifying), ⟳⁻ (negative/dampening)
 ### Task 15: Commit
 
 ```bash
-git add src/Libraries/BioChain.Repository/Data/SIGNALS_EVOLUTION_PROMPT.txt
-git commit -m "feat: add evolution prompt for agent ecosystem LLM calls"
+git add src/Libraries/BioChain.Repository/Data/SIGNALS_EVOLUTION_PROMPT.txt src/Libraries/BioChain.Repository/BioChain.Repository.csproj
+git commit -m "feat: add evolution prompt + fix Content includes for prompt files"
 ```
 
 ---
@@ -1259,18 +1304,18 @@ git commit -m "feat: complete agent ecosystem implementation
 
 ## Summary
 
-| Phase | What | Files | Effort |
-|-------|------|-------|--------|
-| 1 | Repository extensions (UpdateProperties, GetByModuleTag) | 4 modified | Small |
-| 2 | ModuleProps lifecycle model | 1 created | Trivial |
-| 3 | PREDICTION tag handler | 1 modified | Trivial |
-| 4 | Evolution prompt | 1 created | Small |
-| 5 | AgentEcosystemService core | 1 created + 1 modified | Medium |
-| 6 | DI registration | 1 modified | Trivial |
-| 7 | Neo4j Cypher extraction + patterns | 1 modified | Medium |
-| 8 | Module spawning | 1 modified | Small |
-| 9 | Build + integration test | 0 | Small |
+| Phase | What | Files | Project |
+|-------|------|-------|---------|
+| 1 | Repository extensions (UpdateProperties, GetByModuleTag) | 4 modified | `BioChain.Repository` |
+| 2 | ModuleProps lifecycle model | 1 created | `BioChain.Service` |
+| 3 | PREDICTION tag handler | 1 modified | `BioChain.Service` |
+| 4 | Evolution prompt + csproj Content includes | 1 created + 1 modified | `BioChain.Repository` |
+| 5 | AgentEcosystemService core | 1 created + 1 modified | `BioChain.Service` |
+| 6 | DI registration | 1 modified | `BioChain.Server` |
+| 7 | Neo4j Cypher extraction + patterns | 1 modified | `BioChain.Service` |
+| 8 | Module spawning | 1 modified | `BioChain.Service` |
+| 9 | Build + integration test | 0 | All |
 
-**Total: ~400-500 lines of new C# code + 1 prompt file**
+**Total: ~400-500 lines of new C# code + 1 prompt file + 1 csproj update**
 
 **Reuses:** GraphSyncService pattern, evaluate_gate(), BioChainParser, AnalyzeService.LinkComponentAsync, serialize_profile_dsl(), IChatClient, all existing repositories.
