@@ -13,4 +13,12 @@
     <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Data\BIOCHAIN_ANALYZER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" Link="Data\BIOCHAIN_ANALYZER_PROMPT.txt" />
+    <Content Include="Data\SIGNALS_ANALYZER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Data\SIGNALS_AGENT_SPAWNER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Data\SIGNALS_EVOLUTION_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Data\TauConstants.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

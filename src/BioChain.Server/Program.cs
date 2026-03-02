@@ -13,6 +13,7 @@ using BioChain.Server;
 using BioChain.Server.Api;
 using BioChain.Server.Auth;
 using BioChain.Service;
+using Neo4j.Driver;
 using OllamaSharp;
 using OpenAI;
 
@@ -81,7 +82,7 @@ static IEmbeddingGenerator<string, Embedding<float>>? CreateEmbeddingGenerator(L
 
 // ── Registration ─────────────────────────────────────────────────────────────
 
-static void RegisterAll(IServiceCollection services, AgentConfiguration llm, string db, bool isHttp)
+static void RegisterAll(IServiceCollection services, AgentConfiguration llm, string db, bool isHttp, IConfiguration appConfig)
 {
     services.AddSingleton(llm);
 
@@ -104,8 +105,8 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     }
 
     // Repositories — scoped (match DbContext lifetime)
-    services.AddScoped<IPersonRepository, PersonRepository>();
-    services.AddScoped<IDataRepository, DataRepository>();
+    services.AddScoped<ISubjectRepository, SubjectRepository>();
+    services.AddScoped<IStimuliRepository, StimuliRepository>();
     services.AddScoped<ISignalRepository, SignalRepository>();
     services.AddScoped<IReceptorRepository, ReceptorRepository>();
     services.AddScoped<ITransporterRepository, TransporterRepository>();
@@ -113,6 +114,11 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddScoped<ILimiterRepository, LimiterRepository>();
     services.AddScoped<IInterfaceRepository, InterfaceRepository>();
     services.AddScoped<IProtocolRepository, ProtocolRepository>();
+    services.AddScoped<IRegionRepository, RegionRepository>();
+    services.AddScoped<IEdgeRepository, EdgeRepository>();
+    services.AddScoped<IModuleRepository, ModuleRepository>();
+    services.AddScoped<IConstraintDefRepository, ConstraintDefRepository>();
+    services.AddScoped<IToolRepository, ToolRepository>();
     services.AddScoped<IQuestionnaireRepository, QuestionnaireRepository>();
     services.AddScoped<IPersonShareRepository, PersonShareRepository>();
     services.AddScoped<IUserRoleRepository, UserRoleRepository>();
@@ -127,6 +133,16 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
         services.AddSingleton(engineClient);
     }
 
+    // Chat model — nanbeige for conversational BioChain responses (keyed singleton)
+    // Wrapped with FunctionInvokingChatClient so nanbeige can call DB tools autonomously
+    if (llm.Chat is not null)
+    {
+        var chatClient = new ChatClientBuilder(CreateChatClient(llm.Chat))
+            .UseFunctionInvocation()
+            .Build();
+        services.AddKeyedSingleton<IChatClient>("chat", chatClient);
+    }
+
     // Embedding generator — keep for future use
     var embedGen = CreateEmbeddingGenerator(llm.Embedding);
     if (embedGen is not null)
@@ -134,6 +150,24 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
 
     // Services — scoped
     services.AddScoped<AnalyzeService>();
+    services.AddScoped<BioChainChatService>();
+
+    // Neo4j graph sync (optional — only if Neo4j:Uri is configured)
+    var neo4jUri = appConfig["Neo4j:Uri"];
+    if (!string.IsNullOrEmpty(neo4jUri))
+    {
+        var neo4jPassword = appConfig["Neo4j:Password"] ?? "biochain_graph";
+        services.AddSingleton<IDriver>(GraphDatabase.Driver(
+            neo4jUri, AuthTokens.Basic("neo4j", neo4jPassword)));
+        services.AddSingleton<IGraphStore, Neo4jGraphStore>();
+        services.AddHostedService<GraphSyncService>();
+    }
+
+    // Agent ecosystem (optional — only if an analysis LLM is configured)
+    if (llm.AgentAnalyzing is not null)
+    {
+        services.AddHostedService<AgentEcosystemService>();
+    }
 
     LogLlmConfig(llm);
 }
@@ -147,6 +181,7 @@ static void LogLlmConfig(AgentConfiguration config)
     Console.WriteLine($"  Orchestrator:    {Fmt(config.Orchestrator)}");
     Console.WriteLine($"  AgentAnalyzing:  {Fmt(config.AgentAnalyzing)}");
     Console.WriteLine($"  AgentLayer:      {Fmt(config.AgentLayer)}");
+    Console.WriteLine($"  Chat:            {Fmt(config.Chat)}");
     Console.WriteLine($"  Embedding:       {Fmt(config.Embedding)}");
     Console.WriteLine($"  Max Parallel:    {config.MaxParallelAgents}");
 }
@@ -159,7 +194,7 @@ static async Task RunHttpMode(string[] args)
     builder.AddServiceDefaults();
 
     var (llm, db) = LoadConfig(builder.Configuration);
-    RegisterAll(builder.Services, llm, db, isHttp: true);
+    RegisterAll(builder.Services, llm, db, isHttp: true, builder.Configuration);
 
     builder.Services.AddCors(options =>
         options.AddDefaultPolicy(policy =>
@@ -205,12 +240,14 @@ static async Task RunHttpMode(string[] args)
     {
         app.MapAuthApi().AllowAnonymous();
         app.MapAnalyzeApi().AllowAnonymous();
+        app.MapChatApi().AllowAnonymous();
         app.MapQuestionnaireApi().AllowAnonymous();
     }
     else
     {
         app.MapAuthApi().RequireAuthorization();
         app.MapAnalyzeApi().RequireAuthorization("HasRole");
+        app.MapChatApi().RequireAuthorization("HasRole");
         app.MapQuestionnaireApi();
     }
 
@@ -232,7 +269,7 @@ static async Task RunHttpMode(string[] args)
             {
                 try
                 {
-                    await dbCtx.Persons.CountAsync();
+                    await dbCtx.Subjects.CountAsync();
                     Console.WriteLine("DB connectivity verified.");
                     return;
                 }
@@ -261,7 +298,7 @@ static async Task RunStdioMode(string[] args)
         .ConfigureServices((ctx, services) =>
         {
             var (llm, db) = LoadConfig(ctx.Configuration);
-            RegisterAll(services, llm, db, isHttp: false);
+            RegisterAll(services, llm, db, isHttp: false, ctx.Configuration);
 
             services
                 .AddMcpServer()
