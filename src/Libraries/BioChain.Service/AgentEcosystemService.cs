@@ -1,171 +1,51 @@
-using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
+using BioChain.AgentFramework;
 using BioChain.Repository.Entities;
+using BioChain.Repository.Linking;
+using BioChain.Repository.Listeners;
 using BioChain.Repository.Repositories;
 using BioChain.Service.Models;
 using BioChain.Utils.Parsing;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 
 namespace BioChain.Service;
 
 /// <summary>
-/// Evolving agent ecosystem. Listens for graph changes, evaluates MODULE gates,
-/// extracts subgraphs, calls LLM for evolution, parses output back into graph.
-///
-/// Architecture:
-///   PG INSERT → graph_changed NOTIFY
-///     → debounce per subject_id
-///     → load active MODULEs for subject
-///     → for each MODULE whose watched signals changed:
-///         → evaluate gate (PG function)
-///         → extract subgraph (PG serialize_profile_dsl or Neo4j Cypher)
-///         → load prediction history
-///         → call LLM with evolution prompt
-///         → parse output → LinkComponentPublicAsync → write back to graph
-///         → update module lifecycle (eval_count, hit_count, utility)
-///     → cycle continues (new writes may trigger further evaluations)
+/// Evolving agent ecosystem. Delegates LISTEN/debounce to <see cref="IGraphChangeListener"/>,
+/// PG function calls to <see cref="IGraphQueryRepository"/>, LLM evolution to <see cref="EvolutionEngine"/>,
+/// and DSL→entity linking to <see cref="IComponentLinker"/>.
+/// Keeps Neo4j pattern detection (Service-only dependency).
 /// </summary>
 public sealed class AgentEcosystemService : BackgroundService
 {
+    private readonly IGraphChangeListener _listener;
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IChatClient _engine;
-    private readonly string _pgConnString;
-    private readonly int _debounceMs;
-    private readonly ILogger<AgentEcosystemService> _logger;
+    private readonly EvolutionEngine _engine;
     private readonly bool _hasNeo4j;
-
-    // Debounce: subject_id → CTS
-    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _pending = new();
-
-    // Track which signal codes changed per subject (accumulated during debounce window)
-    private readonly ConcurrentDictionary<Guid, ConcurrentBag<string>> _changedSignals = new();
-
-    private static readonly string EvolutionPrompt = LoadEvolutionPrompt();
+    private readonly ILogger<AgentEcosystemService> _logger;
 
     public AgentEcosystemService(
+        IGraphChangeListener listener,
         IServiceScopeFactory scopeFactory,
-        IChatClient engine,
+        EvolutionEngine engine,
         IConfiguration config,
         ILogger<AgentEcosystemService> logger)
     {
+        _listener = listener;
         _scopeFactory = scopeFactory;
         _engine = engine;
-        _pgConnString = config.GetConnectionString("personality")
-            ?? throw new InvalidOperationException("ConnectionStrings:personality is required");
-        _debounceMs = int.TryParse(config["AgentEcosystem:DebounceMs"], out var d) ? d : 2000;
         _hasNeo4j = !string.IsNullOrEmpty(config["Neo4j:Uri"]);
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("[AgentEcosystem] Starting — debounce={DebounceMs}ms, neo4j={HasNeo4j}",
-            _debounceMs, _hasNeo4j);
-
-        await ListenLoopAsync(stoppingToken);
-    }
-
-    // ── LISTEN Loop (same pattern as GraphSyncService) ───────────────────────
-
-    private async Task ListenLoopAsync(CancellationToken ct)
-    {
-        var delay = 1;
-
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                await using var conn = new NpgsqlConnection(_pgConnString);
-                await conn.OpenAsync(ct);
-                conn.Notification += OnNotification;
-
-                await using var cmd = new NpgsqlCommand("LISTEN graph_changed", conn);
-                await cmd.ExecuteNonQueryAsync(ct);
-                delay = 1;
-
-                _logger.LogInformation("[AgentEcosystem] LISTEN connected");
-
-                while (!ct.IsCancellationRequested)
-                    await conn.WaitAsync(ct);
-            }
-            catch (Exception ex) when (!ct.IsCancellationRequested)
-            {
-                _logger.LogWarning(ex, "[AgentEcosystem] LISTEN connection lost, reconnecting in {Delay}s", delay);
-                await Task.Delay(TimeSpan.FromSeconds(delay), ct);
-                delay = Math.Min(delay * 2, 30);
-            }
-        }
-    }
-
-    // ── Notification → Debounce ──────────────────────────────────────────────
-
-    private void OnNotification(object sender, NpgsqlNotificationEventArgs e)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(e.Payload);
-            var root = doc.RootElement;
-
-            var subjectIdStr = root.GetProperty("entity_id").GetString();
-            if (!Guid.TryParse(subjectIdStr, out var subjectId)) return;
-
-            // Accumulate which signal/table changed during debounce window
-            if (root.TryGetProperty("code", out var c) && c.GetString() is { } code)
-            {
-                var bag = _changedSignals.GetOrAdd(subjectId, _ => []);
-                bag.Add(code);
-            }
-
-            ScheduleEvaluation(subjectId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "[AgentEcosystem] Failed to parse notification: {Payload}", e.Payload);
-        }
-    }
-
-    private void ScheduleEvaluation(Guid subjectId)
-    {
-        // Cancel any existing debounce timer
-        if (_pending.TryRemove(subjectId, out var oldCts))
-        {
-            oldCts.Cancel();
-            oldCts.Dispose();
-        }
-
-        var cts = new CancellationTokenSource();
-        _pending[subjectId] = cts;
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(_debounceMs, cts.Token);
-                _pending.TryRemove(subjectId, out _);
-
-                // Collect accumulated signal codes
-                var changedCodes = Array.Empty<string>();
-                if (_changedSignals.TryRemove(subjectId, out var bag))
-                    changedCodes = bag.Distinct().ToArray();
-
-                await EvaluateModulesAsync(subjectId, changedCodes);
-            }
-            catch (OperationCanceledException)
-            {
-                // Debounce reset — expected
-            }
-            catch (Exception ex)
-            {
-                _pending.TryRemove(subjectId, out _);
-                _logger.LogError(ex, "[AgentEcosystem] Evaluation failed for subject {SubjectId}", subjectId);
-            }
-        });
+        _logger.LogInformation("[AgentEcosystem] Starting — neo4j={HasNeo4j}", _hasNeo4j);
+        await _listener.ListenAsync(EvaluateModulesAsync, stoppingToken);
     }
 
     // ── Core Evaluation Loop ─────────────────────────────────────────────────
@@ -175,7 +55,10 @@ public sealed class AgentEcosystemService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var moduleRepo = scope.ServiceProvider.GetRequiredService<IModuleRepository>();
         var protocolRepo = scope.ServiceProvider.GetRequiredService<IProtocolRepository>();
-        var analyzeService = scope.ServiceProvider.GetRequiredService<AnalyzeService>();
+        var gateRepo = scope.ServiceProvider.GetRequiredService<IGateRepository>();
+        var graphQuery = scope.ServiceProvider.GetRequiredService<IGraphQueryRepository>();
+        var linker = scope.ServiceProvider.GetRequiredService<IComponentLinker>();
+        var stimuliRepo = scope.ServiceProvider.GetRequiredService<IStimuliRepository>();
 
         var allModules = await moduleRepo.GetBySubjectAsync(subjectId);
 
@@ -183,102 +66,82 @@ public sealed class AgentEcosystemService : BackgroundService
         {
             try
             {
-                // 1. Deserialize lifecycle properties
                 var props = DeserializeProps(module.Properties);
                 if (props.Status != "active") continue;
 
-                // 2. Check if changed signals overlap with this module's watch list
-                if (props.WatchSignals.Length > 0 && changedCodes.Length > 0)
-                {
-                    var overlap = props.WatchSignals
-                        .Intersect(changedCodes, StringComparer.OrdinalIgnoreCase)
-                        .Any();
-                    if (!overlap) continue;
-                }
-                else if (props.WatchSignals.Length > 0)
-                {
-                    // Module has a watch list but we don't know what changed — skip
+                if (!ShouldEvaluate(props, changedCodes)) continue;
+
+                // Gate evaluation
+                var gate = (await gateRepo.GetByPersonAsync(subjectId))
+                    .FirstOrDefault(g => g.ModuleId == module.Id);
+                if (gate is not null && !await graphQuery.EvaluateGateAsync(gate.Id, subjectId))
                     continue;
-                }
-                // If no watch list, evaluate on any change (new module without filter)
 
-                // 3. Evaluate gate via PG function (if module has a gate)
-                var gateActive = await EvaluateModuleGateAsync(module, subjectId, scope);
-                if (!gateActive) continue;
+                // Extract subgraph
+                var subgraphDsl = await ExtractSubgraphAsync(
+                    subjectId, props.WatchSignals, scope, graphQuery);
 
-                // 4. Extract subgraph context
-                var subgraphDsl = await ExtractSubgraphAsync(subjectId, props.WatchSignals, scope);
-
-                // 5. Load prediction history
+                // Load prediction history → string[]
                 var predictions = await protocolRepo.GetByModuleTagAsync(module.Id, "PREDICTION");
+                var predFormulas = predictions
+                    .Select(p => $"[{p.Status ?? "pending"}] {p.Formula} (created: {p.CreatedOnUtc:yyyy-MM-dd HH:mm})")
+                    .ToArray();
 
-                // 6. Build evolution context and call LLM
-                var userContext = BuildEvolutionContext(module, props, subgraphDsl, predictions);
-                var response = await _engine.GetResponseAsync(
-                [
-                    new ChatMessage(ChatRole.System, EvolutionPrompt),
-                    new ChatMessage(ChatRole.User, userContext),
-                ]);
-                var outputText = response.Text ?? "";
+                // Call LLM via EvolutionEngine
+                var outputText = await _engine.EvolveAsync(
+                    module.Code,
+                    module.AgentType ?? "REACTIVE",
+                    props.Generation,
+                    props.Utility,
+                    props.HitCount,
+                    props.EvalCount,
+                    props.WatchSignals,
+                    subgraphDsl,
+                    predFormulas);
 
                 _logger.LogDebug("[AgentEcosystem] Module {Code} LLM output: {Output}",
                     module.Code, outputText[..Math.Min(200, outputText.Length)]);
 
-                // 7. Skip if no changes
+                // Skip if no changes
                 if (outputText.Contains("-- no changes", StringComparison.OrdinalIgnoreCase))
                 {
-                    props.EvalCount++;
-                    props.LastEval = DateTimeOffset.UtcNow;
+                    UpdateLifecycle(props, 0);
                     await moduleRepo.UpdatePropertiesAsync(module.Id, JsonSerializer.Serialize(props));
                     continue;
                 }
 
-                // 8. Parse LLM output through existing pipeline
+                // Parse LLM output and link via ComponentLinker
                 var lines = BioChainParser.Parse(outputText);
                 if (lines.Count > 0)
                 {
-                    // Create a stimuli entry to anchor the protocols
-                    var stimuliRepo = scope.ServiceProvider.GetRequiredService<IStimuliRepository>();
-                    var stimuliEntity = new StimuliEntity
+                    var stimuliEntity = await stimuliRepo.CreateAsync(new StimuliEntity
                     {
                         SubjectId = subjectId,
                         Kind = "agent_evolution",
                         SourceText = $"MODULE:{module.Code} eval #{props.EvalCount + 1}",
                         Analyzed = true,
-                    };
-                    stimuliEntity = await stimuliRepo.CreateAsync(stimuliEntity);
+                    });
 
-                    // Create an anchor protocol for this evolution cycle
-                    var anchorProtocol = new ProtocolEntity
+                    var anchorProtocol = await protocolRepo.CreateAsync(new ProtocolEntity
                     {
                         SubjectId = subjectId,
                         StimuliId = stimuliEntity.Id,
                         ModuleId = module.Id,
                         Tag = "EVOLUTION",
                         Formula = $"MODULE:{module.Code} generation={props.Generation}",
-                    };
-                    anchorProtocol = await protocolRepo.CreateAsync(anchorProtocol);
+                    });
 
                     foreach (var line in lines)
-                    {
-                        await analyzeService.LinkComponentPublicAsync(
-                            anchorProtocol, line, subjectId, default);
-                    }
+                        await linker.LinkAsync(anchorProtocol, line, subjectId);
                 }
 
-                // 9. Update module lifecycle
+                // Update lifecycle
                 var confirmedCount = lines
                     .Where(l => l.Tag == "PREDICTION")
                     .Count(l => l.Status?.Contains("confirmed", StringComparison.OrdinalIgnoreCase) == true);
 
-                props.EvalCount++;
-                props.HitCount += confirmedCount;
-                props.Utility = props.EvalCount > 0
-                    ? (double)props.HitCount / props.EvalCount
-                    : 0.5;
-                props.LastEval = DateTimeOffset.UtcNow;
+                UpdateLifecycle(props, confirmedCount);
 
-                // Auto-retire if utility drops too low after sufficient evaluations
                 if (props.EvalCount >= 10 && props.Utility < 0.1)
                 {
                     props.Status = "retired";
@@ -299,7 +162,7 @@ public sealed class AgentEcosystemService : BackgroundService
             }
         }
 
-        // Periodically check for new patterns to spawn MODULEs
+        // Spawn new modules for detected patterns
         try
         {
             await SpawnModulesForPatternsAsync(subjectId, scope);
@@ -310,33 +173,12 @@ public sealed class AgentEcosystemService : BackgroundService
         }
     }
 
-    // ── Gate Evaluation via PG ───────────────────────────────────────────────
-
-    private async Task<bool> EvaluateModuleGateAsync(
-        ModuleEntity module, Guid subjectId, IServiceScope scope)
-    {
-        var gateRepo = scope.ServiceProvider.GetRequiredService<IGateRepository>();
-        var moduleGates = await gateRepo.GetByPersonAsync(subjectId);
-        var gate = moduleGates.FirstOrDefault(g => g.ModuleId == module.Id);
-
-        if (gate is null) return true; // No gate = always active
-
-        // Evaluate via PG function
-        await using var conn = new NpgsqlConnection(_pgConnString);
-        await conn.OpenAsync();
-        await using var cmd = new NpgsqlCommand("SELECT evaluate_gate($1, $2)", conn);
-        cmd.Parameters.AddWithValue(gate.Id);
-        cmd.Parameters.AddWithValue(subjectId);
-        var result = await cmd.ExecuteScalarAsync();
-        return result is true;
-    }
-
     // ── Subgraph Extraction ──────────────────────────────────────────────────
 
     private async Task<string> ExtractSubgraphAsync(
-        Guid subjectId, string[] watchSignals, IServiceScope scope)
+        Guid subjectId, string[] watchSignals, IServiceScope scope,
+        IGraphQueryRepository graphQuery)
     {
-        // Try Neo4j targeted extraction if available and we have specific signals
         if (_hasNeo4j && watchSignals.Length > 0)
         {
             try
@@ -351,17 +193,7 @@ public sealed class AgentEcosystemService : BackgroundService
             }
         }
 
-        // Fallback: PG serialize_profile_dsl() — full profile DSL
-        await using var conn = new NpgsqlConnection(_pgConnString);
-        await conn.OpenAsync();
-
-        await using (var refreshCmd = new NpgsqlCommand("SELECT refresh_graph()", conn))
-            await refreshCmd.ExecuteNonQueryAsync();
-
-        await using var cmd = new NpgsqlCommand("SELECT serialize_profile_dsl($1)", conn);
-        cmd.Parameters.AddWithValue(subjectId);
-        var result = await cmd.ExecuteScalarAsync();
-        return result?.ToString() ?? "(empty graph)";
+        return await graphQuery.SerializeProfileDslAsync(subjectId);
     }
 
     private static async Task<string> ExtractSubgraphNeo4jAsync(
@@ -450,7 +282,6 @@ public sealed class AgentEcosystemService : BackgroundService
         var patterns = new List<string>();
         await using var session = driver.AsyncSession();
 
-        // 1. Positive feedback loops with elevated signals
         try
         {
             var feedbackResult = await session.RunAsync("""
@@ -471,7 +302,6 @@ public sealed class AgentEcosystemService : BackgroundService
             _logger.LogDebug(ex, "[AgentEcosystem] Feedback loop detection query failed");
         }
 
-        // 2. Long cascade paths (depth >= 3)
         try
         {
             var cascadeResult = await session.RunAsync("""
@@ -512,9 +342,8 @@ public sealed class AgentEcosystemService : BackgroundService
 
         foreach (var pattern in patterns)
         {
-            var signalCodes = ExtractSignalCodesFromPattern(pattern);
+            var signalCodes = BioChainParser.ExtractSignalCodesFromPattern(pattern);
 
-            // Check if any existing module already watches these signals
             var alreadyCovered = existingModules.Any(m =>
             {
                 var p = DeserializeProps(m.Properties);
@@ -529,131 +358,47 @@ public sealed class AgentEcosystemService : BackgroundService
             var code = $"auto_{agentType.ToLower()}_{signalCodes.FirstOrDefault() ?? "unknown"}";
             if (code.Length > 50) code = code[..50];
 
-            var props = new ModuleProps
-            {
-                Status = "active",
-                Generation = 0,
-                WatchSignals = signalCodes,
-            };
-
-            var entity = new ModuleEntity
+            await moduleRepo.CreateAsync(new ModuleEntity
             {
                 SubjectId = subjectId,
                 Code = code,
                 AgentType = agentType,
-                Properties = JsonSerializer.Serialize(props),
-            };
+                Properties = JsonSerializer.Serialize(new ModuleProps
+                {
+                    Status = "active",
+                    Generation = 0,
+                    WatchSignals = signalCodes,
+                }),
+            });
 
-            await moduleRepo.CreateAsync(entity);
             _logger.LogInformation("[AgentEcosystem] Spawned MODULE {Code} for pattern: {Pattern}",
                 code, pattern[..Math.Min(100, pattern.Length)]);
         }
     }
 
-    private static string[] ExtractSignalCodesFromPattern(string pattern)
-    {
-        var codes = new List<string>();
-        var parts = pattern.Split([':', '\u2192', '-', '>', '(', ')', ' '],
-            StringSplitOptions.RemoveEmptyEntries);
-
-        var skipWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "FEEDBACK", "LOOP", "CASCADE", "MONITOR", "DIAGNOSER",
-            "FEEDBACK_LOOP", "depth", "status"
-        };
-
-        foreach (var part in parts)
-        {
-            var trimmed = part.Trim();
-            if (trimmed.Length >= 2 && trimmed.Length <= 30 &&
-                trimmed.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '_') &&
-                trimmed.Any(char.IsUpper) &&
-                !skipWords.Contains(trimmed))
-            {
-                codes.Add(trimmed);
-            }
-        }
-
-        return codes.Distinct().Take(5).ToArray();
-    }
-
-    // ── Build LLM Context ────────────────────────────────────────────────────
-
-    private static string BuildEvolutionContext(
-        ModuleEntity module,
-        ModuleProps props,
-        string subgraphDsl,
-        List<ProtocolEntity> predictions)
-    {
-        var sb = new StringBuilder();
-
-        sb.AppendLine("## MODULE");
-        sb.AppendLine($"Code: {module.Code}");
-        sb.AppendLine($"Agent Type: {module.AgentType ?? "REACTIVE"}");
-        sb.AppendLine($"Generation: {props.Generation}");
-        sb.AppendLine($"Utility: {props.Utility:F2} ({props.HitCount}/{props.EvalCount} hits)");
-        if (props.WatchSignals.Length > 0)
-            sb.AppendLine($"Watch Signals: {string.Join(", ", props.WatchSignals)}");
-        sb.AppendLine();
-
-        sb.AppendLine("## CURRENT GRAPH STATE");
-        sb.AppendLine(subgraphDsl);
-        sb.AppendLine();
-
-        if (predictions.Count > 0)
-        {
-            sb.AppendLine("## PREDICTION HISTORY");
-            foreach (var p in predictions.Take(20)) // Limit context window
-                sb.AppendLine($"- [{p.Status ?? "pending"}] {p.Formula} (created: {p.CreatedOnUtc:yyyy-MM-dd HH:mm})");
-            sb.AppendLine();
-        }
-
-        return sb.ToString();
-    }
-
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private static bool ShouldEvaluate(ModuleProps props, string[] changedCodes)
+    {
+        if (props.WatchSignals.Length == 0) return true; // No filter = evaluate on any change
+        if (changedCodes.Length == 0) return false;      // Has watch list but unknown changes
+        return props.WatchSignals
+            .Intersect(changedCodes, StringComparer.OrdinalIgnoreCase)
+            .Any();
+    }
+
+    private static void UpdateLifecycle(ModuleProps props, int confirmedCount)
+    {
+        props.EvalCount++;
+        props.HitCount += confirmedCount;
+        props.Utility = props.EvalCount > 0 ? (double)props.HitCount / props.EvalCount : 0.5;
+        props.LastEval = DateTimeOffset.UtcNow;
+    }
 
     private static ModuleProps DeserializeProps(string? json)
     {
-        if (string.IsNullOrWhiteSpace(json))
-            return new ModuleProps();
-
-        try
-        {
-            return JsonSerializer.Deserialize<ModuleProps>(json) ?? new ModuleProps();
-        }
-        catch
-        {
-            return new ModuleProps();
-        }
-    }
-
-    private static string LoadEvolutionPrompt()
-    {
-        var searchPaths = new[]
-        {
-            "Data/SIGNALS_EVOLUTION_PROMPT.txt",
-            "../BioChain.Repository/Data/SIGNALS_EVOLUTION_PROMPT.txt",
-        };
-
-        foreach (var path in searchPaths)
-        {
-            var full = Path.GetFullPath(path, AppContext.BaseDirectory);
-            if (File.Exists(full))
-                return File.ReadAllText(full);
-        }
-
-        return "You are a signal graph evolution agent. Analyze the graph and output Signals Kernel DSL predictions and updates.";
-    }
-
-    public override void Dispose()
-    {
-        foreach (var cts in _pending.Values)
-        {
-            cts.Cancel();
-            cts.Dispose();
-        }
-        _pending.Clear();
-        base.Dispose();
+        if (string.IsNullOrWhiteSpace(json)) return new ModuleProps();
+        try { return JsonSerializer.Deserialize<ModuleProps>(json) ?? new ModuleProps(); }
+        catch { return new ModuleProps(); }
     }
 }

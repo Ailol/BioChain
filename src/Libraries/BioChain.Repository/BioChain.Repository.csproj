@@ -14,6 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BioChain.Utils\BioChain.Utils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Data\BIOCHAIN_ANALYZER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" Link="Data\BIOCHAIN_ANALYZER_PROMPT.txt" />
     <Content Include="Data\SIGNALS_ANALYZER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Data\SIGNALS_AGENT_SPAWNER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" />

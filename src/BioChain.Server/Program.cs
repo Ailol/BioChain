@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 // ReSharper disable AccessToDisposedClosure
 using Microsoft.Extensions.AI;
+using BioChain.AgentFramework;
 using BioChain.Models;
 using BioChain.Repository;
 using BioChain.Repository.Data;
+using BioChain.Repository.Linking;
+using BioChain.Repository.Listeners;
 using BioChain.Repository.Repositories;
 using BioChain.Repository.Roles;
 using BioChain.Server;
@@ -123,6 +126,11 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddScoped<IPersonShareRepository, PersonShareRepository>();
     services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
+    // Repository-layer services (extracted from Service layer)
+    services.AddScoped<IComponentLinker, ComponentLinker>();
+    services.AddScoped<IGraphQueryRepository, GraphQueryRepository>();
+    services.AddSingleton<IGraphChangeListener, PostgresGraphChangeListener>();
+
     // RBAC
     services.AddScoped<IRoleService, RoleService>();
 
@@ -166,6 +174,7 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     // Agent ecosystem (optional — only if an analysis LLM is configured)
     if (llm.AgentAnalyzing is not null)
     {
+        services.AddSingleton<EvolutionEngine>();
         services.AddHostedService<AgentEcosystemService>();
     }
 

@@ -1,5 +1,6 @@
 namespace BioChain.Utils.Parsing;
 
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 /// <summary>
@@ -13,7 +14,15 @@ public static partial class BioChainParser
     private static readonly HashSet<string> Tags = new(StringComparer.OrdinalIgnoreCase)
     {
         "SIGNAL", "RECEPTOR", "GATE", "LIMITER", "FEEDBACK", "FORMULA", "STATE",
-        "TRANSPORT", "INTERFACE", "DEF", "DYSREG", "HYPOTHESIS", "PREDICTION", "INTERVENTION"
+        "TRANSPORT", "INTERFACE", "DEF", "DYSREG", "HYPOTHESIS", "PREDICTION", "INTERVENTION",
+        "CONSTRAINT", "EQUILIBRIUM", "BOUNDARY", "CONSERVE", "TOOL", "LLM_GATE",
+        "EMIT", "MESSAGE", "MODULE", "IMPORT", "BIND", "FAIL"
+    };
+
+    // Tags that use { ... } multi-line block syntax
+    private static readonly HashSet<string> BlockTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "TOOL", "LLM_GATE", "MODULE"
     };
 
     public static List<ParsedLine> Parse(string raw)
@@ -23,10 +32,32 @@ public static partial class BioChainParser
         var result = new List<ParsedLine>();
         string? phase = null;
 
+        // Block accumulation state for TOOL/LLM_GATE/MODULE { ... } blocks
+        string? blockTag = null;
+        string? blockContent = null;
+        string? blockPhase = null;
+        int braceDepth = 0;
+
         foreach (var rawLine in raw.Split('\n'))
         {
             var line = rawLine.Trim();
             if (line.Length == 0) continue;
+
+            // Inside a block accumulation — collect lines until braces balance
+            if (blockTag is not null)
+            {
+                braceDepth += line.Count(c => c == '{') - line.Count(c => c == '}');
+                blockContent += "\n" + line;
+
+                if (braceDepth <= 0)
+                {
+                    // Block complete — emit as single parsed line
+                    result.Add(new ParsedLine(blockTag, blockContent!.Trim(), null, blockPhase));
+                    blockTag = null;
+                    blockContent = null;
+                }
+                continue;
+            }
 
             // #PHASE: name (temporal)
             if (line.StartsWith("#PHASE:", StringComparison.OrdinalIgnoreCase))
@@ -43,6 +74,21 @@ public static partial class BioChainParser
             if (!Tags.Contains(tag)) continue;
 
             var rest = line[(colon + 1)..].Trim();
+
+            // Check for block tags with opening brace — start accumulation
+            if (BlockTags.Contains(tag) && rest.Contains('{'))
+            {
+                braceDepth = rest.Count(c => c == '{') - rest.Count(c => c == '}');
+                if (braceDepth > 0)
+                {
+                    // Block spans multiple lines — start accumulating
+                    blockTag = tag;
+                    blockContent = rest;
+                    blockPhase = phase;
+                    continue;
+                }
+                // Single-line block (braces balanced) — fall through to normal processing
+            }
 
             // Extract "— status:" (em-dash) or "- status:" (hyphen) suffix
             string? status = null;
@@ -64,6 +110,10 @@ public static partial class BioChainParser
 
             result.Add(new ParsedLine(tag, rest, status, phase));
         }
+
+        // Flush any incomplete block (LLM may not have closed braces)
+        if (blockTag is not null && blockContent is not null)
+            result.Add(new ParsedLine(blockTag, blockContent.Trim(), null, blockPhase));
 
         return result;
     }
@@ -125,24 +175,34 @@ public static partial class BioChainParser
 
     public static (string Expression, string Type)? ExtractGate(string formula)
     {
+        // Primary format: {sym(cond) → effect} or {sym: expr}
         var m = GatePattern().Match(formula);
-        if (!m.Success) return null;
-
-        // New format: {sym(cond) → effect} — groups "cond" and "effect"
-        // Legacy format: {sym: expr} — group "cond2"
-        string expr;
-        if (m.Groups["cond"].Success)
+        if (m.Success)
         {
-            var cond = m.Groups["cond"].Value.Trim();
-            var effect = m.Groups["effect"].Success ? m.Groups["effect"].Value.Trim() : "";
-            expr = string.IsNullOrEmpty(effect) ? cond : $"{cond}\u2192{effect}";
-        }
-        else
-        {
-            expr = m.Groups["cond2"].Value.Trim();
+            string expr;
+            if (m.Groups["cond"].Success)
+            {
+                var cond = m.Groups["cond"].Value.Trim();
+                var effect = m.Groups["effect"].Success ? m.Groups["effect"].Value.Trim() : "";
+                expr = string.IsNullOrEmpty(effect) ? cond : $"{cond}\u2192{effect}";
+            }
+            else
+            {
+                expr = m.Groups["cond2"].Value.Trim();
+            }
+            return (expr.Length > 60 ? expr[..60] : expr, MapGateType(m.Groups["sym"].Value));
         }
 
-        return (expr.Length > 60 ? expr[..60] : expr, MapGateType(m.Groups["sym"].Value));
+        // Bare format: SYMBOL[condition] or SYMBOL(condition) without braces
+        // Handles LLM output like: ⊨[TIME.ELAPSED <= 10s]
+        var mb = BareGatePattern().Match(formula);
+        if (mb.Success)
+        {
+            var expr = mb.Groups["cond"].Value.Trim();
+            return (expr.Length > 60 ? expr[..60] : expr, MapGateType(mb.Groups["sym"].Value));
+        }
+
+        return null;
     }
 
     // ── Limiter: TH⧫[≈] → DA.synthesis @VTA ──
@@ -165,8 +225,8 @@ public static partial class BioChainParser
         var m = TransporterPattern().Match(formula);
         if (!m.Success) return null;
         var state = m.Groups["state"].Success ? m.Groups["state"].Value : null;
-        // Clearance is derived from the state arrow symbol
-        return (m.Groups["code"].Value, state, state is not null ? Normalize(state) : null);
+        // Clearance derived from state — map text states to BioChain symbols
+        return (m.Groups["code"].Value, state, state is not null ? NormalizeClearance(state) : null);
     }
 
     // ── Interface: VTA → NAc (mesolimbic) ──
@@ -194,6 +254,92 @@ public static partial class BioChainParser
         var tgt = matches.Count > 1 ? Extract(matches[^1]) : src;
         return (src, tgt);
     }
+
+    // ── Formula gate condition extraction ──
+
+    /// <summary>
+    /// Strips gate condition suffix {⊨(...)} from FORMULA/FEEDBACK lines.
+    /// Returns the gate info + cleaned formula without the gate suffix.
+    /// </summary>
+    public static ((string Expression, string Type)? Gate, string CleanFormula)
+        ExtractFormulaGateCondition(string formula)
+    {
+        var braceStart = formula.LastIndexOf('{');
+        var braceEnd = formula.LastIndexOf('}');
+
+        if (braceStart < 0 || braceEnd <= braceStart)
+            return (null, formula);
+
+        var gatePart = formula[braceStart..(braceEnd + 1)];
+        var cleanPart = formula[..braceStart].TrimEnd();
+        var extracted = ExtractGate(gatePart);
+
+        return (extracted, cleanPart);
+    }
+
+    /// <summary>
+    /// Converts a gate condition expression to structured JSON for gate.expression.
+    /// Handles forms: "H:CORT[↑]", "DA@NAc >= ↑↑", "DA@NAc > baseline", "CORT[↑↑]@ADR".
+    /// Unrecognized → {"raw":"..."} (evaluate_gate returns true).
+    /// </summary>
+    public static string? ParseGateExpression(string expression)
+    {
+        if (string.IsNullOrWhiteSpace(expression)) return null;
+
+        // Strip effect part if present (condition→effect — we only need condition)
+        var arrowIdx = expression.IndexOf('\u2192'); // →
+        var condPart = arrowIdx >= 0 ? expression[..arrowIdx].Trim() : expression.Trim();
+
+        // Form 1: TYPE:CODE[state] @REGION?  — "H:CORT[↑]", "NT:DA[↑↑] @NAc"
+        var m1 = GateExprStatePattern().Match(condPart);
+        if (m1.Success)
+        {
+            var code = m1.Groups["code"].Value;
+            var state = Normalize(m1.Groups["state"].Value);
+            var region = m1.Groups["region"].Success && m1.Groups["region"].Value.Length > 0
+                ? m1.Groups["region"].Value : null;
+            return BuildExprJson(code, region, ">=", state);
+        }
+
+        // Form 2: CODE(@REGION)? op state  — "DA@NAc >= ↑↑", "CORT > baseline"
+        var m2 = GateExprComparePattern().Match(condPart);
+        if (m2.Success)
+        {
+            var code = m2.Groups["code"].Value;
+            var region = m2.Groups["region"].Success && m2.Groups["region"].Value.Length > 0
+                ? m2.Groups["region"].Value : null;
+            var op = NormalizeOp(m2.Groups["op"].Value);
+            var state = NormalizeThresholdWord(m2.Groups["state"].Value);
+            return BuildExprJson(code, region, op, state);
+        }
+
+        // Fallback: store raw — evaluate_gate returns true for unrecognized
+        return JsonSerializer.Serialize(new { raw = condPart });
+    }
+
+    private static string BuildExprJson(string signal, string? region, string op, string state)
+        => JsonSerializer.Serialize(new { signal, region, op, state });
+
+    private static string NormalizeOp(string raw) => raw.Trim() switch
+    {
+        ">=" or "\u2265" => ">=", // ≥
+        ">" => ">",
+        "<=" or "\u2264" => "<=", // ≤
+        "<" => "<",
+        "=" or "==" => "=",
+        "!=" or "\u2260" => "!=", // ≠
+        _ => ">="
+    };
+
+    private static string NormalizeThresholdWord(string raw) => raw.Trim().ToLowerInvariant() switch
+    {
+        "baseline" or "normal" or "homeostatic" => "\u2248", // ≈
+        "elevated" or "high" => "\u2191",                     // ↑
+        "very high" or "very elevated" => "\u2191\u2191",     // ↑↑
+        "depleted" or "low" => "\u2193",                      // ↓
+        "very low" or "very depleted" => "\u2193\u2193",      // ↓↓
+        _ => Normalize(raw.Trim())
+    };
 
     // ── Transporter → Signal code mapping ──
 
@@ -237,6 +383,21 @@ public static partial class BioChainParser
         "\u2191\u2191\u2191" => "\u2191\u2191", // ↑↑↑ → ↑↑
         "\u2193\u2193\u2193" => "\u2193\u2193", // ↓↓↓ → ↓↓
         _ => s
+    };
+
+    /// <summary>
+    /// Maps transporter state text or symbols to a BioChain clearance symbol (≤5 chars).
+    /// BNF: clearance: ↑↑ | ↑ | ≈ | ↓ | ↓↓ | ⊘
+    /// </summary>
+    private static string NormalizeClearance(string s) => s.Trim().ToLowerInvariant() switch
+    {
+        "active" or "normal" or "\u2248" => "\u2248",           // ≈
+        "enhanced" or "increased" or "upregulated" => "\u2191",  // ↑
+        "impaired" or "reduced" or "decreased" or "downregulated" => "\u2193", // ↓
+        "blocked" or "absent" or "inactive" or "\u2298" => "\u2298", // ⊘
+        _ when s.Contains('\u2191') => Normalize(s),  // pass through ↑ symbols
+        _ when s.Contains('\u2193') => Normalize(s),  // pass through ↓ symbols
+        _ => "\u2248" // default to ≈ (normal) for unrecognized
     };
 
     private static string MapGateType(string sym) => sym switch
@@ -300,4 +461,50 @@ public static partial class BioChainParser
     // Matches: DA@VTA, GLU@PFC, DA[↑↑] @NAc
     [GeneratedRegex(@"(?<code>\w+)(?:@|\[.+?\]\s*@)(?<region>\w+)")]
     private static partial Regex SignalRefPattern();
+
+    // Bare gate: SYMBOL[condition] or SYMBOL(condition) without surrounding braces
+    // Matches: ⊨[TIME.ELAPSED <= 10s], ⊡(LATCHED), ⊛[novelty > 0.5]
+    [GeneratedRegex(@"^(?<sym>[\u22A8\u22A1\u03A3\u229B\u22B3\u22BC\u22BD\u00AC\u2295\u2442])[\[\(](?<cond>[^\]\)]+)[\]\)]")]
+    private static partial Regex BareGatePattern();
+
+    // Gate expression: TYPE:CODE[state] @REGION?  — "H:CORT[↑]", "NT:DA[↑↑] @NAc"
+    [GeneratedRegex(@"(?:(?:\w+):)?(?<code>[\w]+)\[(?<state>[^\]]+)\]\s*(?:@(?<region>\w+))?$")]
+    private static partial Regex GateExprStatePattern();
+
+    // Gate expression: CODE(@REGION)? op state  — "DA@NAc >= ↑↑", "CORT > baseline"
+    [GeneratedRegex(@"(?<code>\w+)(?:@(?<region>\w+))?\s*(?<op>>=|<=|>|<|!=|=|\u2265|\u2264|\u2260)\s*(?<state>.+)$")]
+    private static partial Regex GateExprComparePattern();
+
+    // ── Signal Code Extraction ────────────────────────────────────────────────
+
+    private static readonly HashSet<string> PatternSkipWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "FEEDBACK", "LOOP", "CASCADE", "MONITOR", "DIAGNOSER",
+        "FEEDBACK_LOOP", "depth", "status"
+    };
+
+    /// <summary>
+    /// Extracts plausible signal codes from a pattern description string.
+    /// Filters out known keywords and requires mixed case + reasonable length.
+    /// </summary>
+    public static string[] ExtractSignalCodesFromPattern(string pattern)
+    {
+        var codes = new List<string>();
+        var parts = pattern.Split([':', '\u2192', '-', '>', '(', ')', ' '],
+            StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var part in parts)
+        {
+            var trimmed = part.Trim();
+            if (trimmed.Length >= 2 && trimmed.Length <= 30 &&
+                trimmed.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '_') &&
+                trimmed.Any(char.IsUpper) &&
+                !PatternSkipWords.Contains(trimmed))
+            {
+                codes.Add(trimmed);
+            }
+        }
+
+        return codes.Distinct().Take(5).ToArray();
+    }
 }
