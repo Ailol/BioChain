@@ -6,27 +6,28 @@ var keycloak = builder.AddKeycloak("keycloak")
     .WithRealmImport("./Realms")
     .WithLifetime(ContainerLifetime.Persistent);
 
-// PostgreSQL with pgvector for personality storage (persistent)
+// PostgreSQL with pgvector for biochain storage (persistent)
 var pgPassword = builder.AddParameter("postgres-password", secret: true);
 var postgres = builder.AddPostgres("postgres", port: 5434, password: pgPassword)
-    .WithEnvironment("POSTGRES_DB", "personality")
+    .WithEnvironment("POSTGRES_DB", "biochain")
     .WithDataVolume("pgdata-v6")
-    .WithBindMount("../../Libraries/BioChain.Repository/Data/init.sql", "/docker-entrypoint-initdb.d/01-init.sql")
-    .WithBindMount("../../Libraries/BioChain.Repository/Data/seed-core.sql", "/docker-entrypoint-initdb.d/02-seed-core.sql")
-    .WithBindMount("../../Libraries/BioChain.Repository/Data/seed-agents.sql", "/docker-entrypoint-initdb.d/03-seed-agents.sql")
-    .WithBindMount("../../Libraries/BioChain.Repository/Data/seed-chemicals.sql", "/docker-entrypoint-initdb.d/04-seed-chemicals.sql")
-    .WithBindMount("../../Libraries/BioChain.Repository/Data/seed-questionnaire.sql", "/docker-entrypoint-initdb.d/05-seed-questionnaire.sql")
+    .WithBindMount("../../BioChain.Repository/Data/init/biochain_init.sql", "/docker-entrypoint-initdb.d/01-biochain-init.sql")
+    .WithBindMount("../../BioChain.Repository/Data/init/views.sql", "/docker-entrypoint-initdb.d/02-views.sql")
+    .WithBindMount("../../BioChain.Repository/Data/init/biochain_graph.sql", "/docker-entrypoint-initdb.d/03-graph.sql")
+    .WithBindMount("../../BioChain.Repository/Data/init/biochain_functions.sql", "/docker-entrypoint-initdb.d/04-functions.sql")
+    .WithBindMount("../../BioChain.Repository/Data/init/init_core.sql", "/docker-entrypoint-initdb.d/05-init-core.sql")
+    .WithBindMount("../../BioChain.Repository/Data/seed/seed-questionnaire.sql", "/docker-entrypoint-initdb.d/06-seed-questionnaire.sql")
     .WithImageRegistry("docker.io")
     .WithImage("pgvector/pgvector")
     .WithImageTag("pg16")
     .WithLifetime(ContainerLifetime.Persistent);
 
-var personalityDb = postgres.AddDatabase("personality");
+var biochainDb = postgres.AddDatabase("biochain");
 
 // MCP Agent Server — LLM config comes from Server's own appsettings + user-secrets
 var mcpServer = builder.AddProject<Projects.BioChain_Server>("mcp-server")
     .WithEndpoint("http", e => e.Port = 13370)
-    .WithReference(personalityDb)
+    .WithReference(biochainDb)
     .WithReference(keycloak);
 
 // React frontend (Aspire-managed Vite dev server)

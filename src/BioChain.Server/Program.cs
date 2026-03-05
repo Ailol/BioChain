@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 // ReSharper disable AccessToDisposedClosure
 using Microsoft.Extensions.AI;
-using BioChain.AgentFramework;
+using BioChain.Kernel.Agents;
+using BioChain.Kernel.Graph;
+using BioChain.Kernel.Prompts;
 using BioChain.Models;
 using BioChain.Repository;
 using BioChain.Repository.Data;
@@ -19,6 +21,7 @@ using BioChain.Service;
 using Neo4j.Driver;
 using OllamaSharp;
 using OpenAI;
+using BioChain.Kernel.Signals;
 
 if (args.Contains("--stdio"))
     await RunStdioMode(args);
@@ -29,8 +32,8 @@ else
 
 static (AgentConfiguration Llm, string Db) LoadConfig(IConfiguration appConfig)
 {
-    var db = appConfig.GetConnectionString("personality")
-        ?? throw new InvalidOperationException("ConnectionStrings:personality is required");
+    var db = appConfig.GetConnectionString("biochain")
+        ?? throw new InvalidOperationException("ConnectionStrings:biochain is required");
 
     Console.WriteLine($"DB: {db[..Math.Min(60, db.Length)]}...");
 
@@ -60,7 +63,11 @@ static IChatClient CreateChatClient(LlmProviderConfig cfg) =>
 
         _ => new OpenAIClient(
                 new ApiKeyCredential(cfg.ApiKey ?? "unused"),
-                new OpenAIClientOptions { Endpoint = EnsureV1Path(new Uri(cfg.Endpoint!)) })
+                new OpenAIClientOptions
+                {
+                    Endpoint = EnsureV1Path(new Uri(cfg.Endpoint!)),
+                    NetworkTimeout = TimeSpan.FromMinutes(10),
+                })
             .GetChatClient(cfg.Model).AsIChatClient()
     };
 
@@ -110,18 +117,9 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     // Repositories — scoped (match DbContext lifetime)
     services.AddScoped<ISubjectRepository, SubjectRepository>();
     services.AddScoped<IStimuliRepository, StimuliRepository>();
-    services.AddScoped<ISignalRepository, SignalRepository>();
-    services.AddScoped<IReceptorRepository, ReceptorRepository>();
-    services.AddScoped<ITransporterRepository, TransporterRepository>();
     services.AddScoped<IGateRepository, GateRepository>();
-    services.AddScoped<ILimiterRepository, LimiterRepository>();
-    services.AddScoped<IInterfaceRepository, InterfaceRepository>();
     services.AddScoped<IProtocolRepository, ProtocolRepository>();
-    services.AddScoped<IRegionRepository, RegionRepository>();
-    services.AddScoped<IEdgeRepository, EdgeRepository>();
     services.AddScoped<IModuleRepository, ModuleRepository>();
-    services.AddScoped<IConstraintDefRepository, ConstraintDefRepository>();
-    services.AddScoped<IToolRepository, ToolRepository>();
     services.AddScoped<IQuestionnaireRepository, QuestionnaireRepository>();
     services.AddScoped<IPersonShareRepository, PersonShareRepository>();
     services.AddScoped<IUserRoleRepository, UserRoleRepository>();
@@ -156,8 +154,16 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     if (embedGen is not null)
         services.AddSingleton(embedGen);
 
+    // Kernel — prompts + engine
+    services.AddSingleton<IPromptStore, FilePromptStore>();
+    services.AddSingleton<ILlmEngine, LlmEngine>();
+
+    // LLM concurrency limiter — prevents overwhelming local inference servers
+    services.AddSingleton(new LlmSemaphore(llm.MaxParallelAgents > 0 ? llm.MaxParallelAgents : 1));
+
     // Services — scoped
     services.AddScoped<AnalyzeService>();
+    services.AddScoped<SimulationService>();
     services.AddScoped<BioChainChatService>();
 
     // Neo4j graph sync (optional — only if Neo4j:Uri is configured)
@@ -174,7 +180,6 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     // Agent ecosystem (optional — only if an analysis LLM is configured)
     if (llm.AgentAnalyzing is not null)
     {
-        services.AddSingleton<EvolutionEngine>();
         services.AddHostedService<AgentEcosystemService>();
     }
 
@@ -204,6 +209,7 @@ static async Task RunHttpMode(string[] args)
 
     var (llm, db) = LoadConfig(builder.Configuration);
     RegisterAll(builder.Services, llm, db, isHttp: true, builder.Configuration);
+    builder.AddSignalsKernel();
 
     builder.Services.AddCors(options =>
         options.AddDefaultPolicy(policy =>
@@ -251,13 +257,17 @@ static async Task RunHttpMode(string[] args)
         app.MapAnalyzeApi().AllowAnonymous();
         app.MapChatApi().AllowAnonymous();
         app.MapQuestionnaireApi().AllowAnonymous();
+        app.MapSubjectApi().AllowAnonymous();
+        app.MapKernelApi().AllowAnonymous();
     }
     else
     {
         app.MapAuthApi().RequireAuthorization();
         app.MapAnalyzeApi().RequireAuthorization("HasRole");
         app.MapChatApi().RequireAuthorization("HasRole");
+        app.MapSubjectApi().RequireAuthorization("HasRole");
         app.MapQuestionnaireApi();
+        app.MapKernelApi().RequireAuthorization("HasRole");
     }
 
     // MCP protocol

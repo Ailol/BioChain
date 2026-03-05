@@ -33,7 +33,7 @@ services:
       retries: 3
       start_period: 10s
 
-  # PostgreSQL - Personality Storage (dev only)
+  # PostgreSQL - BioChain Storage (dev only)
   postgres:
     image: pgvector/pgvector:pg16
     container_name: biochain-postgres
@@ -41,7 +41,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=personality
+      - POSTGRES_DB=biochain
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../BioChain.Repository/Data/init.sql:/docker-entrypoint-initdb.d/init.sql

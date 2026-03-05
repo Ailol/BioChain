@@ -21,12 +21,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Frameworks\BioChain.AgentFramework\BioChain.AgentFramework.csproj" />
-    <ProjectReference Include="..\Libraries\BioChain.Models\BioChain.Models.csproj" />
+    <ProjectReference Include="..\..\Kernel\BioChain.Kernel\BioChain.Kernel.csproj" />
+    <ProjectReference Include="..\BioChain.Models\BioChain.Models.csproj" />
     <ProjectReference Include="..\Aspire\BioChain.ServiceDefaults\BioChain.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\Libraries\BioChain.Repository\BioChain.Repository.csproj" />
-    <ProjectReference Include="..\Libraries\BioChain.Service\BioChain.Service.csproj" />
-    <ProjectReference Include="..\Libraries\BioChain.Utils\BioChain.Utils.csproj" />
+    <ProjectReference Include="..\BioChain.Repository\BioChain.Repository.csproj" />
+    <ProjectReference Include="..\BioChain.Service\BioChain.Service.csproj" />
+    <ProjectReference Include="..\BioChain.Utils\BioChain.Utils.csproj" />
   </ItemGroup>
 
 </Project>

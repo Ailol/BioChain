@@ -13,15 +13,15 @@ public static class AnalyzeApi
 
         // Analyze text input
         group.MapPost("/", async (AnalyzeRequest req, AnalyzeService svc, IUserContext ctx,
-            IPersonRepository persons) =>
+            ISubjectRepository subjects) =>
         {
-            if (!await persons.HasAccessAsync(req.PersonId, ctx.UserId))
+            if (!await subjects.HasAccessAsync(req.SubjectId, ctx.UserId))
                 return Results.Forbid();
 
-            var result = await svc.AnalyzeAsync(req.PersonId, req.Text, req.Kind);
+            var result = await svc.AnalyzeAsync(req.SubjectId, req.Text, req.Kind);
             return Results.Ok(new
             {
-                result.DataId,
+                result.StimuliId,
                 result.ProtocolsStored,
                 result.LinesTotal,
             });
@@ -29,19 +29,19 @@ public static class AnalyzeApi
 
         // Analyze document (PDF/DOCX via base64)
         group.MapPost("/document", async (AnalyzeDocumentRequest req, AnalyzeService svc,
-            IUserContext ctx, IPersonRepository persons) =>
+            IUserContext ctx, ISubjectRepository subjects) =>
         {
-            if (!await persons.HasAccessAsync(req.PersonId, ctx.UserId))
+            if (!await subjects.HasAccessAsync(req.SubjectId, ctx.UserId))
                 return Results.Forbid();
 
             var text = DocumentExtractor.ExtractText(req.Content, req.DocumentType);
             if (string.IsNullOrWhiteSpace(text))
                 return Results.BadRequest(new { error = "Could not extract text from document" });
 
-            var result = await svc.AnalyzeAsync(req.PersonId, text, req.Kind);
+            var result = await svc.AnalyzeAsync(req.SubjectId, text, req.Kind);
             return Results.Ok(new
             {
-                result.DataId,
+                result.StimuliId,
                 result.ProtocolsStored,
                 result.LinesTotal,
             });
@@ -49,9 +49,9 @@ public static class AnalyzeApi
 
         // Get analysis history for a person
         group.MapGet("/{personId:guid}", async (Guid personId, IUserContext ctx,
-            IPersonRepository persons, IProtocolRepository protocols) =>
+            ISubjectRepository subjects, IProtocolRepository protocols) =>
         {
-            if (!await persons.HasAccessAsync(personId, ctx.UserId))
+            if (!await subjects.HasAccessAsync(personId, ctx.UserId))
                 return Results.Forbid();
 
             var list = await protocols.GetByPersonAsync(personId);
@@ -70,5 +70,5 @@ public static class AnalyzeApi
     }
 }
 
-public record AnalyzeRequest(Guid PersonId, string Text, string Kind);
-public record AnalyzeDocumentRequest(Guid PersonId, string Content, string DocumentType, string Kind);
+public record AnalyzeRequest(Guid SubjectId, string Text, string Kind);
+public record AnalyzeDocumentRequest(Guid SubjectId, string Content, string DocumentType, string Kind);

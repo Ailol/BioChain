@@ -1,0 +1,65 @@
+FROM biochain-chat:latest
+
+TEMPLATE """
+{{- if .Tools }}
+<|im_start|>system
+{{- range .Messages }}
+{{- if eq .Role "system" }}
+{{ .Content }}
+{{ end }}
+{{- end }}
+# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{{- range .Tools }}
+{{ . }}
+{{- end }}
+</tools>
+
+For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{"name": <function-name>, "arguments": <args-json-object>}
+</tool_call><|im_end|>
+{{- range .Messages }}
+{{- if eq .Role "user" }}
+<|im_start|>user
+{{ .Content }}<|im_end|>
+{{- else if eq .Role "assistant" }}
+<|im_start|>assistant
+{{ .Content }}
+{{- if .ToolCalls }}
+{{- range .ToolCalls }}
+<tool_call>
+{"name": "{{ .Function.Name }}", "arguments": {{ .Function.Arguments }}}
+</tool_call>
+{{- end }}
+{{- end }}<|im_end|>
+{{- else if eq .Role "tool" }}
+<|im_start|>user
+<tool_response>
+{{ .Content }}
+</tool_response><|im_end|>
+{{- end }}
+{{- end }}
+<|im_start|>assistant
+{{- else }}
+{{- range .Messages }}
+<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}
+{{- if .Prompt }}
+<|im_start|>assistant
+{{ end }}
+{{- end }}
+"""
+
+PARAMETER num_predict 4096
+PARAMETER stop <|im_end|>
+PARAMETER temperature 0.6
+PARAMETER top_p 0.95
+PARAMETER repeat_penalty 1.1
+PARAMETER min_p 0.05
+PARAMETER num_ctx 4096

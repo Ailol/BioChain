@@ -17,13 +17,21 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:13370
-      - ConnectionStrings__personality=Host=postgres;Port=5432;Database=personality;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
-      # LLM config flows from appsettings.json (local vLLM defaults).
-      # Override with env vars if needed:
-      #   Llm__Orchestrator__ApiKey=sk-ant-xxx  → switches to Anthropic cloud
-      #   Llm__Embedding__ApiKey=sk-xxx         → switches to OpenAI cloud
+      - ConnectionStrings__biochain=Host=postgres;Port=5432;Database=biochain;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      # Inside Docker: vLLM is at service name "vllm", not localhost
+      - Llm__AgentAnalyzing__Endpoint=http://vllm:8000
+      - Llm__Chat__Endpoint=http://vllm:8000
+      # Cloud API keys from .env file
+      - Llm__Orchestrator__ApiKey=${Llm__Orchestrator__ApiKey:-}
+      - Llm__Embedding__ApiKey=${Llm__Embedding__ApiKey:-}
+      # Neo4j graph sync
+      - Neo4j__Uri=bolt://neo4j:7687
+      - Neo4j__Password=${NEO4J_PASSWORD:-biochain_graph}
+      - Neo4j__DebounceMs=500
     depends_on:
       postgres:
+        condition: service_healthy
+      neo4j:
         condition: service_healthy
     restart: unless-stopped
     extra_hosts:
@@ -35,21 +43,89 @@ services:
       retries: 3
       start_period: 10s
 
-  # PostgreSQL - Personality Storage
+  # vLLM — Qwen3.5-35B-A3B (dual 3090, tensor-parallel=2)
+  # Serves analyzer + chat + tools via OpenAI-compatible API
+  vllm:
+    image: vllm/vllm-openai:nightly
+    container_name: biochain-vllm
+    ports:
+      - "8000:8000"
+    volumes:
+      - /c/Users/ailon/llm/Qwen3.5-a3b-awq-4b:/models/Qwen3.5-A3B
+    environment:
+      - VLLM_WORKER_MULTIPROC_METHOD=spawn
+    command:
+      - "--model"
+      - "/models/Qwen3.5-A3B"
+      - "--port"
+      - "8000"
+      - "--tensor-parallel-size"
+      - "2"
+      - "--max-model-len"
+      - "32768"
+      - "--gpu-memory-utilization"
+      - "0.92"
+      - "--enable-auto-tool-choice"
+      - "--tool-call-parser"
+      - "qwen3_coder"
+      - "--default-chat-template-kwargs"
+      - '{"enable_thinking": false}'
+      - "--dtype"
+      - "float16"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 2
+              capabilities: [gpu]
+    ipc: host
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # Neo4j — Graph Database (synced from PostgreSQL via LISTEN/NOTIFY)
+  neo4j:
+    image: neo4j:5-community
+    container_name: biochain-neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-biochain_graph}
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - ./neo4j/init.cypher:/var/lib/neo4j/import/init.cypher
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-biochain_graph}", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # PostgreSQL - BioChain Storage
   postgres:
     image: pgvector/pgvector:pg16
     container_name: biochain-postgres
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=personality
+      - POSTGRES_DB=biochain
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/Libraries/BioChain.Repository/Data/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./src/Libraries/BioChain.Repository/Data/biochain_init.sql:/docker-entrypoint-initdb.d/biochain_init.sql
-      - ./src/Libraries/BioChain.Repository/Data/init_core.sql:/docker-entrypoint-initdb.d/init_core.sql
-      - ./src/Libraries/BioChain.Repository/Data/views.sql:/docker-entrypoint-initdb.d/views.sql
-      - ./src/Libraries/BioChain.Repository/Data/seed-questionnaire.sql:/docker-entrypoint-initdb.d/02-seed-questionnaire.sql
+      - ./src/BioChain.Repository/Data/init/biochain_init.sql:/docker-entrypoint-initdb.d/01-biochain-init.sql
+      - ./src/BioChain.Repository/Data/init/views.sql:/docker-entrypoint-initdb.d/02-views.sql
+      - ./src/BioChain.Repository/Data/init/biochain_graph.sql:/docker-entrypoint-initdb.d/03-graph.sql
+      - ./src/BioChain.Repository/Data/init/biochain_functions.sql:/docker-entrypoint-initdb.d/04-functions.sql
+      - ./src/BioChain.Repository/Data/init/init_core.sql:/docker-entrypoint-initdb.d/05-init-core.sql
+      - ./src/BioChain.Repository/Data/seed/seed-questionnaire.sql:/docker-entrypoint-initdb.d/06-seed-questionnaire.sql
     ports:
       - "5434:5432"
     healthcheck:
@@ -61,6 +137,7 @@ services:
 
 volumes:
   postgres_data:
+  neo4j_data:
 
 networks:
   default:

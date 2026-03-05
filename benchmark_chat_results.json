@@ -1,0 +1,325 @@
+{
+  "model": "biochain-chat:latest",
+  "timestamp": "2026-03-01 14:44:39",
+  "configs": {
+    "baseline": "{}",
+    "temp0.3": "{\"temperature\": 0.3}",
+    "temp0.4": "{\"temperature\": 0.4}",
+    "temp0.7": "{\"temperature\": 0.7}",
+    "temp0.8": "{\"temperature\": 0.8}",
+    "mp0.01": "{\"min_p\": 0.01}",
+    "mp0.05": "{\"min_p\": 0.05}",
+    "mp0.1": "{\"min_p\": 0.1}",
+    "tk20": "{\"top_k\": 20}",
+    "tk40": "{\"top_k\": 40}",
+    "rp1.0": "{\"repeat_penalty\": 1.0}",
+    "rp1.05": "{\"repeat_penalty\": 1.05}",
+    "rp1.1": "{\"repeat_penalty\": 1.1}",
+    "hf_community": "{\"temperature\": 0.6, \"top_k\": 40, \"min_p\": 0.01, \"repeat_penalty\": 1.0}",
+    "t0.4+mp0.01": "{\"temperature\": 0.4, \"min_p\": 0.01}",
+    "t0.4+mp0.05": "{\"temperature\": 0.4, \"min_p\": 0.05}",
+    "t0.5+tk40+mp0.01": "{\"temperature\": 0.5, \"top_k\": 40, \"min_p\": 0.01}",
+    "t0.6+tk40+mp0.01": "{\"temperature\": 0.6, \"top_k\": 40, \"min_p\": 0.01}",
+    "t0.7+tk40+mp0.01": "{\"temperature\": 0.7, \"top_k\": 40, \"min_p\": 0.01}",
+    "t0.6+rp1.05+mp0.01": "{\"temperature\": 0.6, \"repeat_penalty\": 1.05, \"min_p\": 0.01}",
+    "t0.6+rp1.0+tk40": "{\"temperature\": 0.6, \"repeat_penalty\": 1.0, \"top_k\": 40}",
+    "full_combo_a": "{\"temperature\": 0.6, \"top_k\": 40, \"min_p\": 0.01, \"repeat_penalty\": 1.0, \"top_p\": 0.95}",
+    "full_combo_b": "{\"temperature\": 0.5, \"top_k\": 40, \"min_p\": 0.01, \"repeat_penalty\": 1.05, \"top_p\": 0.9}",
+    "full_combo_c": "{\"temperature\": 0.4, \"top_k\": 20, \"min_p\": 0.05, \"repeat_penalty\": 1.05, \"top_p\": 0.9}"
+  },
+  "ranking": [
+    [
+      "baseline",
+      {
+        "composite": 0.7066666666666667,
+        "avg_tool": 0.8888888888888888,
+        "avg_content": 0.5733333333333334,
+        "notation": 8,
+        "repeats": 0,
+        "tokens": 1586,
+        "time": 30.84692668914795
+      }
+    ],
+    [
+      "t0.4+mp0.01",
+      {
+        "composite": 0.6900925925925926,
+        "avg_tool": 0.6805555555555555,
+        "avg_content": 0.6518518518518518,
+        "notation": 9,
+        "repeats": 0,
+        "tokens": 3352,
+        "time": 54.182117223739624
+      }
+    ],
+    [
+      "t0.6+tk40+mp0.01",
+      {
+        "composite": 0.64,
+        "avg_tool": 0.7222222222222222,
+        "avg_content": 0.5266666666666667,
+        "notation": 9,
+        "repeats": 0,
+        "tokens": 1854,
+        "time": 34.06033992767334
+      }
+    ],
+    [
+      "rp1.1",
+      {
+        "composite": 0.6388888888888888,
+        "avg_tool": 0.8888888888888888,
+        "avg_content": 0.4377777777777778,
+        "notation": 8,
+        "repeats": 0,
+        "tokens": 3682,
+        "time": 54.781219244003296
+      }
+    ],
+    [
+      "mp0.05",
+      {
+        "composite": 0.6316666666666666,
+        "avg_tool": 0.8666666666666667,
+        "avg_content": 0.49,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 1882,
+        "time": 34.662635803222656
+      }
+    ],
+    [
+      "hf_community",
+      {
+        "composite": 0.6266666666666667,
+        "avg_tool": 0.6722222222222222,
+        "avg_content": 0.5166666666666667,
+        "notation": 13,
+        "repeats": 1,
+        "tokens": 4598,
+        "time": 54.64407157897949
+      }
+    ],
+    [
+      "temp0.3",
+      {
+        "composite": 0.5266666666666666,
+        "avg_tool": 0.7777777777777777,
+        "avg_content": 0.3333333333333333,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 2121,
+        "time": 38.04217839241028
+      }
+    ],
+    [
+      "tk40",
+      {
+        "composite": 0.52,
+        "avg_tool": 0.7555555555555555,
+        "avg_content": 0.3333333333333333,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 1892,
+        "time": 34.081443309783936
+      }
+    ],
+    [
+      "full_combo_a",
+      {
+        "composite": 0.5166666666666666,
+        "avg_tool": 0.7222222222222222,
+        "avg_content": 0.3333333333333333,
+        "notation": 5,
+        "repeats": 0,
+        "tokens": 4376,
+        "time": 55.63256359100342
+      }
+    ],
+    [
+      "full_combo_b",
+      {
+        "composite": 0.5083333333333333,
+        "avg_tool": 0.6944444444444443,
+        "avg_content": 0.3333333333333333,
+        "notation": 5,
+        "repeats": 0,
+        "tokens": 2850,
+        "time": 45.069148778915405
+      }
+    ],
+    [
+      "mp0.01",
+      {
+        "composite": 0.5025925925925926,
+        "avg_tool": 0.7222222222222222,
+        "avg_content": 0.3185185185185185,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 3439,
+        "time": 54.63368606567383
+      }
+    ],
+    [
+      "t0.7+tk40+mp0.01",
+      {
+        "composite": 0.5016666666666666,
+        "avg_tool": 0.6944444444444443,
+        "avg_content": 0.3333333333333333,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 2338,
+        "time": 40.1100652217865
+      }
+    ],
+    [
+      "rp1.05",
+      {
+        "composite": 0.475,
+        "avg_tool": 0.7222222222222222,
+        "avg_content": 0.25,
+        "notation": 5,
+        "repeats": 0,
+        "tokens": 2225,
+        "time": 42.61687111854553
+      }
+    ],
+    [
+      "rp1.0",
+      {
+        "composite": 0.45999999999999996,
+        "avg_tool": 0.6944444444444443,
+        "avg_content": 0.25,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 3426,
+        "time": 51.05624532699585
+      }
+    ],
+    [
+      "t0.6+rp1.05+mp0.01",
+      {
+        "composite": 0.45499999999999996,
+        "avg_tool": 0.6944444444444443,
+        "avg_content": 0.24,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 3403,
+        "time": 53.894490480422974
+      }
+    ],
+    [
+      "temp0.8",
+      {
+        "composite": 0.44833333333333325,
+        "avg_tool": 0.47222222222222215,
+        "avg_content": 0.3333333333333333,
+        "notation": 6,
+        "repeats": 0,
+        "tokens": 2988,
+        "time": 45.80589246749878
+      }
+    ],
+    [
+      "temp0.4",
+      {
+        "composite": 0.39888888888888896,
+        "avg_tool": 0.4166666666666667,
+        "avg_content": 0.29444444444444445,
+        "notation": 4,
+        "repeats": 0,
+        "tokens": 2589,
+        "time": 43.02864170074463
+      }
+    ],
+    [
+      "t0.6+rp1.0+tk40",
+      {
+        "composite": 0.37833333333333324,
+        "avg_tool": 0.6944444444444443,
+        "avg_content": 0.19333333333333333,
+        "notation": 5,
+        "repeats": 3,
+        "tokens": 2197,
+        "time": 37.82952094078064
+      }
+    ],
+    [
+      "tk20",
+      {
+        "composite": 0.33333333333333326,
+        "avg_tool": 0.7777777777777777,
+        "avg_content": 0.0,
+        "notation": 0,
+        "repeats": 0,
+        "tokens": 1477,
+        "time": 30.276410341262817
+      }
+    ],
+    [
+      "temp0.7",
+      {
+        "composite": 0.3083333333333333,
+        "avg_tool": 0.6944444444444443,
+        "avg_content": 0.0,
+        "notation": 0,
+        "repeats": 0,
+        "tokens": 2340,
+        "time": 43.260401248931885
+      }
+    ],
+    [
+      "mp0.1",
+      {
+        "composite": 0.3083333333333333,
+        "avg_tool": 0.6944444444444443,
+        "avg_content": 0.0,
+        "notation": 0,
+        "repeats": 0,
+        "tokens": 2057,
+        "time": 40.45710635185242
+      }
+    ],
+    [
+      "t0.5+tk40+mp0.01",
+      {
+        "composite": 0.3,
+        "avg_tool": 0.6666666666666666,
+        "avg_content": 0.0,
+        "notation": 0,
+        "repeats": 0,
+        "tokens": 2762,
+        "time": 41.956793546676636
+      }
+    ],
+    [
+      "full_combo_c",
+      {
+        "composite": 0.3,
+        "avg_tool": 0.6666666666666666,
+        "avg_content": 0.0,
+        "notation": 0,
+        "repeats": 0,
+        "tokens": 668,
+        "time": 26.500823259353638
+      }
+    ],
+    [
+      "t0.4+mp0.05",
+      {
+        "composite": 0.22666666666666666,
+        "avg_tool": 0.4222222222222222,
+        "avg_content": 0.0,
+        "notation": 0,
+        "repeats": 0,
+        "tokens": 668,
+        "time": 22.73127818107605
+      }
+    ]
+  ],
+  "best": {
+    "label": "baseline",
+    "options": {},
+    "composite": 0.7066666666666667
+  }
+}

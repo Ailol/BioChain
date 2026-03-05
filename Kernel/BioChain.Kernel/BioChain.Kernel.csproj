@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BioChain.Kernel</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Apache.Arrow" Version="22.1.0" />
+    <PackageReference Include="Extism.Sdk" Version="1.10.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
+    <PackageReference Include="Marten" Version="8.19.0" />
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-rc2" />
+    <PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.0.0-rc2" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Orleans.Persistence.Memory" Version="9.2.0" />
+    <PackageReference Include="Microsoft.Orleans.Sdk" Version="9.2.0" />
+    <PackageReference Include="Neo4j.Driver" Version="6.0.0" />
+    <PackageReference Include="Npgsql" Version="9.0.4" />
+    <PackageReference Include="WolverineFx.Marten" Version="5.13.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BioChain.Models\BioChain.Models.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Prompts\Data\BIOCHAIN_ANALYZER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" Link="Data\BIOCHAIN_ANALYZER_PROMPT.txt" />
+    <Content Include="Prompts\Data\SIGNALS_ANALYZER_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" Link="Data\SIGNALS_ANALYZER_PROMPT.txt" />
+    <Content Include="Prompts\Data\SIGNALS_EVOLUTION_PROMPT.txt" CopyToOutputDirectory="PreserveNewest" Link="Data\SIGNALS_EVOLUTION_PROMPT.txt" />
+  </ItemGroup>
+</Project>
