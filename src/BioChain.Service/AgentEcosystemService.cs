@@ -60,7 +60,7 @@ public sealed class AgentEcosystemService : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var moduleRepo = scope.ServiceProvider.GetRequiredService<IModuleRepository>();
-        var protocolRepo = scope.ServiceProvider.GetRequiredService<IProtocolRepository>();
+        var analysisRepo = scope.ServiceProvider.GetRequiredService<IAnalysisRepository>();
         var gateRepo = scope.ServiceProvider.GetRequiredService<IGateRepository>();
         var graphQuery = scope.ServiceProvider.GetRequiredService<IGraphQueryRepository>();
         var linker = scope.ServiceProvider.GetRequiredService<IComponentLinker>();
@@ -88,7 +88,7 @@ public sealed class AgentEcosystemService : BackgroundService
                     subjectId, props.WatchSignals, scope, graphQuery);
 
                 // Load prediction history → string[]
-                var predictions = await protocolRepo.GetByModuleTagAsync(module.Id, "PREDICTION");
+                var predictions = await analysisRepo.GetByModuleTagAsync(module.Id, "PREDICTION");
                 var predFormulas = predictions
                     .Select(p => $"[{p.Status ?? "pending"}] {p.Formula} (created: {p.CreatedOnUtc:yyyy-MM-dd HH:mm})")
                     .ToArray();
@@ -123,7 +123,7 @@ public sealed class AgentEcosystemService : BackgroundService
                         Analyzed = true,
                     });
 
-                    var anchorProtocol = await protocolRepo.CreateAsync(new ProtocolEntity
+                    var anchorAnalysis = await analysisRepo.CreateAsync(new AnalysisEntity
                     {
                         SubjectId = subjectId,
                         StimuliId = stimuliEntity.Id,
@@ -133,7 +133,7 @@ public sealed class AgentEcosystemService : BackgroundService
                     });
 
                     foreach (var line in lines)
-                        await linker.LinkAsync(anchorProtocol, line, subjectId);
+                        await linker.LinkAsync(anchorAnalysis, line, subjectId);
                 }
 
                 // Update lifecycle

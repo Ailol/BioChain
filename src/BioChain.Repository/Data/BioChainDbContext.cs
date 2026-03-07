@@ -18,7 +18,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
     public DbSet<InterfaceEntity> Interfaces => Set<InterfaceEntity>();
     public DbSet<ConstraintDefEntity> Constraints => Set<ConstraintDefEntity>();
     public DbSet<ToolEntity> Tools => Set<ToolEntity>();
-    public DbSet<ProtocolEntity> Protocols => Set<ProtocolEntity>();
+    public DbSet<AnalysisEntity> Analyses => Set<AnalysisEntity>();
     public DbSet<LoopEntity> Loops => Set<LoopEntity>();
     public DbSet<PlasticityEntity> Plasticities => Set<PlasticityEntity>();
     public DbSet<PathwayEntity> Pathways => Set<PathwayEntity>();
@@ -52,7 +52,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
         ConfigurePathway(modelBuilder);
         ConfigureConstraintDef(modelBuilder);
         ConfigureTool(modelBuilder);
-        ConfigureProtocol(modelBuilder);
+        ConfigureAnalysis(modelBuilder);
         ConfigureEdge(modelBuilder);
         ConfigurePersonShare(modelBuilder);
         ConfigureUserRole(modelBuilder);
@@ -73,7 +73,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Kind).HasMaxLength(30).IsRequired().HasDefaultValueSql("'person'");
             entity.Property(e => e.Meta).HasColumnName("data").HasColumnType("jsonb");
-            entity.Property(e => e.Embedding).HasColumnType("vector(1536)");
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             entity.HasIndex(e => e.OwnerId);
@@ -179,7 +179,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.SubjectId).HasColumnName("entity_id");
             entity.Property(e => e.Kind).HasMaxLength(30).IsRequired();
             entity.Property(e => e.Content).HasColumnType("jsonb");
-            entity.Property(e => e.Embedding).HasColumnType("vector(1536)");
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.Analyzed).HasDefaultValue(false);
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
@@ -232,6 +232,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.DominantSignal).HasMaxLength(20);
             entity.Property(e => e.StressLoad).HasMaxLength(5).HasDefaultValueSql("'≈'");
             entity.Property(e => e.Properties).HasColumnType("jsonb");
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             // Global template regions (entity_id IS NULL)
@@ -290,6 +291,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.Confidence).HasDefaultValue(1.0m);
             entity.Property(e => e.Distribution).HasMaxLength(30);
             entity.Property(e => e.Trend).HasMaxLength(15);
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             // Append-only: temporal index for DISTINCT ON queries
@@ -300,16 +302,16 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.Code);
             entity.HasIndex(e => e.RegionId);
             entity.HasIndex(e => e.ModuleId);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
 
             entity.HasOne(e => e.Module)
                 .WithMany()
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -325,6 +327,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.Code).HasMaxLength(30).IsRequired();
             entity.Property(e => e.Subtype).HasMaxLength(20);
             entity.Property(e => e.State).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.SignalCode).HasMaxLength(30);
+            entity.Property(e => e.SignalType).HasMaxLength(10);
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             // Append-only: temporal index
@@ -334,21 +339,22 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.SignalId);
             entity.HasIndex(e => e.ModuleId);
             entity.HasIndex(e => e.State);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
+            entity.HasIndex(e => new { e.SubjectId, e.SignalCode });
 
             entity.HasOne(e => e.Signal)
                 .WithMany(s => s.Receptors)
                 .HasForeignKey(e => e.SignalId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne(e => e.Module)
                 .WithMany()
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -364,6 +370,8 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.Code).HasMaxLength(30).IsRequired();
             entity.Property(e => e.State).HasMaxLength(10).IsRequired();
             entity.Property(e => e.Clearance).HasMaxLength(5).HasDefaultValueSql("'≈'");
+            entity.Property(e => e.SignalCode).HasMaxLength(30);
+            entity.Property(e => e.SignalType).HasMaxLength(10);
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             // Append-only: temporal index
@@ -373,21 +381,22 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.SignalId);
             entity.HasIndex(e => e.ModuleId);
             entity.HasIndex(e => e.State);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
+            entity.HasIndex(e => new { e.SubjectId, e.SignalCode });
 
             entity.HasOne(e => e.Signal)
                 .WithMany(s => s.Transporters)
                 .HasForeignKey(e => e.SignalId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne(e => e.Module)
                 .WithMany()
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -406,6 +415,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.Latched).HasDefaultValue(false);
             entity.Property(e => e.Model).HasMaxLength(50);
             entity.Property(e => e.ParseMap).HasColumnType("jsonb");
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             // Append-only: temporal index
@@ -416,7 +426,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.ModuleId);
             entity.HasIndex(e => e.ParentId);
             entity.HasIndex(e => e.Latched);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
 
             entity.HasOne(e => e.Parent)
                 .WithMany(g => g.Children)
@@ -428,9 +438,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -446,6 +456,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.Code).HasMaxLength(30).IsRequired();
             entity.Property(e => e.Activity).HasMaxLength(10).HasDefaultValueSql("'≈'");
             entity.Property(e => e.RateLimiting).HasDefaultValue(false);
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             // Append-only: temporal index
@@ -455,7 +466,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.TargetId);
             entity.HasIndex(e => e.ModuleId);
             entity.HasIndex(e => e.RateLimiting);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
 
             entity.HasOne(e => e.Target)
                 .WithMany(s => s.Limiters)
@@ -467,9 +478,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -497,7 +508,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.Pathway);
             entity.HasIndex(e => e.PathwayId).HasFilter("pathway_id IS NOT NULL");
             entity.HasIndex(e => e.Active);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
 
             entity.HasOne(e => e.Module)
                 .WithMany()
@@ -509,9 +520,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.PathwayId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -534,16 +545,16 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => new { e.SubjectId, e.Polarity });
             entity.HasIndex(e => e.SubjectId).HasFilter("active = true").HasDatabaseName("idx_loop_active");
             entity.HasIndex(e => e.SubjectId).HasFilter("gain_product > 1 AND active = true").HasDatabaseName("idx_loop_runaway");
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
 
             entity.HasOne(e => e.Module)
                 .WithMany()
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -569,7 +580,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.SubjectId).HasFilter("consolidation = true").HasDatabaseName("idx_plast_solid");
             entity.HasIndex(e => new { e.SubjectId, e.CreatedOnUtc }).IsDescending(false, true);
             entity.HasIndex(e => e.InductionId);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
 
             entity.HasOne(e => e.Edge)
                 .WithMany()
@@ -586,9 +597,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.InductionId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -609,7 +620,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.SourceRegionId);
             entity.HasIndex(e => e.TargetRegionId);
             entity.HasIndex(e => e.SubjectId).HasFilter("active = true").HasDatabaseName("idx_pathway_active");
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
 
             entity.HasOne(e => e.Module)
                 .WithMany()
@@ -626,9 +637,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.TargetRegionId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -657,9 +668,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
@@ -688,18 +699,18 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.ModuleId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
 
-    private static void ConfigureProtocol(ModelBuilder modelBuilder)
+    private static void ConfigureAnalysis(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ProtocolEntity>(entity =>
+        modelBuilder.Entity<AnalysisEntity>(entity =>
         {
-            entity.ToTable("protocol");
+            entity.ToTable("analysis");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).UseIdentityAlwaysColumn();
             entity.Property(e => e.SubjectId).HasColumnName("entity_id");
@@ -707,8 +718,7 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.Formula).IsRequired();
             entity.Property(e => e.Status).HasMaxLength(20);
             entity.Property(e => e.Phase).HasMaxLength(20);
-            entity.Property(e => e.EdgeFn).HasMaxLength(10);
-            entity.Property(e => e.Embedding).HasColumnType("vector(1536)");
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
             entity.HasIndex(e => e.SubjectId);
@@ -751,7 +761,18 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.Property(e => e.OperatorClass).HasMaxLength(15).IsRequired();
             entity.Property(e => e.TransferFn).HasMaxLength(10);
             entity.Property(e => e.DysregType).HasMaxLength(20);
+            entity.Property(e => e.SourceCode).HasMaxLength(30);
+            entity.Property(e => e.SourceSignalType).HasMaxLength(10);
+            entity.Property(e => e.SourceRegion).HasMaxLength(30);
+            entity.Property(e => e.TargetCode).HasMaxLength(30);
+            entity.Property(e => e.TargetSignalType).HasMaxLength(10);
+            entity.Property(e => e.TargetRegion).HasMaxLength(30);
+            entity.Property(e => e.RelationshipKind).HasMaxLength(30);
+            entity.Property(e => e.GateCode).HasMaxLength(100);
+            entity.Property(e => e.GateType).HasMaxLength(15);
+            entity.Property(e => e.GateCondition);
             entity.Property(e => e.Properties).HasColumnType("jsonb");
+            entity.Property(e => e.Embedding).HasColumnType("vector(2560)");
             entity.Property(e => e.Active).HasDefaultValue(true);
             entity.Property(e => e.CreatedOnUtc).HasDefaultValueSql("now()");
 
@@ -761,12 +782,15 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
             entity.HasIndex(e => e.SubjectId);
             entity.HasIndex(e => e.OperatorClass);
             entity.HasIndex(e => e.ModuleId);
-            entity.HasIndex(e => e.ProtocolId);
+            entity.HasIndex(e => e.AnalysisId);
             entity.HasIndex(e => e.GateId).HasFilter("gate_id IS NOT NULL");
             entity.HasIndex(e => e.LoopId).HasFilter("loop_id IS NOT NULL");
             entity.HasIndex(e => e.PathwayId).HasFilter("pathway_id IS NOT NULL");
             entity.HasIndex(e => new { e.SubjectId, e.DysregType }).HasFilter("dysreg_type IS NOT NULL");
             entity.HasIndex(e => e.ToolId).HasFilter("tool_id IS NOT NULL");
+            entity.HasIndex(e => new { e.SubjectId, e.SourceCode });
+            entity.HasIndex(e => new { e.SubjectId, e.TargetCode });
+            entity.HasIndex(e => new { e.SubjectId, e.RelationshipKind }).HasFilter("relationship_kind IS NOT NULL");
 
             entity.HasOne(e => e.Gate)
                 .WithMany()
@@ -793,9 +817,9 @@ public class BioChainDbContext(DbContextOptions<BioChainDbContext> options) : Db
                 .HasForeignKey(e => e.ToolId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.Protocol)
+            entity.HasOne(e => e.Analysis)
                 .WithMany()
-                .HasForeignKey(e => e.ProtocolId)
+                .HasForeignKey(e => e.AnalysisId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }

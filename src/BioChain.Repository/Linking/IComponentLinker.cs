@@ -9,7 +9,7 @@ namespace BioChain.Repository.Linking;
 /// </summary>
 public interface IComponentLinker
 {
-    Task LinkAsync(ProtocolEntity protocol, BioChainParser.ParsedLine line,
+    Task LinkAsync(AnalysisEntity analysis, BioChainParser.ParsedLine line,
         Guid subjectId, CancellationToken ct = default);
 
     /// <summary>

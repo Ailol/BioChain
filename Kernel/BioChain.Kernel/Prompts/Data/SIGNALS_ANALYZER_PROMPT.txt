@@ -133,9 +133,22 @@ Simultaneous conditions solved post-cascade:
   CONSERVE: sum(ENERGY.A, ENERGY.B, ENERGY.C) == CONST — status: energy conservation
 
 ## BIND
-Computed values:
+Behavioral/functional composites — named outcomes computed from real signals.
+Use BIND to capture behavioral or psychological concepts (mood regulation, impulse control,
+reward sensitivity, etc.) as composites of the underlying signals. This is the ONLY way
+to represent behavioral outcomes — never use them as signal operands.
+
+Pattern: name = signal_expression
+- name: snake_case behavioral concept name
+- signal_expression: real signal codes connected by + (contributing) or ⊣ (inhibiting)
+
+Examples:
+  BIND: mood_regulation = 5HT@DRN + DA@VTA + GABA@AMY — status: impaired due to depleted serotonin and dopamine
+  BIND: impulse_control = GABA@PFC + 5HT@DRN ⊣ NE@LC — status: weakened inhibitory tone
+  BIND: reward_sensitivity = DA@NAc + DA@VTA + ENDORPHIN@NAc — status: blunted from receptor desensitization
+  BIND: stress_reactivity = CORT@ADR + CRH@PVN + NE@LC — status: elevated chronic activation
+  BIND: neuroplasticity = BDNF@HPC + GLU@HPC ⊣ CORT@ADR — status: suppressed by chronic cortisol
   BIND: GAP.INTERNAL = TARGET.INTERNAL - CURRENT.ENV — status: goal-seeking gap
-  BIND: SCORE.INTERNAL = OPTION_A * WEIGHT_A + OPTION_B * WEIGHT_B — status: weighted scoring
 
 ## FAIL
 Computable failures (promoted DYSREG):
@@ -207,7 +220,17 @@ Sets temporal phase context:
 11. For conditional edges, ALWAYS include the gate condition suffix {SYMBOL(condition)}.
 12. Promote DYSREG to FAIL when the condition and held duration are known/computable.
 13. COMPLETENESS: Every SIGNAL you declare must appear as source or target in at least one FORMULA, FEEDBACK, DEF, or DYSREG line. If a signal has no causal relationship with another signal, do not declare it — mention it in a status text instead.
-14. NO ABSTRACT TARGETS: All FORMULA/FEEDBACK/DYSREG operands must be signals you declared (or will declare) in a SIGNAL line. Do not use abstract descriptors like mood.regulation[↓] or impulse.control[↓] as formula operands. Express functional consequences in the " — status: " text instead. Wrong: `5HT[↓]@DRN → mood.regulation[↓]`. Right: `5HT[↓]@DRN → DA[↓]@VTA — status: serotonin deficit reduces dopamine, impairing mood regulation`.
+14. *** CRITICAL — NO ABSTRACT TARGETS ***: ALL operands in SIGNAL, FORMULA, FEEDBACK, DEF, and DYSREG lines MUST be real chemical/domain signal codes declared via SIGNAL (or existing RECEPTOR/LIMITER/TRANSPORT codes). NEVER use behavioral, psychological, or functional abstractions as signal operands — they are NOT signals and the downstream parser will reject them. To capture behavioral outcomes, use BIND (Rule 16).
+    FORBIDDEN operand codes: mood, attention, cognition, behavior, emotion, reward, impulse, focus, energy, motivation, anxiety, fear, stress, memory, learning, sleep, appetite, arousal, pleasure, pain, consciousness, alertness, performance, regulation, stability, control, processing, planning, execution, action, activity, adaptation, neuroplasticity, mood.regulation, impulse.control, reward.seeking, mood.stability, HPC.volume
+    WRONG: `5HT[↓]@DRN → mood.regulation[↓]`         — "mood.regulation" is NOT a declared signal
+    WRONG: `DA[↓]@VTA ∥ reward.seeking[↓]`            — "reward.seeking" is NOT a declared signal
+    WRONG: `SIGNAL: NT:ATTENTION[↑] @PFC`              — "ATTENTION" is NOT a valid chemical code
+    WRONG: `CORT[↑↑]@ADR → BDNF[↓]@HPC ⊃ neuroplasticity[↓]` — "neuroplasticity" is NOT a signal
+    RIGHT: `5HT[↓]@DRN → DA[↓]@VTA — status: serotonin deficit reduces dopamine, impairing mood regulation`
+    RIGHT: `DA[↓]@VTA → DA.D2[.desens]@NAc — status: anhedonia mechanism, reward-seeking impaired`
+    RIGHT: `CORT[↑↑]@ADR → BDNF[↓]@HPC — status: cortisol suppresses BDNF, reducing neuroplasticity`
+    RIGHT: Use BIND instead → `BIND: neuroplasticity = BDNF@HPC + GLU@HPC ⊣ CORT@ADR — status: suppressed`
+16. BEHAVIORAL COMPOSITES via BIND: When the input implies behavioral/functional outcomes (mood regulation, reward sensitivity, impulse control, stress reactivity, neuroplasticity, etc.), express them as BIND lines. Place BIND lines after FORMULA/FEEDBACK/DEF and before CONSTRAINT/DYSREG. Each BIND line names the concept and lists the contributing signals. This is the ONLY way to represent behavioral outcomes structurally.
 15. SINGLE REGION: Use a single @REGION per SIGNAL declaration, not pathway syntax. Wrong: `SIGNAL: NT:5HT[↓] @DRN→PFC`. Right: `SIGNAL: NT:5HT[↓] @DRN`. Use INTERFACE for pathways between regions.
 
 # WORKED EXAMPLE
@@ -243,5 +266,9 @@ FORMULA: NE[↑]@LC ⊣ GABA[↓]@AMY — status: noradrenergic hyperactivation 
 FEEDBACK: ⟳⁺ CORT[↑↑]@ADR → CRH[↑]@PVN — status: positive stress feedback loop
 FEEDBACK: ⟳⁻.decay 5HT[↓]@DRN → 5HT.5HT1A[.desens]@DRN {⊨(NT:5HT[↓])} — status: failing autoreceptor compensation
 DEF: anhedonia_circuit := DA[↓]@VTA → DA.D2[.desens]@NAc — status: dopamine deficit drives receptor desensitization
+BIND: mood_regulation = 5HT@DRN + DA@VTA + GABA@AMY — status: impaired due to depleted serotonin and dopamine
+BIND: reward_sensitivity = DA@VTA + DA@NAc — status: blunted from receptor desensitization
+BIND: stress_reactivity = CORT@ADR + CRH@PVN + NE@LC — status: elevated chronic activation
+BIND: neuroplasticity = BDNF@HPC ⊣ CORT@ADR — status: suppressed by sustained cortisol
 DYSREG: ⚡.sustained CORT[↑↑]@ADR → BDNF[↓]@HPC — status: chronic cortisol neurotoxicity risk
 DYSREG: ⚡.depletion 5HT[↓]@DRN → GABA[↓]@AMY — status: serotonergic exhaustion destabilizes inhibitory control

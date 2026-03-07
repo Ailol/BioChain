@@ -11,12 +11,12 @@ public class PlasticityEntity
     public int? InductionId { get; set; }
     public bool Consolidation { get; set; }
     public bool Reversible { get; set; } = true;
-    public int? ProtocolId { get; set; }
+    public int? AnalysisId { get; set; }
     public DateTimeOffset CreatedOnUtc { get; set; }
 
     public SubjectEntity Subject { get; set; } = null!;
     public EdgeEntity? Edge { get; set; }
     public ReceptorEntity? Receptor { get; set; }
     public SignalEntity? Induction { get; set; }
-    public ProtocolEntity? Protocol { get; set; }
+    public AnalysisEntity? Analysis { get; set; }
 }

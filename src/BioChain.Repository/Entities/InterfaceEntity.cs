@@ -12,7 +12,7 @@ public class InterfaceEntity
     public bool Active { get; set; } = true;
     public int? ModuleId { get; set; }
     public string? Cause { get; set; }
-    public int? ProtocolId { get; set; }
+    public int? AnalysisId { get; set; }
     public DateTimeOffset CreatedOnUtc { get; set; }
 
     public SubjectEntity Subject { get; set; } = null!;
@@ -20,5 +20,5 @@ public class InterfaceEntity
     public RegionEntity TargetRegion { get; set; } = null!;
     public PathwayEntity? PathwayRef { get; set; }
     public ModuleEntity? Module { get; set; }
-    public ProtocolEntity? Protocol { get; set; }
+    public AnalysisEntity? Analysis { get; set; }
 }

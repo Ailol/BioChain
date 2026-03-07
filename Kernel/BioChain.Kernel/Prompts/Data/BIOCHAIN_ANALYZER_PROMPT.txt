@@ -14,6 +14,7 @@ Every output line must match exactly one of these tag formats:
   FEEDBACK: <formula> — status: <status>
   STATE: <formula> — status: <status>
   DEF: <formula> — status: <status>
+  BIND: <formula> — status: <status>
   DYSREG: <formula> — status: <status>
   #PHASE: <phase_name>
 
@@ -117,8 +118,25 @@ Detected pathway disruptions with dysregulation markers:
 - ⚡.excitotoxicity, ⚡.depletion, ⚡.resistance, ⚡.accumulation, ⚡.spillover, ⚡.sustained, ⚡.oscillation, ⚡.uncoupling, ⚡.saturation, ⚡.shunt
 
 Examples:
-  DYSREG: ⚡.depletion 5HT@DRN → mood.instability ∥ impulse.control[↓] — status: serotonergic deficit
-  DYSREG: ⚡.sustained CORT[↑↑]@ADR → HPC.volume[↓] — status: chronic cortisol neurotoxicity
+  DYSREG: ⚡.depletion 5HT@DRN → GABA[↓]@AMY ∥ DA[↓]@VTA — status: serotonergic deficit destabilizes inhibition and reward
+  DYSREG: ⚡.sustained CORT[↑↑]@ADR → BDNF[↓]@HPC — status: chronic cortisol neurotoxicity
+
+## BIND
+Behavioral/functional composites — named outcomes computed from real neurochemical signals.
+Use BIND to capture behavioral or psychological concepts (mood regulation, impulse control,
+reward sensitivity, etc.) as composites of their underlying neurochemical signals.
+This is the ONLY way to represent behavioral outcomes — never use them as signal operands.
+
+Pattern: name = signal_expression
+- name: snake_case behavioral concept name
+- signal_expression: real neurochemical codes connected by + (contributing) or ⊣ (inhibiting)
+
+Examples:
+  BIND: mood_regulation = 5HT@DRN + DA@VTA + GABA@AMY — status: impaired due to depleted serotonin and dopamine
+  BIND: impulse_control = GABA@PFC + 5HT@DRN ⊣ NE@LC — status: weakened inhibitory tone
+  BIND: reward_sensitivity = DA@NAc + DA@VTA + ENDORPHIN@NAc — status: blunted from receptor desensitization
+  BIND: stress_reactivity = CORT@ADR + CRH@PVN + NE@LC — status: elevated chronic activation
+  BIND: neuroplasticity = BDNF@HPC + GLU@HPC ⊣ CORT@ADR — status: suppressed by chronic cortisol
 
 ## #PHASE
 Sets the phase context for subsequent lines:
@@ -144,13 +162,24 @@ DAT → DA, SERT → 5HT, NET → NE, VMAT2 → DA, GAT1 → GABA, GLT1 → GLU,
 1. One tag per line. No blank lines between tags (blank lines only between #PHASE sections).
 2. Every line MUST have " — status: " suffix with a brief behavioral/clinical interpretation.
 3. Start with #PHASE if the input describes distinct temporal phases.
-4. Order: SIGNAL first (establish landscape), then RECEPTOR, GATE, LIMITER, TRANSPORT, INTERFACE, then FORMULA/FEEDBACK/DEF (interactions), then DYSREG (disruptions).
+4. Order: SIGNAL first (establish landscape), then RECEPTOR, GATE, LIMITER, TRANSPORT, INTERFACE, then FORMULA/FEEDBACK/DEF (interactions), then BIND (behavioral composites), then DYSREG (disruptions).
 5. Always include signal TYPE prefix (NT:, H:, P:, etc.).
 6. Use the exact Unicode operators listed above — do not substitute ASCII approximations.
 7. Ground every line in evidence from the input text. Do not hallucinate signals not supported by the behavioral description.
 8. Aim for 15-35 lines per analysis depending on input complexity.
 9. Do NOT wrap output in code blocks, markdown, or any formatting. Raw protocol lines only.
 10. Do NOT output HYPOTHESIS, PREDICTION, or INTERVENTION lines — only map the current neurochemical state.
+11. COMPLETENESS: Every SIGNAL you declare must appear as source or target in at least one FORMULA, FEEDBACK, DEF, or DYSREG line. If a signal has no causal relationship with another signal, do not declare it — mention it in a status text instead.
+12. *** CRITICAL — NO ABSTRACT TARGETS ***: ALL operands in SIGNAL, FORMULA, FEEDBACK, DEF, and DYSREG lines MUST be real neurochemical codes from the CHEMICAL → TYPE MAPPING above (DA, 5HT, NE, GABA, GLU, CORT, BDNF, OXT, etc.) or declared RECEPTOR/LIMITER/TRANSPORT codes. NEVER use behavioral or psychological abstractions as signal operands. To capture behavioral outcomes, use BIND (Rule 14).
+    FORBIDDEN: mood, attention, cognition, behavior, emotion, reward, impulse, focus, energy, motivation, anxiety, fear, stress, memory, learning, sleep, appetite, arousal, pleasure, pain, consciousness, alertness, performance, regulation, stability, control, processing, planning, execution, action, activity, adaptation
+    WRONG: `5HT[↓]@DRN → mood.regulation[↓]`    — "mood.regulation" is NOT a chemical
+    WRONG: `DA[↓]@VTA ∥ reward.seeking[↓]`       — "reward.seeking" is NOT a chemical
+    WRONG: `SIGNAL: NT:ATTENTION[↑] @PFC`         — "ATTENTION" is NOT a neurotransmitter
+    RIGHT: `5HT[↓]@DRN → DA[↓]@VTA — status: serotonin deficit reduces dopamine, impairing mood regulation`
+    RIGHT: `DA[↓]@VTA → DA.D2[.desens]@NAc — status: anhedonia mechanism`
+    RIGHT: Use BIND instead → `BIND: mood_regulation = 5HT@DRN + DA@VTA + GABA@AMY — status: impaired`
+13. SINGLE REGION: Use a single @REGION per SIGNAL declaration, not pathway syntax. Wrong: `SIGNAL: NT:5HT[↓] @DRN→PFC`. Right: `SIGNAL: NT:5HT[↓] @DRN`. Use INTERFACE for pathways between regions.
+14. BEHAVIORAL COMPOSITES via BIND: When the input implies behavioral/functional outcomes (mood regulation, reward sensitivity, impulse control, stress reactivity, neuroplasticity, etc.), express them as BIND lines. Each BIND names the concept and lists the contributing neurochemical signals. Place BIND lines after FORMULA/FEEDBACK/DEF and before DYSREG.
 
 # WORKED EXAMPLE
 
@@ -158,8 +187,8 @@ Input: "Patient shows persistent low mood, anhedonia, sleep disruption, and incr
 
 Output:
 #PHASE: chronic_presentation
-SIGNAL: NT:5HT[↓] @DRN→PFC — status: persistent low mood, serotonergic deficit
-SIGNAL: NT:DA[↓] @VTA→NAc — status: anhedonia, reduced reward signaling
+SIGNAL: NT:5HT[↓] @DRN — status: persistent low mood, serotonergic deficit
+SIGNAL: NT:DA[↓] @VTA — status: anhedonia, reduced reward signaling
 SIGNAL: NT:NE[↑] @LC — status: heightened arousal, stress reactivity
 SIGNAL: H:CRH[↑] @PVN — status: HPA axis activation from chronic stress
 SIGNAL: H:CORT[↑↑] @ADR — status: sustained cortisol elevation
@@ -175,10 +204,15 @@ TRANSPORT: DAT[active] @NAc — status: reuptake maintaining low DA tone
 INTERFACE: VTA → NAc (mesolimbic) — status: reward pathway hypoactive
 INTERFACE: LC → AMY (noradrenergic) — status: stress-fear circuit hyperactive
 INTERFACE: HYP → PIT (HPA) — status: stress axis chronically engaged
-FORMULA: CORT[↑↑]@ADR → BDNF[↓]@HPC ⊃ neuroplasticity[↓] {⊨(H:CORT[↑↑])} — status: cortisol-gated BDNF suppression
-FORMULA: 5HT[↓]@DRN → DA[↓]@VTA ∥ mood.regulation[↓] — status: serotonin-dopamine interaction deficit
+INTERFACE: DRN → PFC (serotonergic) — status: mood regulation pathway
+FORMULA: CORT[↑↑]@ADR → BDNF[↓]@HPC {⊨(H:CORT[↑↑])} — status: cortisol suppresses BDNF, reducing neuroplasticity
+FORMULA: 5HT[↓]@DRN → DA[↓]@VTA — status: serotonin deficit reduces dopamine, impairing mood regulation
 FEEDBACK: ⟳⁺ CORT[↑↑]@ADR → CRH[↑]@PVN — status: positive stress feedback loop
 FEEDBACK: ⟳⁻.decay 5HT[↓]@DRN → 5HT.5HT1A[.desens]@DRN {⊨(NT:5HT[↓])} — status: failing autoreceptor compensation, only under low 5HT
-DEF: anhedonia_circuit := DA[↓]@VTA → DA.D2[.desens]@NAc ∥ reward.seeking[↓] — status: anhedonia mechanism
-DYSREG: ⚡.sustained CORT[↑↑]@ADR → HPC.volume[↓] — status: chronic cortisol neurotoxicity risk
-DYSREG: ⚡.depletion 5HT@DRN → impulse.control[↓] ∥ mood.stability[↓] — status: serotonergic exhaustion
+DEF: anhedonia_circuit := DA[↓]@VTA → DA.D2[.desens]@NAc — status: dopamine deficit drives receptor desensitization
+BIND: mood_regulation = 5HT@DRN + DA@VTA + GABA@AMY — status: impaired due to depleted serotonin and dopamine
+BIND: reward_sensitivity = DA@VTA + DA@NAc — status: blunted from receptor desensitization
+BIND: stress_reactivity = CORT@ADR + CRH@PVN + NE@LC — status: elevated chronic activation
+BIND: neuroplasticity = BDNF@HPC ⊣ CORT@ADR — status: suppressed by sustained cortisol
+DYSREG: ⚡.sustained CORT[↑↑]@ADR → BDNF[↓]@HPC — status: chronic cortisol neurotoxicity risk
+DYSREG: ⚡.depletion 5HT@DRN → GABA[↓]@AMY — status: serotonergic exhaustion destabilizes inhibitory control

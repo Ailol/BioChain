@@ -1,3 +1,5 @@
+using Pgvector;
+
 namespace BioChain.Repository.Entities;
 
 public class SignalEntity
@@ -21,13 +23,14 @@ public class SignalEntity
     public long? TauMaxMs { get; set; }
     public string? Trend { get; set; }
     public string? Cause { get; set; }
-    public int? ProtocolId { get; set; }
+    public Vector? Embedding { get; set; }
+    public int? AnalysisId { get; set; }
     public DateTimeOffset CreatedOnUtc { get; set; }
 
     public SubjectEntity Subject { get; set; } = null!;
     public RegionEntity? Region { get; set; }
     public ModuleEntity? Module { get; set; }
-    public ProtocolEntity? Protocol { get; set; }
+    public AnalysisEntity? Analysis { get; set; }
     public ICollection<ReceptorEntity> Receptors { get; set; } = [];
     public ICollection<TransporterEntity> Transporters { get; set; } = [];
     public ICollection<LimiterEntity> Limiters { get; set; } = [];

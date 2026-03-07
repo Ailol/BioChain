@@ -45,7 +45,40 @@ public class ComponentLinker(
         return new Dictionary<string, (long?, long?)>();
     });
 
-    public async Task LinkAsync(ProtocolEntity protocol, BioChainParser.ParsedLine line,
+    /// <summary>
+    /// Additional signal code aliases that the LLM may produce but aren't in TauConstants.json.
+    /// </summary>
+    private static readonly HashSet<string> AdditionalSignalAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "MEL", "ATP", "CORTISOL", "EPINEPHRINE", "ADRENALINE", "NORADRENALINE",
+        "INS", "ANANDAMIDE", "ANA", "ECB", "SUBP", "SUBSTANCE_P",
+        "SEROTONIN", "DOPAMINE", "NOREPINEPHRINE", "GLUTAMATE",
+        "OXYTOCIN", "VASOPRESSIN", "THYROID", "CRF",
+        "TNF", "TNFA", "IL1", "IFN", "NFKB", "ALLO",
+    };
+
+    /// <summary>
+    /// Validates that a signal code represents a known biochemical entity.
+    /// Rejects behavioral abstractions (ATTENTION, ACTION, BEHAVIOR, etc.)
+    /// that the LLM sometimes hallucinates as signal codes.
+    /// </summary>
+    private static bool IsValidSignalCode(string code)
+    {
+        if (TauLookup.Value.ContainsKey(code)) return true;
+        if (AdditionalSignalAliases.Contains(code)) return true;
+
+        // Check base code for region-suffixed codes (DA_VTA → DA, 5HT_DRN → 5HT)
+        var idx = code.IndexOf('_');
+        if (idx > 0)
+        {
+            var baseCode = code[..idx];
+            return TauLookup.Value.ContainsKey(baseCode) || AdditionalSignalAliases.Contains(baseCode);
+        }
+
+        return false;
+    }
+
+    public async Task LinkAsync(AnalysisEntity analysis, BioChainParser.ParsedLine line,
         Guid subjectId, CancellationToken ct = default)
     {
         switch (line.Tag)
@@ -55,6 +88,9 @@ public class ComponentLinker(
             {
                 var sig = BioChainParser.ExtractSignal(line.Formula);
                 if (sig is null) break;
+
+                // Reject behavioral abstractions (ATTENTION, ACTION, COGNITION, etc.)
+                if (!IsValidSignalCode(sig.Value.Code)) break;
 
                 int? regionId = null;
                 if (sig.Value.Region is not null)
@@ -73,7 +109,7 @@ public class ComponentLinker(
                     RegionId = regionId,
                     TauMinMs = tau.MinMs,
                     TauMaxMs = tau.MaxMs,
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 });
                 await db.SaveChangesAsync(ct);
                 break;
@@ -83,16 +119,17 @@ public class ComponentLinker(
             {
                 var rec = BioChainParser.ExtractReceptor(line.Formula);
                 if (rec is null) break;
-                var parent = await GetCurrentSignalByCodeAsync(subjectId, rec.Value.SignalCode, ct: ct);
-                if (parent is null) break;
+
+                // Store signal code directly — no parent lookup needed
                 db.Receptors.Add(new ReceptorEntity
                 {
                     SubjectId = subjectId,
-                    SignalId = parent.Id,
+                    SignalCode = rec.Value.SignalCode,
+                    SignalType = BioChainParser.InferSignalType(rec.Value.SignalCode),
                     Code = rec.Value.Code,
                     State = rec.Value.State ?? "active",
                     Subtype = rec.Value.Subtype,
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 });
                 await db.SaveChangesAsync(ct);
                 break;
@@ -107,7 +144,7 @@ public class ComponentLinker(
                     SubjectId = subjectId,
                     Code = gate.Value.Expression,
                     Type = gate.Value.Type,
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 }, ct);
                 break;
             }
@@ -118,7 +155,7 @@ public class ComponentLinker(
                 {
                     SubjectId = subjectId,
                     Type = "llm",
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 };
 
                 if (line.Formula.Contains("PROMPT:") || line.Formula.Contains("MODEL:") ||
@@ -172,7 +209,7 @@ public class ComponentLinker(
                     Activity = lim.Value.Activity ?? "\u2248",
                     RateLimiting = lim.Value.RateLimiting,
                     Reaction = lim.Value.Reaction,
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 };
 
                 // Resolve reaction target to a signal FK
@@ -186,8 +223,9 @@ public class ComponentLinker(
                             regionId = (await GetOrCreateRegionAsync(reactionRef.Value.Region, subjectId, ct)).Id;
 
                         var target = await GetOrCreateSignalAsync(
-                            subjectId, protocol.Id, reactionRef.Value.Code, regionId, ct);
-                        limiterEntity.TargetId = target.Id;
+                            subjectId, analysis.Id, reactionRef.Value.Code, regionId, ct);
+                        if (target is not null)
+                            limiterEntity.TargetId = target.Id;
                     }
                 }
 
@@ -200,19 +238,20 @@ public class ComponentLinker(
             {
                 var tr = BioChainParser.ExtractTransporter(line.Formula);
                 if (tr is null) break;
-                var signalCode = BioChainParser.MapTransporterToSignal(tr.Value.Code);
-                var parent = signalCode is not null
-                    ? await GetCurrentSignalByCodeAsync(subjectId, signalCode, ct: ct)
-                    : null;
-                if (parent is null) break;
+
+                // Infer signal code from transporter naming convention (DAT→DA, SERT→5HT, etc.)
+                var signalCode = BioChainParser.InferTransporterSignalCode(tr.Value.Code);
+                var signalType = signalCode is not null ? BioChainParser.InferSignalType(signalCode) : null;
+
                 db.Transporters.Add(new TransporterEntity
                 {
                     SubjectId = subjectId,
-                    SignalId = parent.Id,
+                    SignalCode = signalCode,
+                    SignalType = signalType,
                     Code = tr.Value.Code,
                     State = tr.Value.State ?? "active",
                     Clearance = tr.Value.Clearance ?? "\u2248",
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 });
                 await db.SaveChangesAsync(ct);
                 break;
@@ -231,7 +270,7 @@ public class ComponentLinker(
                     SourceRegionId = srcRegion.Id,
                     TargetRegionId = tgtRegion.Id,
                     Pathway = iface.Value.Pathway,
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 });
                 await db.SaveChangesAsync(ct);
                 break;
@@ -247,7 +286,7 @@ public class ComponentLinker(
                     SubjectId = subjectId,
                     Type = line.Tag.ToLowerInvariant(),
                     Expression = line.Formula,
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 });
                 await db.SaveChangesAsync(ct);
                 break;
@@ -258,7 +297,7 @@ public class ComponentLinker(
                 var toolEntity = new ToolEntity
                 {
                     SubjectId = subjectId,
-                    ProtocolId = protocol.Id,
+                    AnalysisId = analysis.Id,
                 };
 
                 if (line.Formula.Contains("INVOKE:") || line.Formula.Contains("INPUT:") ||
@@ -363,7 +402,7 @@ public class ComponentLinker(
                         var r = await GetOrCreateRegionAsync(src.Value.Region, subjectId, ct);
                         srcRegionId = r.Id;
                     }
-                    srcSignal = await GetOrCreateSignalAsync(subjectId, protocol.Id, src.Value.Code, srcRegionId, ct);
+                    srcSignal = await GetOrCreateSignalAsync(subjectId, analysis.Id, src.Value.Code, srcRegionId, ct);
                 }
                 if (tgt is not null && tgt != src)
                 {
@@ -373,15 +412,17 @@ public class ComponentLinker(
                         var r = await GetOrCreateRegionAsync(tgt.Value.Region, subjectId, ct);
                         tgtRegionId = r.Id;
                     }
-                    tgtSignal = await GetOrCreateSignalAsync(subjectId, protocol.Id, tgt.Value.Code, tgtRegionId, ct);
+                    tgtSignal = await GetOrCreateSignalAsync(subjectId, analysis.Id, tgt.Value.Code, tgtRegionId, ct);
                 }
 
                 if (srcSignal is not null && tgtSignal is not null)
                 {
                     var opClass = line.Tag == "FEEDBACK" ? "feedback" : "causal";
                     var op = line.Tag == "FEEDBACK" ? "\u27f3\u207b" : "\u2192";
+                    var kind = line.Tag == "FEEDBACK" ? "negative_feedback" : "causal";
 
                     int? gateId = null;
+                    string? gateCode = null, gateType = null, gateCond = null;
                     if (gateInfo is not null)
                     {
                         var structuredExpr = BioChainParser.ParseGateExpression(gateInfo.Value.Expression);
@@ -391,22 +432,38 @@ public class ComponentLinker(
                             Code = gateInfo.Value.Expression,
                             Type = gateInfo.Value.Type,
                             Expression = structuredExpr,
-                            ProtocolId = protocol.Id,
+                            AnalysisId = analysis.Id,
                         }, ct);
                         gateId = gateEntity.Id;
+                        gateCode = gateInfo.Value.Expression;
+                        gateType = gateInfo.Value.Type;
+                        gateCond = structuredExpr;
                     }
 
                     db.Edges.Add(new EdgeEntity
                     {
                         SubjectId = subjectId,
+                        // Legacy ID-based
                         SourceType = "signal",
                         SourceId = srcSignal.Id,
                         TargetType = "signal",
                         TargetId = tgtSignal.Id,
+                        // Code-based
+                        SourceCode = src!.Value.Code,
+                        SourceSignalType = BioChainParser.InferSignalType(src.Value.Code),
+                        SourceRegion = src.Value.Region,
+                        TargetCode = tgt!.Value.Code,
+                        TargetSignalType = BioChainParser.InferSignalType(tgt.Value.Code),
+                        TargetRegion = tgt.Value.Region,
+                        RelationshipKind = kind,
+                        // Gate
                         Operator = op,
                         OperatorClass = opClass,
                         GateId = gateId,
-                        ProtocolId = protocol.Id,
+                        GateCode = gateCode,
+                        GateType = gateType,
+                        GateCondition = gateCond,
+                        AnalysisId = analysis.Id,
                     });
                     await db.SaveChangesAsync(ct);
                 }
@@ -439,10 +496,12 @@ public class ComponentLinker(
                         var r = await GetOrCreateRegionAsync(dTgt.Value.Region, subjectId, ct);
                         dTgtRegionId = r.Id;
                     }
-                    var s = await GetOrCreateSignalAsync(subjectId, protocol.Id, dSrc.Value.Code, dSrcRegionId, ct);
-                    var t = await GetOrCreateSignalAsync(subjectId, protocol.Id, dTgt.Value.Code, dTgtRegionId, ct);
+                    var s = await GetOrCreateSignalAsync(subjectId, analysis.Id, dSrc.Value.Code, dSrcRegionId, ct);
+                    var t = await GetOrCreateSignalAsync(subjectId, analysis.Id, dTgt.Value.Code, dTgtRegionId, ct);
+                    if (s is null || t is null) break; // unknown signal code — skip edge
 
                     int? dysregGateId = null;
+                    string? dysregGateCode = null, dysregGateType = null, dysregGateCond = null;
                     if (dysregGateInfo is not null)
                     {
                         var structuredExpr = BioChainParser.ParseGateExpression(dysregGateInfo.Value.Expression);
@@ -452,22 +511,38 @@ public class ComponentLinker(
                             Code = dysregGateInfo.Value.Expression,
                             Type = dysregGateInfo.Value.Type,
                             Expression = structuredExpr,
-                            ProtocolId = protocol.Id,
+                            AnalysisId = analysis.Id,
                         }, ct);
                         dysregGateId = gateEntity.Id;
+                        dysregGateCode = dysregGateInfo.Value.Expression;
+                        dysregGateType = dysregGateInfo.Value.Type;
+                        dysregGateCond = structuredExpr;
                     }
 
                     db.Edges.Add(new EdgeEntity
                     {
                         SubjectId = subjectId,
+                        // Legacy ID-based
                         SourceType = "signal",
                         SourceId = s.Id,
                         TargetType = "signal",
                         TargetId = t.Id,
+                        // Code-based
+                        SourceCode = dSrc.Value.Code,
+                        SourceSignalType = BioChainParser.InferSignalType(dSrc.Value.Code),
+                        SourceRegion = dSrc.Value.Region,
+                        TargetCode = dTgt.Value.Code,
+                        TargetSignalType = BioChainParser.InferSignalType(dTgt.Value.Code),
+                        TargetRegion = dTgt.Value.Region,
+                        RelationshipKind = "dysregulation",
+                        // Gate
                         Operator = "\u26a1",
                         OperatorClass = "dysreg",
                         GateId = dysregGateId,
-                        ProtocolId = protocol.Id,
+                        GateCode = dysregGateCode,
+                        GateType = dysregGateType,
+                        GateCondition = dysregGateCond,
+                        AnalysisId = analysis.Id,
                     });
                     await db.SaveChangesAsync(ct);
                 }
@@ -496,13 +571,18 @@ public class ComponentLinker(
     /// Returns the most recent signal with the given code, or auto-creates a placeholder
     /// signal if none exists. Used by FORMULA/FEEDBACK/DYSREG handlers so edges are never
     /// silently dropped when the LLM references signal codes without a preceding SIGNAL: line.
+    /// Returns null for codes that fail biochemical vocabulary validation.
     /// </summary>
-    private async Task<SignalEntity> GetOrCreateSignalAsync(
-        Guid subjectId, int protocolId, string code,
+    private async Task<SignalEntity?> GetOrCreateSignalAsync(
+        Guid subjectId, int analysisId, string code,
         int? regionId = null, CancellationToken ct = default)
     {
+        // Always check for an existing signal first (may have been created before validation was added)
         var existing = await GetCurrentSignalByCodeAsync(subjectId, code, regionId, ct);
         if (existing is not null) return existing;
+
+        // Don't auto-create signals for unknown/behavioral codes (ATTENTION, ACTION, etc.)
+        if (!IsValidSignalCode(code)) return null;
 
         var tau = TauLookup.Value.GetValueOrDefault(code);
         var signal = new SignalEntity
@@ -514,7 +594,7 @@ public class ComponentLinker(
             RegionId = regionId,
             TauMinMs = tau.MinMs,
             TauMaxMs = tau.MaxMs,
-            ProtocolId = protocolId,
+            AnalysisId = analysisId,
         };
         db.Signals.Add(signal);
         await db.SaveChangesAsync(ct);
@@ -540,51 +620,85 @@ public class ComponentLinker(
     /// <inheritdoc />
     public async Task ConnectOrphanedSignalsAsync(Guid subjectId, CancellationToken ct = default)
     {
-        // Collect all signal IDs that participate in any relationship
+        // Collect signal codes/IDs that participate in any relationship
+        // Check both ID-based and code-based connections
         var edgeSourceIds = await db.Edges
-            .Where(e => e.SubjectId == subjectId)
-            .Select(e => e.SourceId)
+            .Where(e => e.SubjectId == subjectId && e.SourceId != null)
+            .Select(e => e.SourceId!.Value)
             .ToListAsync(ct);
         var edgeTargetIds = await db.Edges
-            .Where(e => e.SubjectId == subjectId)
-            .Select(e => e.TargetId)
+            .Where(e => e.SubjectId == subjectId && e.TargetId != null)
+            .Select(e => e.TargetId!.Value)
             .ToListAsync(ct);
-        var edgeIds = edgeSourceIds.Concat(edgeTargetIds).Distinct().ToList();
+        var edgeSourceCodes = await db.Edges
+            .Where(e => e.SubjectId == subjectId && e.SourceCode != null)
+            .Select(e => e.SourceCode!)
+            .Distinct()
+            .ToListAsync(ct);
+        var edgeTargetCodes = await db.Edges
+            .Where(e => e.SubjectId == subjectId && e.TargetCode != null)
+            .Select(e => e.TargetCode!)
+            .Distinct()
+            .ToListAsync(ct);
+        var edgeConnectedCodes = edgeSourceCodes.Concat(edgeTargetCodes).Distinct().ToList();
 
         var limiterTargetIds = await db.Limiters
             .Where(l => l.SubjectId == subjectId && l.TargetId != null)
             .Select(l => l.TargetId!.Value)
             .ToListAsync(ct);
 
+        // Code-based: receptors and transporters now reference signals by code
+        var receptorSignalCodes = await db.Receptors
+            .Where(r => r.SubjectId == subjectId && r.SignalCode != null)
+            .Select(r => r.SignalCode!)
+            .Distinct()
+            .ToListAsync(ct);
         var receptorSignalIds = await db.Receptors
-            .Where(r => r.SubjectId == subjectId)
-            .Select(r => r.SignalId)
+            .Where(r => r.SubjectId == subjectId && r.SignalId != null)
+            .Select(r => r.SignalId!.Value)
             .ToListAsync(ct);
 
+        var transporterSignalCodes = await db.Transporters
+            .Where(t => t.SubjectId == subjectId && t.SignalCode != null)
+            .Select(t => t.SignalCode!)
+            .Distinct()
+            .ToListAsync(ct);
         var transporterSignalIds = await db.Transporters
-            .Where(t => t.SubjectId == subjectId)
-            .Select(t => t.SignalId)
+            .Where(t => t.SubjectId == subjectId && t.SignalId != null)
+            .Select(t => t.SignalId!.Value)
             .ToListAsync(ct);
 
-        var connected = new HashSet<int>(edgeIds
+        var connectedIds = new HashSet<int>(edgeSourceIds
+            .Concat(edgeTargetIds)
             .Concat(limiterTargetIds)
             .Concat(receptorSignalIds)
             .Concat(transporterSignalIds));
+
+        var connectedCodes = new HashSet<string>(
+            edgeConnectedCodes.Concat(receptorSignalCodes).Concat(transporterSignalCodes)
+                .Where(c => c is not null)!,
+            StringComparer.OrdinalIgnoreCase);
 
         var allSignals = await db.Signals
             .Where(s => s.SubjectId == subjectId)
             .ToListAsync(ct);
 
-        var orphans = allSignals.Where(s => !connected.Contains(s.Id)).ToList();
+        // A signal is connected if referenced by ID or by code
+        var orphans = allSignals
+            .Where(s => !connectedIds.Contains(s.Id) && !connectedCodes.Contains(s.Code))
+            .ToList();
         if (orphans.Count == 0) return;
 
-        // Build region → best connected signal lookup (prefer most-connected)
+        // Build region → best connected signal lookup
+        bool IsConnected(SignalEntity s) =>
+            connectedIds.Contains(s.Id) || connectedCodes.Contains(s.Code);
+
         var connectedByRegion = allSignals
-            .Where(s => connected.Contains(s.Id) && s.RegionId is not null)
+            .Where(s => IsConnected(s) && s.RegionId is not null)
             .GroupBy(s => s.RegionId!.Value)
             .ToDictionary(g => g.Key, g => g.First());
 
-        var anyConnected = allSignals.FirstOrDefault(s => connected.Contains(s.Id));
+        var anyConnected = allSignals.FirstOrDefault(IsConnected);
 
         foreach (var orphan in orphans)
         {
@@ -601,10 +715,17 @@ public class ComponentLinker(
             db.Edges.Add(new EdgeEntity
             {
                 SubjectId = subjectId,
+                // Legacy ID-based
                 SourceType = "signal",
                 SourceId = orphan.Id,
                 TargetType = "signal",
                 TargetId = target.Id,
+                // Code-based
+                SourceCode = orphan.Code,
+                SourceSignalType = orphan.Type,
+                TargetCode = target.Code,
+                TargetSignalType = target.Type,
+                RelationshipKind = "modulation",
                 Operator = "\u22a9", // ⊩ modulates
                 OperatorClass = "causal",
             });

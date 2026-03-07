@@ -22,14 +22,14 @@ CREATE TABLE entity (
     name            VARCHAR(100) NOT NULL,
     kind            VARCHAR(30) NOT NULL DEFAULT 'person',
     data            JSONB DEFAULT '{}',
-    embedding       vector(1536),
+    embedding       vector(2560),
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_entity_owner ON entity(owner_id);
 CREATE UNIQUE INDEX idx_entity_owner_name ON entity(owner_id, namespace, name);
 CREATE INDEX idx_entity_ns ON entity(namespace);
 CREATE INDEX idx_entity_kind ON entity(kind);
-CREATE INDEX idx_entity_embed ON entity USING hnsw(embedding vector_cosine_ops);
+CREATE INDEX idx_entity_embed ON entity USING ivfflat(embedding vector_cosine_ops) WITH (lists = 10);
 COMMENT ON TABLE entity IS
 'Scope target. What the graph describes.
  kind: person | market | organism | system | organization | population | device.
@@ -47,7 +47,7 @@ CREATE TABLE stimuli (
     formula         TEXT,
     analyzed        BOOLEAN DEFAULT false,
     content         JSONB DEFAULT '{}',
-    embedding       vector(1536),
+    embedding       vector(2560),
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_stimuli_eid ON stimuli(entity_id);
@@ -55,12 +55,12 @@ CREATE INDEX idx_stimuli_kind ON stimuli(kind);
 CREATE INDEX idx_stimuli_queue ON stimuli(entity_id, analyzed) WHERE analyzed = false;
 CREATE INDEX idx_stimuli_time ON stimuli(entity_id, created_on_utc DESC);
 CREATE INDEX idx_stimuli_content ON stimuli USING GIN(content);
-CREATE INDEX idx_stimuli_embed ON stimuli USING hnsw(embedding vector_cosine_ops);
+CREATE INDEX idx_stimuli_embed ON stimuli USING ivfflat(embedding vector_cosine_ops) WITH (lists = 10);
 COMMENT ON TABLE stimuli IS
 'Parser inbox. Everything the system reacts to. Append-only.
  kind: chat | observation | clinical | wearable | behavioral | formula | intervention.
  analyzed=false: queued for parsing. analyzed=true: consumed, graph updated.
- System outputs (events, snapshots, tool results) go to protocol + edge tables,
+ System outputs (events, snapshots, tool results) go to analysis + edge tables,
  not here. Stimuli flow in. Signals flow through. Protocol records what happened.';
 
 
@@ -105,6 +105,7 @@ CREATE TABLE region (
     stress_load     VARCHAR(5) DEFAULT '≈',
     properties      JSONB DEFAULT '{}',
     cause           TEXT,
+    embedding       vector(2560),
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE UNIQUE INDEX idx_region_global_code ON region(code) WHERE entity_id IS NULL;
@@ -145,7 +146,8 @@ CREATE TABLE signal (
     tau_max_ms      BIGINT,
     trend           VARCHAR(15),
     cause           TEXT,
-    protocol_id     INT,
+    embedding       vector(2560),
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_signal_latest ON signal(entity_id, code, region_id, created_on_utc DESC);
@@ -171,13 +173,16 @@ COMMENT ON TABLE signal IS
 CREATE TABLE receptor (
     id              SERIAL PRIMARY KEY,
     entity_id       UUID NOT NULL REFERENCES entity(id) ON DELETE CASCADE,
-    signal_id       INT NOT NULL REFERENCES signal(id) ON DELETE CASCADE,
+    signal_id       INT REFERENCES signal(id) ON DELETE SET NULL,
+    signal_code     VARCHAR(30),
+    signal_type     VARCHAR(10),
     code            VARCHAR(30) NOT NULL,
     subtype         VARCHAR(20),
     module_id       INT REFERENCES module(id),
     state           VARCHAR(10) NOT NULL DEFAULT 'active',
     cause           TEXT,
-    protocol_id     INT,
+    embedding       vector(2560),
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_receptor_latest ON receptor(entity_id, code, created_on_utc DESC);
@@ -185,6 +190,7 @@ CREATE INDEX idx_receptor_eid ON receptor(entity_id);
 CREATE INDEX idx_receptor_signal ON receptor(signal_id);
 CREATE INDEX idx_receptor_module ON receptor(module_id);
 CREATE INDEX idx_receptor_state ON receptor(entity_id, state);
+CREATE INDEX idx_receptor_signal_code ON receptor(entity_id, signal_code);
 COMMENT ON TABLE receptor IS
 'Input component. Append-only.
  state: active | desens | intern | upreg | downreg | resist | primed.
@@ -197,19 +203,22 @@ COMMENT ON TABLE receptor IS
 CREATE TABLE transporter (
     id              SERIAL PRIMARY KEY,
     entity_id       UUID NOT NULL REFERENCES entity(id) ON DELETE CASCADE,
-    signal_id       INT NOT NULL REFERENCES signal(id) ON DELETE CASCADE,
+    signal_id       INT REFERENCES signal(id) ON DELETE SET NULL,
+    signal_code     VARCHAR(30),
+    signal_type     VARCHAR(10),
     code            VARCHAR(30) NOT NULL,
     module_id       INT REFERENCES module(id),
     state           VARCHAR(10) NOT NULL DEFAULT 'active',
     clearance       VARCHAR(5) NOT NULL DEFAULT '≈',
     cause           TEXT,
-    protocol_id     INT,
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_transporter_latest ON transporter(entity_id, code, created_on_utc DESC);
 CREATE INDEX idx_transporter_eid ON transporter(entity_id);
 CREATE INDEX idx_transporter_signal ON transporter(signal_id);
 CREATE INDEX idx_transporter_module ON transporter(module_id);
+CREATE INDEX idx_transporter_signal_code ON transporter(entity_id, signal_code);
 COMMENT ON TABLE transporter IS
 'Clearance component. Append-only.
  state: active | blocked | impaired | enhanced. clearance: ↑↑ | ↑ | ≈ | ↓ | ↓↓ | ⊘.';
@@ -239,7 +248,8 @@ CREATE TABLE gate (
     cache_ms        INT,
     --
     cause           TEXT,
-    protocol_id     INT,
+    embedding       vector(2560),
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_gate_latest ON gate(entity_id, code, created_on_utc DESC);
@@ -272,7 +282,8 @@ CREATE TABLE limiter (
     rate_limiting   BOOLEAN DEFAULT false,
     activity        VARCHAR(10) NOT NULL DEFAULT '≈',
     cause           TEXT,
-    protocol_id     INT,
+    embedding       vector(2560),
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_limiter_latest ON limiter(entity_id, code, created_on_utc DESC);
@@ -300,7 +311,7 @@ CREATE TABLE interface (
     pathway_id      INT,  -- FK added after pathway table created
     active          BOOLEAN DEFAULT true,
     cause           TEXT,
-    protocol_id     INT,
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_interface_latest ON interface(entity_id, code, created_on_utc DESC);
@@ -328,7 +339,7 @@ CREATE TABLE loop (
     gain_product     NUMERIC,
     time_constant_ms BIGINT,
     active           BOOLEAN DEFAULT true,
-    protocol_id      INT,  -- FK added after protocol table
+    analysis_id      INT,  -- FK added after analysis table
     created_on_utc   TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_loop_entity   ON loop(entity_id);
@@ -360,7 +371,7 @@ CREATE TABLE plasticity (
     induction_id     INT     REFERENCES signal(id),
     consolidation    BOOLEAN DEFAULT false,
     reversible       BOOLEAN DEFAULT true,
-    protocol_id      INT,   -- FK added after protocol table
+    analysis_id      INT,   -- FK added after analysis table
     created_on_utc   TIMESTAMPTZ DEFAULT NOW(),
 
     CONSTRAINT plasticity_target_check
@@ -393,7 +404,7 @@ CREATE TABLE pathway (
     target_region_id INT     REFERENCES region(id),
     expression       TEXT,
     active           BOOLEAN DEFAULT true,
-    protocol_id      INT,   -- FK added after protocol table
+    analysis_id      INT,   -- FK added after analysis table
     created_on_utc   TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_pathway_entity  ON pathway(entity_id);
@@ -423,7 +434,7 @@ CREATE TABLE constraint_def (
     confidence      NUMERIC DEFAULT 1.0,
     module_id       INT REFERENCES module(id),
     active          BOOLEAN DEFAULT true,
-    protocol_id     INT,
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_constraint_eid ON constraint_def(entity_id);
@@ -453,7 +464,7 @@ CREATE TABLE tool (
     retry_count     INT DEFAULT 0,
     fallback        JSONB,
     module_id       INT REFERENCES module(id),
-    protocol_id     INT,
+    analysis_id     INT,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_tool_eid ON tool(entity_id);
@@ -468,9 +479,9 @@ COMMENT ON TABLE tool IS
 
 
 -- ═══════════════════════════════════════
--- PROTOCOL — immutable audit log
+-- ANALYSIS — immutable audit log
 -- ═══════════════════════════════════════
-CREATE TABLE protocol (
+CREATE TABLE analysis (
     id              SERIAL PRIMARY KEY,
     entity_id       UUID REFERENCES entity(id) ON DELETE CASCADE,
     stimuli_id      INT REFERENCES stimuli(id),
@@ -480,50 +491,37 @@ CREATE TABLE protocol (
     status          TEXT,
     phase           TEXT,
     seq             INT,
-    -- edge fields (inline to avoid join for simple formulas)
-    edge_gain       NUMERIC,
-    edge_noise      NUMERIC,
-    edge_fn         VARCHAR(10),
-    edge_delay_ms   BIGINT,
-    edge_clamp_lo   NUMERIC,
-    edge_clamp_hi   NUMERIC,
-    -- bind/fail fields
     bind_expr       TEXT,
     fail_condition  TEXT,
-    fail_consequence TEXT,
-    fail_held_ms    BIGINT,
-    --
-    embedding       vector(1536),
+    embedding       vector(2560),
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX idx_protocol_eid ON protocol(entity_id);
-CREATE INDEX idx_protocol_tag ON protocol(tag);
-CREATE INDEX idx_protocol_phase ON protocol(phase);
-CREATE INDEX idx_protocol_stimuli ON protocol(stimuli_id);
-CREATE INDEX idx_protocol_module ON protocol(module_id);
-CREATE INDEX idx_protocol_seq ON protocol(entity_id, phase, seq);
-CREATE INDEX idx_protocol_embed ON protocol USING hnsw(embedding vector_cosine_ops);
-COMMENT ON TABLE protocol IS
-'Immutable audit log. Every tag line = one protocol row.
+CREATE INDEX idx_analysis_eid ON analysis(entity_id);
+CREATE INDEX idx_analysis_tag ON analysis(tag);
+CREATE INDEX idx_analysis_phase ON analysis(phase);
+CREATE INDEX idx_analysis_stimuli ON analysis(stimuli_id);
+CREATE INDEX idx_analysis_module ON analysis(module_id);
+CREATE INDEX idx_analysis_seq ON analysis(entity_id, phase, seq);
+CREATE INDEX idx_analysis_embed ON analysis USING ivfflat(embedding vector_cosine_ops) WITH (lists = 10);
+COMMENT ON TABLE analysis IS
+'Immutable audit log. Every tag line = one analysis row.
  tag: SIGNAL | RECEPTOR | GATE | LIMITER | FEEDBACK | FORMULA | STATE
       | TRANSPORT | INTERFACE | DEF | DYSREG | HYPOTHESIS | PREDICTION
       | INTERVENTION | EDGE | CONSTRAINT | EQUILIBRIUM | BOUNDARY
       | CONSERVE | TOOL | LLM_GATE | EMIT | MESSAGE | MODULE | IMPORT
       | LOOP | PLASTICITY | PATHWAY.
- entity_id NULL = global textbook. module_id scopes to subgraph.
- LOOP: references loop.id in properties. PLASTICITY: references plasticity.id.
- PATHWAY / DEF: references pathway.id.';
+ entity_id NULL = global textbook. module_id scopes to subgraph.';
 
--- FK constraints added after protocol exists
-ALTER TABLE signal ADD CONSTRAINT fk_signal_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE receptor ADD CONSTRAINT fk_receptor_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE transporter ADD CONSTRAINT fk_transporter_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE gate ADD CONSTRAINT fk_gate_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE limiter ADD CONSTRAINT fk_limiter_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE interface ADD CONSTRAINT fk_interface_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE loop ADD CONSTRAINT fk_loop_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE plasticity ADD CONSTRAINT fk_plast_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
-ALTER TABLE pathway ADD CONSTRAINT fk_pathway_protocol FOREIGN KEY (protocol_id) REFERENCES protocol(id);
+-- FK constraints added after analysis table exists
+ALTER TABLE signal ADD CONSTRAINT fk_signal_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE receptor ADD CONSTRAINT fk_receptor_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE transporter ADD CONSTRAINT fk_transporter_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE gate ADD CONSTRAINT fk_gate_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE limiter ADD CONSTRAINT fk_limiter_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE interface ADD CONSTRAINT fk_interface_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE loop ADD CONSTRAINT fk_loop_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE plasticity ADD CONSTRAINT fk_plast_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
+ALTER TABLE pathway ADD CONSTRAINT fk_pathway_analysis FOREIGN KEY (analysis_id) REFERENCES analysis(id);
 
 -- FK constraints added after edge table exists
 ALTER TABLE interface ADD CONSTRAINT fk_interface_pathway FOREIGN KEY (pathway_id) REFERENCES pathway(id);
@@ -537,9 +535,21 @@ CREATE TABLE edge (
     id              SERIAL PRIMARY KEY,
     entity_id       UUID REFERENCES entity(id) ON DELETE CASCADE,
     source_type     VARCHAR(15) NOT NULL,
-    source_id       INT NOT NULL,
+    source_id       INT,
     target_type     VARCHAR(15) NOT NULL,
-    target_id       INT NOT NULL,
+    target_id       INT,
+    -- Code-based endpoints (store LLM codes directly)
+    source_code         VARCHAR(30),
+    source_signal_type  VARCHAR(10),
+    source_region       VARCHAR(30),
+    target_code         VARCHAR(30),
+    target_signal_type  VARCHAR(10),
+    target_region       VARCHAR(30),
+    relationship_kind   VARCHAR(30),
+    -- Gate code-based (alongside gate_id FK)
+    gate_code           VARCHAR(100),
+    gate_type           VARCHAR(15),
+    gate_condition      TEXT,
     operator        VARCHAR(20) NOT NULL,
     operator_class  VARCHAR(15) NOT NULL,
     gain            NUMERIC,
@@ -555,7 +565,8 @@ CREATE TABLE edge (
     dysreg_type     VARCHAR(20),
     module_id       INT REFERENCES module(id),
     tool_id         INT REFERENCES tool(id),
-    protocol_id     INT REFERENCES protocol(id),
+    embedding       vector(2560),
+    analysis_id     INT REFERENCES analysis(id),
     active          BOOLEAN DEFAULT true,
     created_on_utc  TIMESTAMPTZ DEFAULT NOW()
 );
@@ -566,7 +577,7 @@ CREATE INDEX idx_edge_operator ON edge(operator);
 CREATE INDEX idx_edge_class ON edge(operator_class);
 CREATE INDEX idx_edge_module ON edge(module_id);
 CREATE INDEX idx_edge_active ON edge(entity_id) WHERE active = true;
-CREATE INDEX idx_edge_protocol ON edge(protocol_id);
+CREATE INDEX idx_edge_analysis ON edge(analysis_id);
 CREATE INDEX idx_edge_walk ON edge(entity_id, source_type, source_id, active) WHERE active = true;
 CREATE INDEX idx_edge_walk_rev ON edge(entity_id, target_type, target_id, active) WHERE active = true;
 CREATE INDEX idx_edge_global ON edge(source_type, source_id, active) WHERE entity_id IS NULL AND active = true;
@@ -575,6 +586,9 @@ CREATE INDEX idx_edge_tool ON edge(tool_id) WHERE tool_id IS NOT NULL;
 CREATE INDEX idx_edge_loop ON edge(loop_id) WHERE loop_id IS NOT NULL;
 CREATE INDEX idx_edge_pathway ON edge(pathway_id) WHERE pathway_id IS NOT NULL;
 CREATE INDEX idx_edge_dysreg ON edge(entity_id, dysreg_type) WHERE dysreg_type IS NOT NULL;
+CREATE INDEX idx_edge_source_code ON edge(entity_id, source_code) WHERE source_code IS NOT NULL;
+CREATE INDEX idx_edge_target_code ON edge(entity_id, target_code) WHERE target_code IS NOT NULL;
+CREATE INDEX idx_edge_rel_kind ON edge(entity_id, relationship_kind) WHERE relationship_kind IS NOT NULL;
 COMMENT ON TABLE edge IS
 'Graph layer. Every relationship is an explicit row. Append-only.
  source_type/target_type: signal | receptor | transporter | limiter | gate | tool.
@@ -609,7 +623,7 @@ COMMENT ON TABLE edge IS
 --   pathway        named multi-hop route (DEF circuits, projections)
 --   constraint_def simultaneous conditions
 --   tool           external action bridge
---   protocol       immutable audit log
+--   analysis       immutable audit log
 --   edge           graph layer (+ loop_id, pathway_id, dysreg_type)
 --
 -- Flow: stimuli in → parser → signals/edges/gates → eval engine → stable

@@ -16,6 +16,7 @@ public class RegionEntity
     public string StressLoad { get; set; } = "≈";
     public string? Properties { get; set; }
     public string? Cause { get; set; }
+    public Vector? Embedding { get; set; }
     public DateTimeOffset CreatedOnUtc { get; set; }
 
     public SubjectEntity? Subject { get; set; }

@@ -23,7 +23,9 @@ services:
       - Llm__Chat__Endpoint=http://vllm:8000
       # Cloud API keys from .env file
       - Llm__Orchestrator__ApiKey=${Llm__Orchestrator__ApiKey:-}
-      - Llm__Embedding__ApiKey=${Llm__Embedding__ApiKey:-}
+      - Llm__Embedding__Endpoint=http://vllm-embed:8001
+      - Llm__Embedding__Model=/models/Qwen3-Embedding-4B
+      - Llm__Embedding__Dimensions=2560
       # Neo4j graph sync
       - Neo4j__Uri=bolt://neo4j:7687
       - Neo4j__Password=${NEO4J_PASSWORD:-biochain_graph}
@@ -87,6 +89,43 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+
+  # vLLM Embedding — Qwen3-Embedding-4B FP16 (single GPU, pooling mode)
+  # Serves /v1/embeddings endpoint for bio-insight vectors
+  vllm-embed:
+    image: vllm/vllm-openai:nightly
+    container_name: biochain-vllm-embed
+    ports:
+      - "8001:8001"
+    volumes:
+      - /c/Users/ailon/llm/Qwen3-Embedding-4B:/models/Qwen3-Embedding-4B
+    command:
+      - "--model"
+      - "/models/Qwen3-Embedding-4B"
+      - "--port"
+      - "8001"
+      - "--runner"
+      - "pooling"
+      - "--max-model-len"
+      - "8192"
+      - "--gpu-memory-utilization"
+      - "0.45"
+      - "--dtype"
+      - "float16"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # Neo4j — Graph Database (synced from PostgreSQL via LISTEN/NOTIFY)
   neo4j:

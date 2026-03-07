@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import HereticChatPage from '@/pages/HereticChatPage';
 import QuestionnairePage from '@/pages/QuestionnairePage';
+import ConstellationPage from '@/pages/ConstellationPage';
 
 export default function App() {
   return (
@@ -19,6 +20,22 @@ export default function App() {
         element={
           <Layout>
             <QuestionnairePage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/constellation"
+        element={
+          <Layout>
+            <ConstellationPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/constellation/:subjectId"
+        element={
+          <Layout>
+            <ConstellationPage />
           </Layout>
         }
       />

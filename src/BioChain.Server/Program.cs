@@ -118,7 +118,7 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddScoped<ISubjectRepository, SubjectRepository>();
     services.AddScoped<IStimuliRepository, StimuliRepository>();
     services.AddScoped<IGateRepository, GateRepository>();
-    services.AddScoped<IProtocolRepository, ProtocolRepository>();
+    services.AddScoped<IAnalysisRepository, AnalysisRepository>();
     services.AddScoped<IModuleRepository, ModuleRepository>();
     services.AddScoped<IQuestionnaireRepository, QuestionnaireRepository>();
     services.AddScoped<IPersonShareRepository, PersonShareRepository>();
@@ -165,6 +165,7 @@ static void RegisterAll(IServiceCollection services, AgentConfiguration llm, str
     services.AddScoped<AnalyzeService>();
     services.AddScoped<SimulationService>();
     services.AddScoped<BioChainChatService>();
+    services.AddScoped<IConstellationService, ConstellationService>();
 
     // Neo4j graph sync (optional — only if Neo4j:Uri is configured)
     var neo4jUri = appConfig["Neo4j:Uri"];
@@ -258,6 +259,7 @@ static async Task RunHttpMode(string[] args)
         app.MapChatApi().AllowAnonymous();
         app.MapQuestionnaireApi().AllowAnonymous();
         app.MapSubjectApi().AllowAnonymous();
+        app.MapConstellationApi().AllowAnonymous();
         app.MapKernelApi().AllowAnonymous();
     }
     else
@@ -266,6 +268,7 @@ static async Task RunHttpMode(string[] args)
         app.MapAnalyzeApi().RequireAuthorization("HasRole");
         app.MapChatApi().RequireAuthorization("HasRole");
         app.MapSubjectApi().RequireAuthorization("HasRole");
+        app.MapConstellationApi().RequireAuthorization("HasRole");
         app.MapQuestionnaireApi();
         app.MapKernelApi().RequireAuthorization("HasRole");
     }

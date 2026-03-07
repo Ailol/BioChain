@@ -355,6 +355,62 @@ public static partial class BioChainParser
         _ => Normalize(raw.Trim())
     };
 
+    // ── BIND: name = signal_expression ──
+
+    /// <summary>
+    /// Extracts a BIND assignment: name = expression with signal references.
+    /// Returns the concept name and a list of referenced signal codes + regions.
+    /// Example: "mood_regulation = 5HT@DRN + DA@VTA + GABA@AMY"
+    ///   → ("mood_regulation", [("5HT","DRN"), ("DA","VTA"), ("GABA","AMY")])
+    /// </summary>
+    public static (string Name, List<(string Code, string? Region)> Sources)? ExtractBind(string formula)
+    {
+        var eqIdx = formula.IndexOf('=');
+        if (eqIdx <= 0) return null;
+
+        var name = formula[..eqIdx].Trim();
+        var expr = formula[(eqIdx + 1)..].Trim();
+
+        // Extract signal refs from the right-hand expression using existing patterns
+        var refs = SignalRefPattern().Matches(expr);
+        var sources = new List<(string, string?)>();
+
+        if (refs.Count > 0)
+        {
+            foreach (Match m in refs)
+                sources.Add((m.Groups["code"].Value,
+                    m.Groups["region"].Success ? m.Groups["region"].Value : null));
+        }
+        else
+        {
+            // Fallback: match CODE[state] without @REGION
+            var fallback = SignalRefFallbackPattern().Matches(expr);
+            foreach (Match m in fallback)
+                sources.Add((m.Groups["code"].Value,
+                    m.Groups["region"].Success && m.Groups["region"].Value.Length > 0
+                        ? m.Groups["region"].Value : null));
+        }
+
+        if (sources.Count == 0)
+        {
+            // Last resort: split on operators and extract bare signal codes
+            var parts = expr.Split(['+', '\u2192', '\u22A3', '\u2225', ' '],
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var part in parts)
+            {
+                var atIdx = part.IndexOf('@');
+                if (atIdx > 0)
+                    sources.Add((part[..atIdx], part[(atIdx + 1)..]));
+                else if (part.Length >= 2 && part.All(c => char.IsLetterOrDigit(c) || c == '_')
+                         && part.Any(char.IsUpper))
+                    sources.Add((part, null));
+            }
+        }
+
+        if (sources.Count == 0 || string.IsNullOrWhiteSpace(name)) return null;
+        return (name, sources);
+    }
+
     // ── Limiter reaction → signal ref extraction ──
 
     /// <summary>
@@ -381,12 +437,22 @@ public static partial class BioChainParser
         return (code, region);
     }
 
-    // ── Transporter → Signal code mapping ──
+    // ── Transporter → Signal code inference ──
 
-    public static string? MapTransporterToSignal(string code) => code.ToUpperInvariant() switch
+    /// <summary>
+    /// Infers the parent signal code from a transporter code using naming conventions.
+    /// Returns null for unrecognized codes (still stored, just unresolved).
+    /// </summary>
+    public static string? InferTransporterSignalCode(string code) => code.ToUpperInvariant() switch
     {
-        "DAT" => "DA", "SERT" => "5HT", "NET" => "NE", "GAT" => "GABA",
-        "VMAT2" => "DA", "EAAT" => "GLU", "CHT" => "ACh", _ => null
+        "DAT" or "VMAT2" => "DA",
+        "SERT" => "5HT",
+        "NET" => "NE",
+        "GAT" or "GAT1" or "GAT3" => "GABA",
+        "EAAT" or "EAAT1" or "EAAT2" or "EAAT3" => "GLU",
+        "CHT" or "CHT1" => "ACH",
+        "PMAT" => null,  // polyspecific — multiple signals
+        _ => null         // unknown — store anyway, resolve later
     };
 
     // ── Signal code → type inference ──

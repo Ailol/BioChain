@@ -10,11 +10,11 @@ public class LoopEntity
     public decimal? GainProduct { get; set; }
     public long? TimeConstantMs { get; set; }
     public bool Active { get; set; } = true;
-    public int? ProtocolId { get; set; }
+    public int? AnalysisId { get; set; }
     public DateTimeOffset CreatedOnUtc { get; set; }
 
     public SubjectEntity Subject { get; set; } = null!;
     public ModuleEntity Module { get; set; } = null!;
-    public ProtocolEntity? Protocol { get; set; }
+    public AnalysisEntity? Analysis { get; set; }
     public ICollection<EdgeEntity> Edges { get; set; } = [];
 }

@@ -96,7 +96,7 @@ public static class QuestionnaireApi
                     results[idx] = await analyze.AnalyzeAsync(req.SubjectId, analysisText, "psych", ct);
                 });
 
-            var totalProtocols = results.Sum(r => r.ProtocolsStored);
+            var totalAnalyses = results.Sum(r => r.AnalysesStored);
             var totalLines = results.Sum(r => r.LinesTotal);
             var stimuliIds = results.Select(r => r.StimuliId).ToList();
 
@@ -106,7 +106,7 @@ public static class QuestionnaireApi
             return Results.Ok(new QuestionnaireSubmitResponse(
                 questionnaire.Id,
                 stimuliIds,
-                totalProtocols,
+                totalAnalyses,
                 totalLines));
         });
 
@@ -146,5 +146,5 @@ public record QuestionnaireAnswer(int SortOrder, int SelectedItemId);
 public record QuestionnaireSubmitResponse(
     Guid QuestionnaireId,
     List<int> StimuliIds,
-    int ProtocolsStored,
+    int AnalysesStored,
     int LinesTotal);

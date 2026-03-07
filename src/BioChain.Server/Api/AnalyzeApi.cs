@@ -22,7 +22,7 @@ public static class AnalyzeApi
             return Results.Ok(new
             {
                 result.StimuliId,
-                result.ProtocolsStored,
+                result.AnalysesStored,
                 result.LinesTotal,
             });
         });
@@ -42,23 +42,23 @@ public static class AnalyzeApi
             return Results.Ok(new
             {
                 result.StimuliId,
-                result.ProtocolsStored,
+                result.AnalysesStored,
                 result.LinesTotal,
             });
         });
 
         // Get analysis history for a person
         group.MapGet("/{personId:guid}", async (Guid personId, IUserContext ctx,
-            ISubjectRepository subjects, IProtocolRepository protocols) =>
+            ISubjectRepository subjects, IAnalysisRepository analyses) =>
         {
             if (!await subjects.HasAccessAsync(personId, ctx.UserId))
                 return Results.Forbid();
 
-            var list = await protocols.GetByPersonAsync(personId);
+            var list = await analyses.GetByPersonAsync(personId);
             return Results.Ok(new
             {
                 count = list.Count,
-                protocols = list.Select(p => new
+                analyses = list.Select(p => new
                 {
                     p.Id, p.Tag, p.Formula, p.Status, p.Phase,
                     createdAt = p.CreatedOnUtc,

@@ -12,12 +12,12 @@ public class AnalyzeService(
     LlmSemaphore llmSemaphore,
     IPromptStore prompts,
     IStimuliRepository stimuli,
-    IProtocolRepository protocols,
+    IAnalysisRepository analyses,
     IComponentLinker linker)
 {
     private readonly string? SystemPrompt =
-        prompts.Load("SIGNALS_ANALYZER_PROMPT.txt")
-        ?? prompts.Load("BIOCHAIN_ANALYZER_PROMPT.txt");
+        prompts.Load("BIOCHAIN_ANALYZER_PROMPT.txt")
+        ?? prompts.Load("SIGNALS_ANALYZER_PROMPT.txt");
 
     private static readonly Dictionary<string, string> Preambles = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -47,10 +47,10 @@ public class AnalyzeService(
         var options = new ChatOptions
         {
             MaxOutputTokens = 4096,
-            Temperature = 0.7f,
+            Temperature = 0.3f,
             TopP = 0.8f,
             TopK = 20,
-            PresencePenalty = 1.5f,
+            PresencePenalty = 0.0f,
             AdditionalProperties = new AdditionalPropertiesDictionary
             {
                 ["chat_template_kwargs"] = new Dictionary<string, object> { ["enable_thinking"] = false },
@@ -73,13 +73,13 @@ public class AnalyzeService(
 
         var raw = StripThinkBlocks(response.Text ?? "");
 
-        // 3. Parse + store: protocol first (to get ID), then link via ComponentLinker
+        // 3. Parse + store: analysis first (to get ID), then link via ComponentLinker
         var lines = BioChainParser.Parse(raw);
         var stored = 0;
 
         foreach (var line in lines)
         {
-            var protocolEntity = new ProtocolEntity
+            var analysisEntity = new AnalysisEntity
             {
                 SubjectId = subjectId,
                 Tag = line.Tag,
@@ -91,12 +91,12 @@ public class AnalyzeService(
             };
 
             if (line.Tag is "BIND")
-                protocolEntity.BindExpr = line.Formula;
+                analysisEntity.BindExpr = line.Formula;
             else if (line.Tag is "FAIL")
-                protocolEntity.FailCondition = line.Formula;
+                analysisEntity.FailCondition = line.Formula;
 
-            var protocol = await protocols.CreateAsync(protocolEntity, ct);
-            await linker.LinkAsync(protocol, line, subjectId, ct);
+            var analysis = await analyses.CreateAsync(analysisEntity, ct);
+            await linker.LinkAsync(analysis, line, subjectId, ct);
             stored++;
         }
 
@@ -122,4 +122,4 @@ public class AnalyzeService(
     }
 }
 
-public record AnalyzeResult(int StimuliId, int ProtocolsStored, int LinesTotal, string RawOutput);
+public record AnalyzeResult(int StimuliId, int AnalysesStored, int LinesTotal, string RawOutput);

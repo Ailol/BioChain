@@ -1,10 +1,11 @@
 import { type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageCircle, ClipboardList, Brain } from 'lucide-react';
+import { MessageCircle, ClipboardList, Brain, Orbit } from 'lucide-react';
 
 const navItems = [
   { to: '/', icon: MessageCircle, label: 'Chat' },
   { to: '/questionnaire', icon: ClipboardList, label: 'Questionnaire' },
+  { to: '/constellation', icon: Orbit, label: 'Constellation' },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {

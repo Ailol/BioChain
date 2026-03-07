@@ -155,24 +155,28 @@ $$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE VIEW v_graph AS
 SELECT
-    e.id AS edge_id, e.entity_id,
+    e.id AS eid, e.entity_id,
     e.source_type, e.source_id,
-    src.code AS source_code, src.primary_state AS source_state,
+    COALESCE(e.source_code, src.code) AS source_code,
+    src.primary_state AS source_state,
     src.properties AS source_properties,
     e.operator, e.operator_class, e.properties AS edge_properties,
     e.gain, e.noise_sigma, e.transfer_fn, e.delay_ms,
     e.clamp_lo, e.clamp_hi,
     e.target_type, e.target_id,
-    tgt.code AS target_code, tgt.primary_state AS target_state,
+    COALESCE(e.target_code, tgt.code) AS target_code,
+    tgt.primary_state AS target_state,
     tgt.properties AS target_properties,
     e.gate_id,
     g.type AS gate_type,
     CASE WHEN e.gate_id IS NULL THEN true
          ELSE evaluate_gate(e.gate_id, e.entity_id) END AS gate_active,
-    e.active, e.protocol_id, e.created_on_utc
+    e.active, e.analysis_id, e.created_on_utc
 FROM edge e
 JOIN v_node src ON src.kind = e.source_type AND src.id = e.source_id
+                AND src.entity_id = e.entity_id
 JOIN v_node tgt ON tgt.kind = e.target_type AND tgt.id = e.target_id
+                AND tgt.entity_id = e.entity_id
 LEFT JOIN v_gate_current g ON g.id = e.gate_id
 WHERE e.active = true;
 
@@ -319,36 +323,57 @@ BEGIN
                     'transfer_fn', NULL, 'delay_ms', NULL,
                     'gate_id', NULL, 'gate_type', NULL,
                     'gate_active', NULL
-                ) FROM v_signal_current s
+                ) FROM signal s
                 JOIN v_region_current r
                     ON s.region_id = r.id AND s.entity_id = r.entity_id
                 WHERE s.entity_id = p_entity_id
                   AND s.region_id IS NOT NULL
 
                 -- ── BINDS: receptor → signal ─────────────────
-                -- raw_sig resolves FK; cur_sig gives current nid
+                -- FK-based (signal_id set)
                 UNION ALL
                 SELECT jsonb_build_object(
                     'source', rec.code, 'source_type', 'receptor',
                     'source_id', rec.id,
                     'operator', '⊕', 'class', 'binds',
-                    'target', cur_sig.code, 'target_type', 'signal',
-                    'target_id', cur_sig.id,
+                    'target', sig.code, 'target_type', 'signal',
+                    'target_id', sig.id,
                     'properties', NULL::JSONB,
                     'gain', NULL, 'noise_sigma', NULL,
                     'transfer_fn', NULL, 'delay_ms', NULL,
                     'gate_id', NULL, 'gate_type', NULL,
                     'gate_active', NULL
-                ) FROM v_receptor_current rec
-                JOIN signal raw_sig ON rec.signal_id = raw_sig.id
-                JOIN v_signal_current cur_sig
-                    ON cur_sig.entity_id = raw_sig.entity_id
-                    AND cur_sig.code = raw_sig.code
-                    AND cur_sig.region_id IS NOT DISTINCT FROM raw_sig.region_id
+                ) FROM receptor rec
+                JOIN signal sig ON rec.signal_id = sig.id
                 WHERE rec.entity_id = p_entity_id
                   AND rec.signal_id IS NOT NULL
 
+                -- Code-based BINDS (signal_id NULL, signal_code set)
+                UNION ALL
+                SELECT jsonb_build_object(
+                    'source', rec.code, 'source_type', 'receptor',
+                    'source_id', rec.id,
+                    'operator', '⊕', 'class', 'binds',
+                    'target', sig.code, 'target_type', 'signal',
+                    'target_id', sig.id,
+                    'properties', NULL::JSONB,
+                    'gain', NULL, 'noise_sigma', NULL,
+                    'transfer_fn', NULL, 'delay_ms', NULL,
+                    'gate_id', NULL, 'gate_type', NULL,
+                    'gate_active', NULL
+                ) FROM receptor rec
+                CROSS JOIN LATERAL (
+                    SELECT id, code FROM signal
+                    WHERE code = rec.signal_code
+                      AND entity_id = rec.entity_id
+                    ORDER BY created_on_utc DESC LIMIT 1
+                ) sig
+                WHERE rec.entity_id = p_entity_id
+                  AND rec.signal_id IS NULL
+                  AND rec.signal_code IS NOT NULL
+
                 -- ── EXPRESSED_IN: receptor → region (via signal) ─
+                -- FK-based
                 UNION ALL
                 SELECT jsonb_build_object(
                     'source', rec.code, 'source_type', 'receptor',
@@ -361,7 +386,7 @@ BEGIN
                     'transfer_fn', NULL, 'delay_ms', NULL,
                     'gate_id', NULL, 'gate_type', NULL,
                     'gate_active', NULL
-                ) FROM v_receptor_current rec
+                ) FROM receptor rec
                 JOIN signal raw_sig ON rec.signal_id = raw_sig.id
                 JOIN v_region_current reg
                     ON raw_sig.region_id = reg.id AND raw_sig.entity_id = reg.entity_id
@@ -369,27 +394,75 @@ BEGIN
                   AND rec.signal_id IS NOT NULL
                   AND raw_sig.region_id IS NOT NULL
 
-                -- ── CLEARS: transporter → signal ─────────────
+                -- Code-based EXPRESSED_IN
                 UNION ALL
                 SELECT jsonb_build_object(
-                    'source', t.code, 'source_type', 'transporter',
-                    'source_id', t.id,
-                    'operator', '⊖', 'class', 'clears',
-                    'target', cur_sig.code, 'target_type', 'signal',
-                    'target_id', cur_sig.id,
+                    'source', rec.code, 'source_type', 'receptor',
+                    'source_id', rec.id,
+                    'operator', '@', 'class', 'expressed_in',
+                    'target', reg.code, 'target_type', 'region',
+                    'target_id', reg.id,
                     'properties', NULL::JSONB,
                     'gain', NULL, 'noise_sigma', NULL,
                     'transfer_fn', NULL, 'delay_ms', NULL,
                     'gate_id', NULL, 'gate_type', NULL,
                     'gate_active', NULL
-                ) FROM v_transporter_current t
-                JOIN signal raw_sig ON t.signal_id = raw_sig.id
-                JOIN v_signal_current cur_sig
-                    ON cur_sig.entity_id = raw_sig.entity_id
-                    AND cur_sig.code = raw_sig.code
-                    AND cur_sig.region_id IS NOT DISTINCT FROM raw_sig.region_id
+                ) FROM receptor rec
+                CROSS JOIN LATERAL (
+                    SELECT s.region_id FROM signal s
+                    WHERE s.code = rec.signal_code
+                      AND s.entity_id = rec.entity_id
+                      AND s.region_id IS NOT NULL
+                    ORDER BY s.created_on_utc DESC LIMIT 1
+                ) sig_region
+                JOIN v_region_current reg
+                    ON sig_region.region_id = reg.id AND reg.entity_id = rec.entity_id
+                WHERE rec.entity_id = p_entity_id
+                  AND rec.signal_id IS NULL
+                  AND rec.signal_code IS NOT NULL
+
+                -- ── CLEARS: transporter → signal ─────────────
+                -- FK-based
+                UNION ALL
+                SELECT jsonb_build_object(
+                    'source', t.code, 'source_type', 'transporter',
+                    'source_id', t.id,
+                    'operator', '⊖', 'class', 'clears',
+                    'target', sig.code, 'target_type', 'signal',
+                    'target_id', sig.id,
+                    'properties', NULL::JSONB,
+                    'gain', NULL, 'noise_sigma', NULL,
+                    'transfer_fn', NULL, 'delay_ms', NULL,
+                    'gate_id', NULL, 'gate_type', NULL,
+                    'gate_active', NULL
+                ) FROM transporter t
+                JOIN signal sig ON t.signal_id = sig.id
                 WHERE t.entity_id = p_entity_id
                   AND t.signal_id IS NOT NULL
+
+                -- Code-based CLEARS
+                UNION ALL
+                SELECT jsonb_build_object(
+                    'source', t.code, 'source_type', 'transporter',
+                    'source_id', t.id,
+                    'operator', '⊖', 'class', 'clears',
+                    'target', sig.code, 'target_type', 'signal',
+                    'target_id', sig.id,
+                    'properties', NULL::JSONB,
+                    'gain', NULL, 'noise_sigma', NULL,
+                    'transfer_fn', NULL, 'delay_ms', NULL,
+                    'gate_id', NULL, 'gate_type', NULL,
+                    'gate_active', NULL
+                ) FROM transporter t
+                CROSS JOIN LATERAL (
+                    SELECT id, code FROM signal
+                    WHERE code = t.signal_code
+                      AND entity_id = t.entity_id
+                    ORDER BY created_on_utc DESC LIMIT 1
+                ) sig
+                WHERE t.entity_id = p_entity_id
+                  AND t.signal_id IS NULL
+                  AND t.signal_code IS NOT NULL
 
                 -- ── MODULATES: limiter → signal ──────────────
                 UNION ALL
@@ -397,19 +470,15 @@ BEGIN
                     'source', lim.code, 'source_type', 'limiter',
                     'source_id', lim.id,
                     'operator', '⧫', 'class', 'modulates',
-                    'target', cur_sig.code, 'target_type', 'signal',
-                    'target_id', cur_sig.id,
+                    'target', sig.code, 'target_type', 'signal',
+                    'target_id', sig.id,
                     'properties', NULL::JSONB,
                     'gain', NULL, 'noise_sigma', NULL,
                     'transfer_fn', NULL, 'delay_ms', NULL,
                     'gate_id', NULL, 'gate_type', NULL,
                     'gate_active', NULL
-                ) FROM v_limiter_current lim
-                JOIN signal raw_sig ON lim.target_id = raw_sig.id
-                JOIN v_signal_current cur_sig
-                    ON cur_sig.entity_id = raw_sig.entity_id
-                    AND cur_sig.code = raw_sig.code
-                    AND cur_sig.region_id IS NOT DISTINCT FROM raw_sig.region_id
+                ) FROM limiter lim
+                JOIN signal sig ON lim.target_id = sig.id
                 WHERE lim.entity_id = p_entity_id
                   AND lim.target_id IS NOT NULL
 
@@ -429,7 +498,8 @@ BEGIN
                     'gate_active', NULL
                 ) FROM edge e
                 JOIN v_node src ON src.kind = e.source_type AND src.id = e.source_id
-                JOIN v_gate_current g ON e.gate_id = g.id
+                                AND src.entity_id = e.entity_id
+                JOIN gate g ON e.gate_id = g.id
                 WHERE (e.entity_id = p_entity_id OR e.entity_id IS NULL)
                   AND e.gate_id IS NOT NULL AND e.active = true
 
@@ -446,7 +516,7 @@ BEGIN
                     'transfer_fn', NULL, 'delay_ms', NULL,
                     'gate_id', NULL, 'gate_type', NULL,
                     'gate_active', NULL
-                ) FROM v_interface_current i
+                ) FROM interface i
                 JOIN v_region_current r
                     ON i.source_region_id = r.id AND i.entity_id = r.entity_id
                 WHERE i.entity_id = p_entity_id AND i.active = true
@@ -464,7 +534,7 @@ BEGIN
                     'transfer_fn', NULL, 'delay_ms', NULL,
                     'gate_id', NULL, 'gate_type', NULL,
                     'gate_active', NULL
-                ) FROM v_interface_current i
+                ) FROM interface i
                 JOIN v_region_current r
                     ON i.target_region_id = r.id AND i.entity_id = r.entity_id
                 WHERE i.entity_id = p_entity_id AND i.active = true

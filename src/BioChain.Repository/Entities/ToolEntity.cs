@@ -13,10 +13,10 @@ public class ToolEntity
     public int RetryCount { get; set; }
     public string? Fallback { get; set; }
     public int? ModuleId { get; set; }
-    public int? ProtocolId { get; set; }
+    public int? AnalysisId { get; set; }
     public DateTimeOffset CreatedOnUtc { get; set; }
 
     public SubjectEntity? Subject { get; set; }
     public ModuleEntity? Module { get; set; }
-    public ProtocolEntity? Protocol { get; set; }
+    public AnalysisEntity? Analysis { get; set; }
 }
