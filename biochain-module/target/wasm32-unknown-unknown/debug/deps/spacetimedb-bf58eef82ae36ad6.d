@@ -1,0 +1,11 @@
+C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\spacetimedb-bf58eef82ae36ad6.d: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\log_stopwatch.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\logger.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\rng.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\rt.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\table.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\../README.md
+
+C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\libspacetimedb-bf58eef82ae36ad6.rmeta: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\log_stopwatch.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\logger.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\rng.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\rt.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\table.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\../README.md
+
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\lib.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\log_stopwatch.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\logger.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\rng.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\rt.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\table.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-2.0.3\src\../README.md:

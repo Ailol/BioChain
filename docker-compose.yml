@@ -74,6 +74,8 @@ services:
       - '{"enable_thinking": false}'
       - "--dtype"
       - "float16"
+      - "--speculative-config"
+      - '{"method": "mtp", "num_speculative_tokens": 2}'
     deploy:
       resources:
         reservations:
@@ -174,9 +176,29 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # SpacetimeDB — Relational database meets smart contracts
+  # Module published via: spacetime publish --server http://localhost:3000 biochain ./biochain-module
+  spacetimedb:
+    image: clockworklabs/spacetime:latest
+    container_name: biochain-spacetimedb
+    ports:
+      - "3000:3000"
+    volumes:
+      - spacetimedb_data:/stdb/data
+    command: ["start", "--data-dir=/stdb/data", "--listen-addr=0.0.0.0:3000"]
+    user: "0:0"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/v1/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   postgres_data:
   neo4j_data:
+  spacetimedb_data:
 
 networks:
   default:

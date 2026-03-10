@@ -1,10 +1,5 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Keycloak identity server (persistent — survives Aspire restarts, ~30s faster)
-var keycloak = builder.AddKeycloak("keycloak")
-    .WithEndpoint("http", e => e.Port = 8080)
-    .WithRealmImport("./Realms")
-    .WithLifetime(ContainerLifetime.Persistent);
 
 // PostgreSQL with pgvector for biochain storage (persistent)
 var pgPassword = builder.AddParameter("postgres-password", secret: true);
@@ -27,14 +22,12 @@ var biochainDb = postgres.AddDatabase("biochain");
 // MCP Agent Server — LLM config comes from Server's own appsettings + user-secrets
 var mcpServer = builder.AddProject<Projects.BioChain_Server>("mcp-server")
     .WithEndpoint("http", e => e.Port = 13370)
-    .WithReference(biochainDb)
-    .WithReference(keycloak);
+    .WithReference(biochainDb);
 
 // React frontend (Aspire-managed Vite dev server)
 builder.AddViteApp("biochain-app", "../../BioChain.App", "dev")
     .WithEndpoint("http", e => e.Port = 5173)
     .WithReference(mcpServer)
-    .WithReference(keycloak)
     .WaitFor(mcpServer);
 
 builder.Build().Run();

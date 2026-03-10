@@ -1,98 +1,31 @@
-# Visual Studio
+# Build
+bin/
+obj/
 .vs/
 *.user
 *.suo
-*.userosscache
-*.sln.docstates
 
-# Build results
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
-
-# NuGet
-*.nupkg
-*.snupkg
-**/[Pp]ackages/*
-!**/[Pp]ackages/build/
-*.nuget.props
-*.nuget.targets
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-# .NET Core
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-# Rider
-.idea/
-*.sln.iml
-
-# VS Code
-.vscode/
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# User-specific files
-*.rsuser
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-# Secrets - LOCAL CONFIG FILES (never committed)
-.env
-*.env.local
-appsettings.Local.json
-appsettings.*.local.json
-secrets.json
-
-# Test results
-[Tt]est[Rr]esult*/
-*.trx
-*.coverage
-*.coveragexml
-
-# NCrunch
-*.ncrunch*
-_NCrunch_*
-.*crunch*.local.xml
-nCrunchTemp_*
-
-# Aspire
-.aspire/
-nul
-
-# Test data
-cv/
-
-# Calibration raw datasets (large, downloaded separately)
-NeuroGateway.Calibration/RawData/*
-!NeuroGateway.Calibration/RawData/.gitkeep
-
-# Node / Frontend
+# Node
 node_modules/
 dist/
-*.tsbuildinfo
-.claude
+.vite/
 
-# Git worktrees
-.worktrees/
+# Environment
+.env
+.env.local
+*.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# SpacetimeDB
+.spacetime/
+
+# Playwright
+.playwright-mcp/
+
+# OS
+Thumbs.db
+.DS_Store

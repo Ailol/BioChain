@@ -1,0 +1,11 @@
+C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\decorum-94139f4c2b7ad225.d: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\canonical.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\cmp.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\constraint.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\hash.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\primitive.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\proxy.rs
+
+C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\libdecorum-94139f4c2b7ad225.rmeta: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\canonical.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\cmp.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\constraint.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\hash.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\primitive.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\proxy.rs
+
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\lib.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\canonical.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\cmp.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\constraint.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\hash.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\primitive.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\decorum-0.3.1\src\proxy.rs:

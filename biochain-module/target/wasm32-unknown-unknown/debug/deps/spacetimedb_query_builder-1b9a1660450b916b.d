@@ -1,0 +1,8 @@
+C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\spacetimedb_query_builder-1b9a1660450b916b.d: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\expr.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\join.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\table.rs
+
+C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\libspacetimedb_query_builder-1b9a1660450b916b.rmeta: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\expr.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\join.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\table.rs
+
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\lib.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\expr.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\join.rs:
+C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-query-builder-2.0.3\src\table.rs:

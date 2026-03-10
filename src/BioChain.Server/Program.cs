@@ -22,6 +22,7 @@ using Neo4j.Driver;
 using OllamaSharp;
 using OpenAI;
 using BioChain.Kernel.Signals;
+using BioChain.Service.IModels;
 
 if (args.Contains("--stdio"))
     await RunStdioMode(args);
