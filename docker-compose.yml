@@ -1,140 +1,14 @@
-# BioChain Docker Compose
+# Chain Core — Infrastructure Services
 # Usage:
-#   docker-compose up -d                    # Start all services
-#   docker-compose up -d --build            # Rebuild and start
-#   docker-compose logs -f mcp              # View logs
-#   docker-compose down                     # Stop all
+#   docker compose up -d                    # Start all services
+#   docker compose logs -f spacetimedb      # View logs
+#   docker compose down                     # Stop all
+#
+# Module publish:
+#   spacetime publish --server http://localhost:3000 biochain ./chain-core
 
 services:
-  # MCP Server - Multi-Agent AI
-  mcp:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: biochain-server
-    ports:
-      - "13370:13370"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:13370
-      - ConnectionStrings__biochain=Host=postgres;Port=5432;Database=biochain;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
-      # Inside Docker: vLLM is at service name "vllm", not localhost
-      - Llm__AgentAnalyzing__Endpoint=http://vllm:8000
-      - Llm__Chat__Endpoint=http://vllm:8000
-      # Cloud API keys from .env file
-      - Llm__Orchestrator__ApiKey=${Llm__Orchestrator__ApiKey:-}
-      - Llm__Embedding__Endpoint=http://vllm-embed:8001
-      - Llm__Embedding__Model=/models/Qwen3-Embedding-4B
-      - Llm__Embedding__Dimensions=2560
-      # Reactome knowledge graph tools
-      - Llm__BioChainToolsUrl=http://biochain-tools:8002
-      # Neo4j graph sync
-      - Neo4j__Uri=bolt://neo4j:7687
-      - Neo4j__Password=${NEO4J_PASSWORD:-biochain_graph}
-      - Neo4j__DebounceMs=500
-    depends_on:
-      postgres:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-    restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:13370/ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  # vLLM — Qwen3.5-35B-A3B (single 3090 mode — use tp=1 until PSU upgraded)
-  # Serves analyzer + chat + tools via OpenAI-compatible API
-  # NOTE: To restore dual-GPU, change tensor-parallel-size to 2, count to 2, and re-add ipc: host
-  vllm:
-    image: vllm/vllm-openai:nightly
-    container_name: biochain-vllm
-    ports:
-      - "8000:8000"
-    volumes:
-      - /c/Users/ailon/llm/Qwen3.5-a3b-awq-4b:/models/Qwen3.5-A3B
-    command:
-      - "--model"
-      - "/models/Qwen3.5-A3B"
-      - "--port"
-      - "8000"
-      - "--tensor-parallel-size"
-      - "1"
-      - "--max-model-len"
-      - "4096"
-      - "--gpu-memory-utilization"
-      - "0.80"
-      - "--enforce-eager"
-      - "--cpu-offload-gb"
-      - "4"
-      - "--limit-mm-per-prompt"
-      - '{"image": 0}'
-      - "--enable-auto-tool-choice"
-      - "--tool-call-parser"
-      - "qwen3_coder"
-      - "--default-chat-template-kwargs"
-      - '{"enable_thinking": false}'
-      - "--dtype"
-      - "float16"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s
-
-  # vLLM Embedding — Qwen3-Embedding-4B FP16 (single GPU, pooling mode)
-  # Serves /v1/embeddings endpoint for bio-insight vectors
-  # DISABLED: Requires second GPU — re-enable after PSU upgrade to 1200W
-  vllm-embed:
-    profiles: ["dual-gpu"]
-    image: vllm/vllm-openai:nightly
-    container_name: biochain-vllm-embed
-    ports:
-      - "8001:8001"
-    volumes:
-      - /c/Users/ailon/llm/Qwen3-Embedding-4B:/models/Qwen3-Embedding-4B
-    command:
-      - "--model"
-      - "/models/Qwen3-Embedding-4B"
-      - "--port"
-      - "8001"
-      - "--runner"
-      - "pooling"
-      - "--max-model-len"
-      - "8192"
-      - "--gpu-memory-utilization"
-      - "0.45"
-      - "--dtype"
-      - "float16"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-
-  # Neo4j — Graph Database (synced from PostgreSQL via LISTEN/NOTIFY)
+  # Neo4j — Graph Database
   neo4j:
     image: neo4j:5-community
     container_name: biochain-neo4j
@@ -156,7 +30,7 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # PostgreSQL - BioChain Storage
+  # PostgreSQL — Relational storage (pgvector)
   postgres:
     image: pgvector/pgvector:pg16
     container_name: biochain-postgres
@@ -166,12 +40,6 @@ services:
       - POSTGRES_DB=biochain
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/BioChain.Repository/Data/init/biochain_init.sql:/docker-entrypoint-initdb.d/01-biochain-init.sql
-      - ./src/BioChain.Repository/Data/init/views.sql:/docker-entrypoint-initdb.d/02-views.sql
-      - ./src/BioChain.Repository/Data/init/biochain_graph.sql:/docker-entrypoint-initdb.d/03-graph.sql
-      - ./src/BioChain.Repository/Data/init/biochain_functions.sql:/docker-entrypoint-initdb.d/04-functions.sql
-      - ./src/BioChain.Repository/Data/init/init_core.sql:/docker-entrypoint-initdb.d/05-init-core.sql
-      - ./src/BioChain.Repository/Data/seed/seed-questionnaire.sql:/docker-entrypoint-initdb.d/06-seed-questionnaire.sql
     ports:
       - "5434:5432"
     healthcheck:
@@ -182,7 +50,6 @@ services:
     restart: unless-stopped
 
   # SpacetimeDB — Relational database meets smart contracts
-  # Module published via: spacetime publish --server http://localhost:3000 biochain ./biochain-module
   spacetimedb:
     image: clockworklabs/spacetime:latest
     container_name: biochain-spacetimedb
@@ -201,7 +68,6 @@ services:
       start_period: 10s
 
   # biochain-tools — Reactome knowledge graph tool server (Rust/axum)
-  # Provides receptor/cascade/downstream lookups for tool-augmented generation
   biochain-tools:
     build:
       context: ./biochain-tools
