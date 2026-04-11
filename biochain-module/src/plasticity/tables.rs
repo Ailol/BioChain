@@ -23,6 +23,9 @@ pub struct DeltaOp {
     pub change: PropChange,
 
     pub tau: String,
+    pub depends: Vec<String>,         // references to other delta_op labels
+    pub status: Option<String>,       // pending | active | complete | blocked | reversible | consolidating
+    pub cascade_name: Option<String>, // ⊟ cascade this belongs to
     pub tensor_expr: Option<String>,
 }
 

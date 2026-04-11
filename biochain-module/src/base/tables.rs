@@ -1,11 +1,16 @@
 use spacetimedb::table;
 use crate::types::*;
 
-#[table(accessor = program, public)]
+#[table(
+    accessor = program,
+    public,
+    index(accessor = by_patient, btree(columns = [patient_id]))
+)]
 pub struct Program {
     #[primary_key]
     #[auto_inc]
     pub id: u64,
+    pub patient_id: String,
     pub name: String,
     pub phase: Option<String>,
     pub domains: Vec<String>,
@@ -29,15 +34,15 @@ pub struct Node {
     pub id: u64,
     pub program_id: u64,
     pub code: String,
-    pub kind: String,         // L.nt | R | K | N.pyr | etc
+    pub kind: String,         // L.nt | R | K | N.pyr | B.beh | P.agg | etc
     pub region: Option<String>,
     pub rank_tag: String,     // R0 | R1
 
     pub state: Option<NodeState>,
     pub integ: Option<Integration>,
-    pub field_ops: Vec<String>,
     pub props: Vec<Kv>,
     pub is_root: bool,
+    pub terminal: Option<String>,     // ↺⁺|↺⁻|↺⁰|→⊘|→□|→≋|→Δm with detail
 }
 
 #[table(
@@ -99,7 +104,7 @@ pub struct Diag {
     #[auto_inc]
     pub id: u64,
     pub program_id: u64,
-    pub kind: String,         // conservation | composite | dysreg
+    pub kind: String,         // composite | dysreg | observable
     pub name: Option<String>,
     pub expr: String,
     pub detail: Vec<Kv>,

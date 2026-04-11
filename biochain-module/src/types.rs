@@ -4,7 +4,7 @@ use spacetimedb::SpacetimeType;
 
 #[derive(SpacetimeType, Clone, Debug)]
 pub struct NodeState {
-    pub sym: String,          // ↑↑ | ↑ | ≈ | ↓ | ↓↓ | ~ | ⊘ | ●
+    pub sym: String,          // ++ | + | = | ~ | - | -- | X | *
     pub val: Option<f32>,
     pub delta_sign: Option<String>,
     pub delta_val: Option<f32>,
@@ -53,7 +53,7 @@ pub struct ProtocolSpec {
 pub struct GateSpec {
     pub node_code: String,
     pub region: String,
-    pub threshold: String,    // >=↑
+    pub threshold: String,    // >=+
 }
 
 // -- Tensor (R3) --
@@ -62,7 +62,7 @@ pub struct GateSpec {
 pub struct TensorCond {
     pub code: String,
     pub region: String,
-    pub state: String,        // ↑ | ↑↑ | ≈ | ↓ | ↓↓
+    pub state: String,        // ++ | + | = | ~ | - | --
     pub negated: bool,
 }
 
@@ -70,7 +70,7 @@ pub struct TensorCond {
 pub struct TensorEffect {
     pub code: String,
     pub region: String,
-    pub action: String,       // pass | block | amplify | switch
+    pub action: String,       // pass | block | amplify | switch | apoptosis
     pub value: Option<f32>,
     pub switch_to: Option<String>,
 }
@@ -79,17 +79,19 @@ pub struct TensorEffect {
 
 #[derive(SpacetimeType, Clone, Debug)]
 pub struct PropChange {
-    pub property: String,     // release | baseline | gain | spines
-    pub before: String,       // norm | open | ×1.0
-    pub after: String,        // depleted | desens | ×1.5
+    pub property: String,     // Δ0: release|baseline|synthesis|reuptake|secretion|pool|conversion|aggregation
+                              // Δ1: spines|dendrite|axon|myelin|state|volume|neurogenesis|permeability|motility|innervation|pool_capacity|receptor_density|neuron_count
+                              // Δ2: gain|gate|tau|pr|dens|st|coup
+    pub before: String,       // norm | open | full | functional | voluntary | situational
+    pub after: String,        // depleted | desens | reduced | X | compulsive | generalized
 }
 
 // -- Meta --
 
 #[derive(SpacetimeType, Clone, Debug)]
 pub struct MetaWindow {
-    pub kind: String,         // age_range | condition | cumulative
-    pub value: String,        // "0yr-5yr" | "after:CORT.chronic:6mo"
+    pub kind: String,         // age_range | condition | cumulative | congenital | aging
+    pub value: String,        // "0yr-5yr" | "after:CORT.chronic:6mo" | "0yr-∞" | "60yr-∞"
 }
 
 #[derive(SpacetimeType, Clone, Debug)]
@@ -97,7 +99,10 @@ pub struct MetaTarget {
     pub code: String,
     pub region: String,
     pub property: String,
-    pub program: String,      // "norm→low" | "plastic" | "methylation_locked"
+    pub program: String,           // "norm→low" | "plastic" | "methylation_locked"
+    pub reversible: Option<String>,// yes | difficult | no
+    pub unlocks_with: Option<String>,
+    pub pull: Option<String>,      // weak | moderate | strong
 }
 
 // -- Convergence --
@@ -105,7 +110,7 @@ pub struct MetaTarget {
 #[derive(SpacetimeType, Clone, Debug)]
 pub struct ConvVector {
     pub source: String,       // v_past | v_current | v_meta
-    pub state: String,        // ↑ | ↓ | ↓↓
+    pub state: String,        // ++ | + | = | ~ | - | --
     pub detail: Option<String>,
 }
 
@@ -115,4 +120,23 @@ pub struct ConvVector {
 pub struct Kv {
     pub k: String,
     pub v: String,
+}
+
+// -- Simulation --
+
+#[derive(SpacetimeType, Clone, Debug)]
+pub struct Perturbation {
+    pub target_code: String,
+    pub target_region: String,
+    pub action: String,       // set | add | block
+    pub value: Option<f32>,
+}
+
+#[derive(SpacetimeType, Clone, Debug)]
+pub struct SnapshotDiff {
+    pub kind: String,         // node_added | node_removed | node_changed | edge_added | edge_removed | edge_changed
+    pub entity_id: u64,
+    pub field: String,
+    pub old_val: String,
+    pub new_val: String,
 }

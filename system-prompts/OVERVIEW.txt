@@ -1,0 +1,86 @@
+BioChain Pipeline Overview
+==========================
+
+4-layer biochemical signal cascade notation system.
+Converts natural language clinical descriptions into structured BNF formulas.
+
+PIPELINE ORDER
+--------------
+BASE -> PLASTICITY -> META -> CONVERGENCE
+
+Each layer depends on all prior layers. Convergence closes the diamond.
+
+LAYERS
+------
+BASE          Single-snapshot signal cascade analysis.
+              chains->integration->protocol->conditional->EMIT.
+              Operators: @domain, chain, integrate, protocol, conditional, composite, dysreg, observable.
+              Symbols: {} [] @ -> => ~> |> integrate protocol conditional composite dysreg observable
+              Fates: loop+ loop- loop0 clearance sequester diffuse metabolize
+
+PLASTICITY    Change map between BASE snapshots. Delta0->Delta3 upward cascade.
+              Operators: delta, cascade.
+              Symbols: delta bind tau cascade
+
+META          Developmental/epigenetic program layer. Top-down.
+              Operators: architecture, program, remodel, setpoint.
+              Symbols: arch program remodel setpoint (tilde variants)
+
+CONVERGENCE   Diamond closure. Computes convergence state from all 3 layers.
+              Operators: contour, trajectory, risk, flag, monitor.
+              Symbols: contour trajectory risk flag monitor
+
+MODEL & INFERENCE
+-----------------
+Model:    Qwen3.5-A3B-AWQ-4B (4-bit quantized, ~3B active params)
+Server:   vLLM (Docker, localhost:8000)
+Context:  8192 tokens total
+
+OPTIMAL vLLM PARAMETERS (benchmarked 2026-03-13)
+-------------------------------------------------
+temperature:      0.3
+top_p:            0.9
+min_p:            0.05
+presence_penalty: 0.5
+max_tokens:       dynamic (8192 - input_tokens - 200, capped at 4000)
+thinking_mode:    disabled (chat_template_kwargs: { enable_thinking: false })
+
+BENCHMARK RESULTS (BASE pipeline, chronic stress input)
+-------------------------------------------------------
+Config          Fin      Tok  Lines  Uniq  Rep%  Chains  Integ  Proto  Cond  Obs  Comp  Flag  Loop  Fate
+rep_1.15        stop     4500  200+   ~50   75%   9       0      0      0     0    0     0     6     0
+rep_1.2         length   4500  200+   ~30   85%   hallucinated fates, broke into prose
+freq_0.3        stop     2100  55     52    5%    9       4      3      2     12   2     4     6     3
+pres_0.5        stop     1827  48     48    0%    9       4      3      3     15   2     5     6     3
+combo           stop     2200  58     54    7%    9       4      3      2     13   2     4     6     3
+
+WINNER: presence_penalty=0.5
+- 0% line repetition (48 unique lines out of 48)
+- Full operator coverage across all BNF constructs
+- Natural stop (not truncated)
+- Correct cascades: HPA axis, neuroinflammation, kynurenine pathway, gut-brain, sleep/circadian
+
+WHY NOT OTHERS:
+- rep_1.15: Massive repetition loops, never reaches integration/protocol/conditional sections
+- rep_1.2: Hallucinated 200+ fate entries, model broke into English prose mid-output
+- freq_0.3: Good but slight repetition (5%), fewer observables than pres_0.5
+- combo: Good but 7% repetition, fewer conditionals
+
+PROMPT FILES
+------------
+BASE_SYSTEM_PROMPT.txt          ~264 lines, ~3000 tokens
+PLASTICITY_SYSTEM_PROMPT.txt    ~117 lines, ~1200 tokens
+META_SYSTEM_PROMPT.txt          ~104 lines, ~1100 tokens
+CONVERGENCE_SYSTEM_PROMPT.txt   ~178 lines, ~1800 tokens
+
+TOKEN BUDGET
+------------
+BASE alone:        ~3000 sys + input -> ~4000 output budget
+BASE+PLASTICITY:   ~4200 sys + input -> ~3000 output budget
+Full pipeline:     Run sequentially, each layer gets its own context window.
+
+CONSTRAINED DECODING
+--------------------
+Optional xgrammar EBNF files in xgrammar/ directory.
+Enabled via AgentOptions.UseGrammar = true.
+Forces output to conform to BNF grammar structure.

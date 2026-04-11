@@ -1,0 +1,135 @@
+# BioChain BASE — vLLM/xgrammar constrained decoding grammar (GBNF)
+# Usage: pass as guided_grammar or structured_outputs.grammar to vLLM
+# This grammar constrains the structural skeleton. The model chooses
+# WHICH nodes, states, regions, and cascade types to emit — the grammar
+# ensures the result is syntactically valid BioChain BASE.
+
+root ::= header planning delta-decls "\n" pathways cross-section?
+
+# --- HEADER ---
+header ::= "@domain:" ws domain-list "\n" context "\n"
+domain-list ::= domain (ws domain)*
+domain ::= "chem" | "elec" | "meta" | "struct"
+context ::= "#" context-word (ws context-word)*
+context-word ::= [a-zA-Z0-9_:.-]+
+
+# --- PLANNING ---
+planning ::= "::fates" ws fate-list "\n" "::open_ends 0" "\n"
+fate-list ::= fate-type (ws fate-type)*
+fate-type ::= loop-sym | fate-sym
+loop-sym ::= "↺⁺" | "↺⁻" | "↺⁰"
+fate-sym ::= "→⊘" | "→□" | "→≋" | "→Δm"
+
+# --- DELTA DECLARATIONS ---
+delta-decls ::= delta-decl*
+delta-decl ::= "Δ(" code "@" region ")=" sign exogenous? "\n"
+exogenous ::= "(exogenous:" ident ")"
+sign ::= "++" | "+" | "=" | "~" | "-" | "--"
+
+# --- PATHWAY BLOCKS ---
+pathways ::= pathway+
+pathway ::= "::pathway" ws pathway-name "\n" refs? pathway-body
+pathway-name ::= [a-zA-Z0-9_] [a-zA-Z0-9_ &/-]*
+refs ::= "::refs" ws (ref-list | "—") "\n"
+ref-list ::= node-ref (ws node-ref)*
+pathway-body ::= (chain | recycling | fate-chain | integration | protocol | composite | dysreg | observable)+
+
+# --- CROSS SECTION ---
+cross-section ::= "::cross" "\n" conditional+
+
+# --- CHAINS ---
+chain ::= cascade-tag? root-mark? node (edge node)+ terminal "\n"
+cascade-tag ::= cascade-type ws
+cascade-type ::= "GPCR.Gs:" | "GPCR.Gi:" | "GPCR.Gq:" | "GPCR.G12:" | "NUCLEAR:" | "RTK:" | "CYTOKINE:" | "IONOTROPIC:" | "VAGAL:" | "GUT_HORMONE:" | "ENZ:" | "RECYCLE:" | "TRANSPORT:"
+root-mark ::= "⊙"
+recycling ::= chain
+fate-chain ::= chain
+
+# --- TERMINAL ---
+terminal ::= loop | fate | beh-passthrough
+loop ::= "↺⁺" | "↺⁻" | "↺⁻(" detail ")" | "↺⁰" | "↺⁰(" detail ")"
+detail ::= "mechanism_impaired" | "effector_impaired" | "drive_overwhelmed"
+fate ::= "→⊘" | "→□(" ident ")" | "→≋" | "→Δm(" ident ")"
+beh-passthrough ::= "=>[cb]→" code "@" region "=" sign exogenous? "→" node-ref loop?
+
+# --- NODE ---
+node ::= "{" type ":" code state? props? "@" region "}"
+node-ref ::= "{" type ":" code "@" region "}"
+type ::= struct-type | chem-type | elec-type | meta-type
+chem-type ::= ligand-type | "R" | "Gp" | "2m" | "K" | "Ph" | "NR" | "TF" | "G" | "T" | "E" | "V"
+ligand-type ::= "L.nt" | "L.h" | "L.p" | "L.cb" | "L.ni" | "L.ns" | "L.mb"
+elec-type ::= "E.v" | "E.lf" | "E.gj" | "Ch" | "Ch.vg" | "Ch.mec" | "Ch.trp"
+meta-type ::= "M.atp" | "M.glc" | "M.ros" | "M.o2" | "Mt" | "M:" ident
+struct-type ::= "N.pyr" | "N.da" | "N.5ht" | "N.gaba" | "N.gran" | "N.glia.mg" | "N.glia.as" | "N.glia" | "N.ent" | "N.eec" | "N.icc" | "B.gut" | "B.bbb" | "B.beh" | "P.agg" | "P.oligo" | "N"
+code ::= code-char+
+code-char ::= [a-zA-Z0-9_.] | "-" | "α" | "β" | "γ" | "δ" | "ε" | "κ" | "τ"
+state ::= "[" arrow "]"
+arrow ::= "++" | "+" | "=" | "~" | "-" | "--" | "X" | "*"
+props ::= "(" prop ("," prop)* ")"
+prop ::= coupling-prop | state-mod
+coupling-prop ::= "Gs" | "Gi" | "Gq" | "G12" | "Cl⁻" | "Ca²⁺" | "Na⁺" | "K⁺" | "RTK" | "JAK-STAT" | "heteromer"
+state-mod ::= "up" | "down" | "des" | "act" | "block" | "intern"
+
+# --- REGION ---
+region ::= cns-region | bg-region | bs-region | sp-region | ens-region | endo-region | periph-region | barrier-region | "behavior"
+cns-region ::= "PVN" | "LC" | "DRN" | "VTA" | "NAc" | "AMY" | "BLA" | "CeA" | "HPC" | "PFC" | "ACC" | "INS" | "SCN" | "PIT" | "PAG" | "RVM" | "EC" | "SN" | "LH" | "BST" | "POA" | "DG" | "thalamus" | "NBM"
+bg-region ::= "striatum" | "GPi" | "GPe" | "STN"
+bs-region ::= "brainstem" | "pons" | "SLD"
+sp-region ::= "spinal"
+ens-region ::= "ENS" | "GUT" | "VAG" | "NTS" | "DMV" | "AP"
+endo-region ::= "ARC" | "ADR" | "THYROID" | "GONAD"
+periph-region ::= "LIVER" | "systemic" | "plasma" | "kidney" | "cardiac"
+barrier-region ::= "B.gut" | "B.bbb"
+
+# --- EDGES ---
+edge ::= "→" | "⊣" | "~>" | "=>" | "|>"
+
+# --- GATE ---
+gate ::= "→?" "{" node-ref "}"
+
+# --- INTEGRATION ---
+integration ::= "∫{" typed-ref "}←(" input-list ")→{" typed-ref "}:" mode "\n"
+typed-ref ::= type ":" code "@" region | code "@" region
+input-list ::= input ("," ws? input)*
+input ::= code "@" region ":" input-sign
+input-sign ::= "+" | "-" | "×"
+mode ::= "thr" | "rate" | "burst" | "tonic"
+
+# --- PROTOCOL ---
+protocol ::= node-ref "⊲{" edge-target "}[" pterm-list "]" "\n"
+edge-target ::= type ":" code "@" region | code "@" region
+pterm-list ::= pterm ("," pterm)*
+pterm ::= polarity | tau | coupling | gate-cond
+polarity ::= "exc" | "inh" | "mod"
+tau ::= "fast" | "slow" | "tonic"
+coupling ::= "syn" | "vol" | "gap" | "para"
+gate-cond ::= ident
+
+# --- CONDITIONAL ---
+conditional ::= "⊗(" condition (logic condition)* ")⟹" effect "\n"
+logic ::= "∧" | "∨"
+condition ::= neg? node-ref ">=" arrow
+neg ::= "¬"
+effect ::= node-ref ":" effect-action
+effect-action ::= "pass" | "block" | "amplify" | "switch:" ident | "apoptosis"
+
+# --- COMPOSITE ---
+composite ::= "◈" ident "=" node-ref ("+" node-ref)* "\n"
+
+# --- DYSREGULATION ---
+dysreg ::= "⚡" flag-type ":" dysreg-chain "(" dynamics ")" "\n"
+flag-type ::= "sus" | "dep" | "exc" | "shunt" | "osc" | "res" | "acc" | "lock" | "sat"
+dysreg-chain ::= code "@" region (edge-or-inh code "@" region)*
+edge-or-inh ::= "→" | "⊣"
+dynamics ::= "positive_feedback_dominant" | "self_sustaining" | "disinhibition_cascade" | "anhedonia_trap" | "approaching_threshold" | "precursor_diversion" | "rhythm_lost" | "resistance_building" | "accumulating" | "locked_state" | "saturated" | "behavioral_maintenance" | "developmental_disruption" | "hormonal_collapse_cascade" | "pain_mood_trap" | "neuroinflammatory_degeneration" | "prion_like_propagation" | "local_autocatalytic_aggregation" | "inactivity_degeneration_trap" | "motor_depression_trap" | "reward_inversion_addiction" | "refeeding_aversion_trap" | "metabolic_conservation"
+
+# --- OBSERVABLE ---
+observable ::= "⊕" ws measurement-name ws? "→" ws? node-ref-list "(" relationship ")" "\n"
+measurement-name ::= [a-zA-Z_] [a-zA-Z0-9_ ]*
+node-ref-list ::= node-ref ("," ws? node-ref)*
+relationship ::= "direct" | "proxy" | "ratio" | "activity" | "metabolite" | "autonomic"
+
+# --- PRIMITIVES ---
+ident ::= [a-zA-Z_][a-zA-Z0-9_.:-]*
+ws ::= " "+
+ws? ::= " "*

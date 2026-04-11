@@ -1,0 +1,526 @@
+# BioChain Unified Registry — ported from tools/biochain_grammar_gen.py
+# Source of truth for ligand→receptor→cascade→target knowledge graph
+
+# ═══════════════════════════════════════
+# BINDINGS: ligand → [(receptor, coupling), ...]
+# ═══════════════════════════════════════
+
+# L.nt neurotransmitters
+[bindings.DA]
+receptors = [
+    { receptor = "D1", coupling = "Gs" },
+    { receptor = "D2", coupling = "Gi" },
+    { receptor = "D3", coupling = "Gi" },
+    { receptor = "D4", coupling = "Gi" },
+    { receptor = "D5", coupling = "Gs" },
+    { receptor = "TAAR1", coupling = "Gs" },
+]
+
+[bindings."5HT"]
+receptors = [
+    { receptor = "5HT1A", coupling = "Gi" },
+    { receptor = "5HT1B", coupling = "Gi" },
+    { receptor = "5HT2A", coupling = "Gq" },
+    { receptor = "5HT2B", coupling = "Gq" },
+    { receptor = "5HT2C", coupling = "Gq" },
+    { receptor = "5HT3", coupling = "ion_Na" },
+    { receptor = "5HT4", coupling = "Gs" },
+    { receptor = "5HT6", coupling = "Gs" },
+    { receptor = "5HT7", coupling = "Gs" },
+]
+
+[bindings.NE]
+receptors = [
+    { receptor = "a1", coupling = "Gq" },
+    { receptor = "a2A", coupling = "Gi" },
+    { receptor = "a2B", coupling = "Gi" },
+    { receptor = "a2C", coupling = "Gi" },
+    { receptor = "b1", coupling = "Gs" },
+    { receptor = "b2", coupling = "Gs" },
+    { receptor = "b3", coupling = "Gs" },
+]
+
+[bindings.GABA]
+receptors = [
+    { receptor = "GABA-A", coupling = "ion_Cl" },
+    { receptor = "GABA-B", coupling = "Gi" },
+]
+
+[bindings.GLU]
+receptors = [
+    { receptor = "NMDA", coupling = "ion_Ca" },
+    { receptor = "AMPA", coupling = "ion_Na" },
+    { receptor = "kainate", coupling = "ion_Na" },
+    { receptor = "mGluR1", coupling = "Gq" },
+    { receptor = "mGluR2", coupling = "Gi" },
+    { receptor = "mGluR3", coupling = "Gi" },
+    { receptor = "mGluR4", coupling = "Gi" },
+    { receptor = "mGluR5", coupling = "Gq" },
+]
+
+[bindings.ACh]
+receptors = [
+    { receptor = "nAChR", coupling = "ion_Na" },
+    { receptor = "mAChR", coupling = "Gq" },
+    { receptor = "M1", coupling = "Gq" },
+    { receptor = "M2", coupling = "Gi" },
+    { receptor = "M3", coupling = "Gq" },
+    { receptor = "M4", coupling = "Gi" },
+    { receptor = "M5", coupling = "Gq" },
+]
+
+[bindings.adenosine]
+receptors = [
+    { receptor = "A1", coupling = "Gi" },
+    { receptor = "A2A", coupling = "Gs" },
+    { receptor = "A2B", coupling = "Gs" },
+    { receptor = "A3", coupling = "Gi" },
+]
+
+[bindings.histamine]
+receptors = [
+    { receptor = "H1", coupling = "Gq" },
+    { receptor = "H2", coupling = "Gs" },
+    { receptor = "H3", coupling = "Gi" },
+    { receptor = "H4", coupling = "Gi" },
+]
+
+[bindings.glycine]
+receptors = [
+    { receptor = "GlyR", coupling = "ion_Cl" },
+    { receptor = "NMDA", coupling = "ion_Ca" },
+]
+
+[bindings."D-serine"]
+receptors = [
+    { receptor = "NMDA", coupling = "ion_Ca" },
+]
+
+[bindings.ATP]
+receptors = [
+    { receptor = "P2X", coupling = "ion_Ca" },
+    { receptor = "P2Y", coupling = "Gq" },
+]
+
+# L.h hormones — GPCR
+[bindings.CRH]
+receptors = [
+    { receptor = "CRH-R1", coupling = "Gs" },
+    { receptor = "CRH-R2", coupling = "Gs" },
+]
+
+[bindings.TRH]
+receptors = [
+    { receptor = "TRH-R", coupling = "Gq" },
+]
+
+[bindings.ACTH]
+receptors = [
+    { receptor = "MC2R", coupling = "Gs" },
+]
+
+[bindings.melatonin]
+receptors = [
+    { receptor = "MT1", coupling = "Gi" },
+    { receptor = "MT2", coupling = "Gi" },
+]
+
+[bindings.ghrelin]
+receptors = [
+    { receptor = "GHSR", coupling = "Gq" },
+]
+
+[bindings."GLP-1"]
+receptors = [
+    { receptor = "GLP1R", coupling = "Gs" },
+]
+
+[bindings.CCK]
+receptors = [
+    { receptor = "CCK-A", coupling = "Gq" },
+    { receptor = "CCK-B", coupling = "Gq" },
+]
+
+[bindings.PYY]
+receptors = [
+    { receptor = "Y2R", coupling = "Gi" },
+    { receptor = "Y4R", coupling = "Gi" },
+]
+
+[bindings.TSH]
+receptors = [
+    { receptor = "TSHR", coupling = "Gs" },
+]
+
+[bindings.GnRH]
+receptors = [
+    { receptor = "GnRH-R", coupling = "Gq" },
+]
+
+[bindings.LH]
+receptors = [
+    { receptor = "LHR", coupling = "Gs" },
+]
+
+[bindings.FSH]
+receptors = [
+    { receptor = "FSHR", coupling = "Gs" },
+]
+
+[bindings.PGE2]
+receptors = [
+    { receptor = "EP1", coupling = "Gq" },
+    { receptor = "EP2", coupling = "Gs" },
+    { receptor = "EP3", coupling = "Gi" },
+    { receptor = "EP4", coupling = "Gs" },
+]
+
+# L.h hormones — nuclear
+[bindings.CORT]
+receptors = [
+    { receptor = "GR", coupling = "nuclear" },
+    { receptor = "MR", coupling = "nuclear" },
+]
+
+[bindings.estradiol]
+receptors = [
+    { receptor = "ERa", coupling = "nuclear" },
+    { receptor = "ERb", coupling = "nuclear" },
+]
+
+[bindings.testosterone]
+receptors = [
+    { receptor = "AR", coupling = "nuclear" },
+]
+
+[bindings.progesterone]
+receptors = [
+    { receptor = "PR", coupling = "nuclear" },
+]
+
+[bindings.aldosterone]
+receptors = [
+    { receptor = "MR", coupling = "nuclear" },
+]
+
+[bindings.T3]
+receptors = [
+    { receptor = "TRa", coupling = "nuclear" },
+    { receptor = "TRb", coupling = "nuclear" },
+]
+
+[bindings.T4]
+receptors = [
+    { receptor = "TRa", coupling = "nuclear" },
+    { receptor = "TRb", coupling = "nuclear" },
+]
+
+# L.h hormones — RTK / JAK-STAT
+[bindings.insulin]
+receptors = [
+    { receptor = "InsR", coupling = "RTK" },
+]
+
+[bindings.leptin]
+receptors = [
+    { receptor = "LepR", coupling = "JAK-STAT" },
+]
+
+[bindings.prolactin]
+receptors = [
+    { receptor = "PRLR", coupling = "JAK-STAT" },
+]
+
+# L.p peptides
+[bindings.BDNF]
+receptors = [
+    { receptor = "TrkB", coupling = "RTK" },
+    { receptor = "p75NTR", coupling = "RTK" },
+]
+
+[bindings.NGF]
+receptors = [
+    { receptor = "TrkA", coupling = "RTK" },
+    { receptor = "p75NTR", coupling = "RTK" },
+]
+
+[bindings.OXT]
+receptors = [
+    { receptor = "OXTR", coupling = "Gq" },
+]
+
+[bindings.NPY]
+receptors = [
+    { receptor = "Y1R", coupling = "Gi" },
+    { receptor = "Y2R", coupling = "Gi" },
+    { receptor = "Y5R", coupling = "Gi" },
+]
+
+[bindings.dynorphin]
+receptors = [
+    { receptor = "KOR", coupling = "Gi" },
+]
+
+[bindings.orexin]
+receptors = [
+    { receptor = "OX1R", coupling = "Gq" },
+    { receptor = "OX2R", coupling = "Gq" },
+]
+
+[bindings.substance_P]
+receptors = [
+    { receptor = "NK1", coupling = "Gq" },
+]
+
+[bindings.VIP]
+receptors = [
+    { receptor = "VPAC1", coupling = "Gs" },
+    { receptor = "VPAC2", coupling = "Gs" },
+]
+
+[bindings.CGRP]
+receptors = [
+    { receptor = "CGRP-R", coupling = "Gs" },
+    { receptor = "CLR-RAMP1", coupling = "Gs" },
+]
+
+[bindings."b-endorphin"]
+receptors = [
+    { receptor = "MOR", coupling = "Gi" },
+    { receptor = "DOR", coupling = "Gi" },
+]
+
+[bindings.motilin]
+receptors = [
+    { receptor = "MLNR", coupling = "Gq" },
+]
+
+# L.cb endocannabinoids
+[bindings."2-AG"]
+receptors = [
+    { receptor = "CB1", coupling = "Gi" },
+    { receptor = "CB2", coupling = "Gi" },
+]
+
+[bindings.AEA]
+receptors = [
+    { receptor = "CB1", coupling = "Gi" },
+    { receptor = "CB2", coupling = "Gi" },
+    { receptor = "TRPV1", coupling = "ion_Ca" },
+]
+
+# L.ni neuroimmune
+[bindings.IL6]
+receptors = [
+    { receptor = "IL6R", coupling = "JAK-STAT" },
+]
+
+[bindings.TNFa]
+receptors = [
+    { receptor = "TNFR1", coupling = "JAK-STAT" },
+    { receptor = "TNFR2", coupling = "JAK-STAT" },
+]
+
+[bindings.IL1b]
+receptors = [
+    { receptor = "IL1R1", coupling = "JAK-STAT" },
+]
+
+[bindings.IL10]
+receptors = [
+    { receptor = "IL10R", coupling = "JAK-STAT" },
+]
+
+[bindings.IFNg]
+receptors = [
+    { receptor = "IFNGR", coupling = "JAK-STAT" },
+]
+
+[bindings.QUIN]
+receptors = [
+    { receptor = "NMDA", coupling = "ion_Ca" },
+]
+
+[bindings.LPS]
+receptors = [
+    { receptor = "TLR4", coupling = "JAK-STAT" },
+]
+
+# L.ns neurosteroids
+[bindings.allopregnanolone]
+receptors = [
+    { receptor = "GABA-A", coupling = "ion_Cl" },
+]
+
+[bindings.DHEAS]
+receptors = [
+    { receptor = "GABA-A", coupling = "ion_Cl" },
+    { receptor = "NMDA", coupling = "ion_Ca" },
+]
+
+# L.mb microbiome
+[bindings.butyrate]
+receptors = [
+    { receptor = "FFAR2", coupling = "Gi" },
+    { receptor = "FFAR3", coupling = "Gi" },
+    { receptor = "GPR109A", coupling = "Gi" },
+]
+
+[bindings.propionate]
+receptors = [
+    { receptor = "FFAR2", coupling = "Gi" },
+    { receptor = "FFAR3", coupling = "Gi" },
+]
+
+[bindings.indole]
+receptors = [
+    { receptor = "AhR", coupling = "nuclear" },
+]
+
+# L.gas gasotransmitter
+[bindings.NO]
+receptors = [
+    { receptor = "sGC", coupling = "cGMP" },
+]
+
+# ═══════════════════════════════════════
+# COUPLING → SECOND MESSENGERS
+# ═══════════════════════════════════════
+
+[coupling_to_2m]
+Gs = ["cAMP"]
+Gi = ["cAMP"]
+Gq = ["IP3", "DAG"]
+G12 = ["Rho"]
+cGMP = ["cGMP"]
+
+# ═══════════════════════════════════════
+# SECOND MESSENGER → KINASES
+# ═══════════════════════════════════════
+
+[sm_to_kinase]
+cAMP = ["PKA", "EPAC"]
+IP3 = ["PKC"]
+DAG = ["PKC"]
+ion_Ca = ["CaMKII", "CaMKIV", "calcineurin", "PKC"]
+ion_Cl = []
+ion_Na = []
+Rho = ["ROCK"]
+cGMP = ["PKG"]
+
+# ═══════════════════════════════════════
+# KINASE → DOWNSTREAM TARGETS
+# ═══════════════════════════════════════
+
+[kinase_targets]
+PKA = ["CREB", "DARPP-32", "GluA1", "TH", "TPH2"]
+PKC = ["MARCKS", "GAP43", "CREB", "NF-kB"]
+CaMKII = ["CREB", "GluA1", "TH", "TPH2", "nNOS"]
+CaMKIV = ["CREB"]
+calcineurin = ["NFAT"]
+EPAC = ["Rap1"]
+ROCK = ["LIMK", "MLC"]
+PKG = ["VASP", "CREB"]
+ERK = ["CREB", "Elk-1"]
+Akt = ["mTOR", "GSK3b", "CREB", "BAD", "FOXO"]
+PI3K = ["Akt"]
+PLCg = ["IP3", "DAG"]
+JNK = ["c-Jun", "AP-1"]
+JAK2 = ["STAT3", "STAT5", "STAT1"]
+JAK1 = ["STAT3", "STAT1", "STAT5"]
+TYK2 = ["STAT1", "STAT3"]
+GSK3b = ["b-catenin", "tau"]
+
+# ═══════════════════════════════════════
+# NUCLEAR RECEPTOR → TF TARGETS
+# ═══════════════════════════════════════
+
+[nr_tf]
+GR = ["NF-kB", "CREB", "AP-1"]
+MR = ["NF-kB", "SGK1", "CREB"]
+ERa = ["CREB", "AP-1", "Sp1", "NF-kB"]
+ERb = ["CREB", "AP-1"]
+TRa = ["CREB"]
+TRb = ["CREB", "NF-kB"]
+PR = ["CREB", "AP-1", "NF-kB"]
+AR = ["CREB", "AP-1"]
+AhR = ["ARNT", "NF-kB"]
+
+# ═══════════════════════════════════════
+# RTK → KINASES (receptor-specific)
+# ═══════════════════════════════════════
+
+[rtk_kinases]
+TrkB = ["ERK", "Akt", "PLCg"]
+TrkA = ["ERK", "Akt", "PLCg"]
+p75NTR = ["JNK", "NF-kB"]
+InsR = ["PI3K", "Akt", "ERK"]
+
+# ═══════════════════════════════════════
+# JAK-STAT → JAK KINASES (receptor-specific)
+# ═══════════════════════════════════════
+
+[jakstat_kinases]
+LepR = ["JAK2"]
+PRLR = ["JAK2"]
+IL6R = ["JAK1", "JAK2"]
+IL10R = ["JAK1", "TYK2"]
+IFNGR = ["JAK1", "JAK2"]
+TNFR1 = ["JAK1"]
+TNFR2 = ["JAK1"]
+IL1R1 = ["JAK1"]
+TLR4 = ["JAK1"]
+
+# ═══════════════════════════════════════
+# ENZYME → PRODUCT
+# ═══════════════════════════════════════
+
+[enzyme_product]
+TH = "DA"
+DDC = "DA"
+DBH = "NE"
+TPH1 = "5HT"
+TPH2 = "5HT"
+GAD67 = "GABA"
+GAD65 = "GABA"
+ChAT = "ACh"
+IDO = "KYN"
+"5a-reductase" = "allopregnanolone"
+CYP19A1 = "estradiol"
+deiodinase_D2 = "T3"
+deiodinase_D1 = "T3"
+deiodinase_D3 = "rT3"
+GLS = "GLU"
+GS = "GLN"
+nNOS = "NO"
+iNOS = "NO"
+eNOS = "NO"
+AANAT = "NAS"
+ASMT = "melatonin"
+BACE1 = "amyloid-b"
+"g-secretase" = "amyloid-b"
+
+# ═══════════════════════════════════════
+# DEGRADATION ENZYMES
+# ═══════════════════════════════════════
+
+[degradation_enzymes]
+enzymes = [
+    "MAO-A", "MAO-B", "COMT", "CYP3A4", "MAGL", "FAAH",
+    "11b-HSD2", "ADH", "ALDH2", "COX1", "COX2",
+    "AChE", "BChE",
+]
+
+# ═══════════════════════════════════════
+# TRANSPORTER → SUBSTRATES
+# ═══════════════════════════════════════
+
+[transporter_substrate]
+DAT = ["DA"]
+SERT = ["5HT"]
+NET = ["NE"]
+VMAT2 = ["DA", "5HT", "NE"]
+LAT1 = ["TRP"]
+EAAT2 = ["GLU"]
+GAT1 = ["GABA"]
+SN1 = ["GLN"]

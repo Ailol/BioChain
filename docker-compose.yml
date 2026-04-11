@@ -26,6 +26,8 @@ services:
       - Llm__Embedding__Endpoint=http://vllm-embed:8001
       - Llm__Embedding__Model=/models/Qwen3-Embedding-4B
       - Llm__Embedding__Dimensions=2560
+      # Reactome knowledge graph tools
+      - Llm__BioChainToolsUrl=http://biochain-tools:8002
       # Neo4j graph sync
       - Neo4j__Uri=bolt://neo4j:7687
       - Neo4j__Password=${NEO4J_PASSWORD:-biochain_graph}
@@ -45,8 +47,9 @@ services:
       retries: 3
       start_period: 10s
 
-  # vLLM — Qwen3.5-35B-A3B (dual 3090, tensor-parallel=2)
+  # vLLM — Qwen3.5-35B-A3B (single 3090 mode — use tp=1 until PSU upgraded)
   # Serves analyzer + chat + tools via OpenAI-compatible API
+  # NOTE: To restore dual-GPU, change tensor-parallel-size to 2, count to 2, and re-add ipc: host
   vllm:
     image: vllm/vllm-openai:nightly
     container_name: biochain-vllm
@@ -54,19 +57,22 @@ services:
       - "8000:8000"
     volumes:
       - /c/Users/ailon/llm/Qwen3.5-a3b-awq-4b:/models/Qwen3.5-A3B
-    environment:
-      - VLLM_WORKER_MULTIPROC_METHOD=spawn
     command:
       - "--model"
       - "/models/Qwen3.5-A3B"
       - "--port"
       - "8000"
       - "--tensor-parallel-size"
-      - "2"
+      - "1"
       - "--max-model-len"
-      - "32768"
+      - "4096"
       - "--gpu-memory-utilization"
-      - "0.92"
+      - "0.80"
+      - "--enforce-eager"
+      - "--cpu-offload-gb"
+      - "4"
+      - "--limit-mm-per-prompt"
+      - '{"image": 0}'
       - "--enable-auto-tool-choice"
       - "--tool-call-parser"
       - "qwen3_coder"
@@ -74,16 +80,13 @@ services:
       - '{"enable_thinking": false}'
       - "--dtype"
       - "float16"
-      - "--speculative-config"
-      - '{"method": "mtp", "num_speculative_tokens": 2}'
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: 2
+              count: 1
               capabilities: [gpu]
-    ipc: host
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -94,7 +97,9 @@ services:
 
   # vLLM Embedding — Qwen3-Embedding-4B FP16 (single GPU, pooling mode)
   # Serves /v1/embeddings endpoint for bio-insight vectors
+  # DISABLED: Requires second GPU — re-enable after PSU upgrade to 1200W
   vllm-embed:
+    profiles: ["dual-gpu"]
     image: vllm/vllm-openai:nightly
     container_name: biochain-vllm-embed
     ports:
@@ -195,10 +200,34 @@ services:
       retries: 5
       start_period: 10s
 
+  # biochain-tools — Reactome knowledge graph tool server (Rust/axum)
+  # Provides receptor/cascade/downstream lookups for tool-augmented generation
+  biochain-tools:
+    build:
+      context: ./biochain-tools
+      dockerfile: Dockerfile
+    container_name: biochain-tools
+    ports:
+      - "8002:8002"
+    environment:
+      - BIOCHAIN_TOOLS_PORT=8002
+      - BIOCHAIN_TOOLS_DB=/data/cache.db
+      - BIOCHAIN_REACTOME_RATE_MS=100
+    volumes:
+      - biochain_tools_cache:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
 volumes:
   postgres_data:
   neo4j_data:
   spacetimedb_data:
+  biochain_tools_cache:
 
 networks:
   default:

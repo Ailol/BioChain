@@ -14,13 +14,16 @@ pub fn add_delta(
     target_region: String,
     change: PropChange,
     tau: String,
+    depends: Vec<String>,
+    status: Option<String>,
+    cascade_name: Option<String>,
     tensor_expr: Option<String>,
 ) {
     ctx.db.delta_op().insert(DeltaOp {
         id: 0, program_id, rank_tag,
         trigger_code, trigger_region, trigger_state,
         target_code, target_region, change,
-        tau, tensor_expr,
+        tau, depends, status, cascade_name, tensor_expr,
     });
 }
 

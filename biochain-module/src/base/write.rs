@@ -10,7 +10,7 @@ pub fn create_program(
     domains: Vec<String>,
 ) {
     ctx.db.program().insert(Program {
-        id: 0, name, phase, domains,
+        id: 0, patient_id: String::new(), name, phase, domains,
         tick: 0,
         raw_base: None, raw_plasticity: None,
         raw_meta: None, raw_convergence: None,
@@ -48,13 +48,13 @@ pub fn add_node(
     rank_tag: String,
     state: Option<NodeState>,
     integ: Option<Integration>,
-    field_ops: Vec<String>,
     props: Vec<Kv>,
     is_root: bool,
+    terminal: Option<String>,
 ) {
     ctx.db.node().insert(Node {
         id: 0, program_id, code, kind, region, rank_tag,
-        state, integ, field_ops, props, is_root,
+        state, integ, props, is_root, terminal,
     });
 }
 

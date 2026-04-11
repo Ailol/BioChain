@@ -1,0 +1,80 @@
+# BioChain META — vLLM/xgrammar constrained decoding grammar (GBNF)
+# Constrains σ̃, ⊲̃, ∫̃, ⊗̃ declarations, pathway-sorted layout.
+# Model chooses WHICH programs and setpoints — grammar ensures valid structure.
+
+root ::= meta-pathways meta-cross?
+
+# --- PATHWAY-SORTED META BLOCKS ---
+meta-pathways ::= meta-pathway+
+meta-pathway ::= "::meta_pathway" ws ident "\n" meta-refs? meta-body
+meta-refs ::= "::meta_refs" ws (ref-list | "—") "\n"
+ref-list ::= node-ref (ws node-ref)*
+meta-body ::= (setpoint | program | remodel | arch)+
+
+# --- CROSS-PATHWAY ---
+meta-cross ::= "::meta_cross" "\n" (setpoint | program | remodel | arch)+
+
+# --- σ̃ SETPOINT ---
+setpoint ::= "σ̃[" window "](" node-ref "(baseline:" baseline-val "))" ws "pull:" pull "\n"
+baseline-val ::= arrow "→" arrow | arrow
+pull ::= "weak" | "moderate" | "strong"
+
+# --- ⊲̃ PROTOCOL PROGRAM ---
+program ::= "⊲̃[" window "](" protocol-target ")" ws "reversible:" reversible ws unlock "\n"
+protocol-target ::= "{⊲:" ident "@" region "}[" ident ":" ident "→" ident "]"
+reversible ::= "yes" | "difficult" | "no"
+unlock ::= "unlocks_with:" unlock-body
+unlock-body ::= unlock-condition | "none"
+unlock-condition ::= "⊗(" condition (logic condition)* ")[sustained>" duration "]"
+condition ::= neg? node-ref ">=" arrow
+neg ::= "¬"
+logic ::= "∧" | "∨"
+arrow ::= "++" | "+" | "=" | "~" | "-" | "--" | "X" | "*"
+
+# --- ∫̃ STRUCTURAL PROGRAM ---
+remodel ::= "∫̃[" window "](" struct-target ")" "\n"
+struct-target ::= "{" ident "@" region "}(property:" struct-program ")"
+struct-program ::= "myelin" | "survival" | "death" | "neurogenesis" | "volume" | "state" | "pool_capacity" | "neuron_count"
+
+# --- ⊗̃ ARCHITECTURE ---
+arch ::= "⊗̃[" window "]({" region "→" region "}:conn:" conn-program ")" "\n"
+conn-program ::= "plastic" | "strengthen" | "refine" | "gradual_decline" | "dominance_shift"
+
+# --- WINDOW ---
+window ::= age-range | condition-win | cumulative | congenital | aging
+age-range ::= age "–" age
+condition-win ::= "after:" ident ":" duration
+cumulative ::= "cumulative:" ident
+congenital ::= "0yr–∞"
+aging ::= age "–∞"
+age ::= [0-9]+ "yr"
+
+# --- DURATION ---
+duration ::= dur-num dur-unit
+dur-num ::= [0-9]+
+dur-unit ::= "ms" | "s" | "min" | "h" | "d" | "wk" | "mo" | "yr"
+
+# --- NODE REFERENCE (full-form, matches BASE) ---
+node-ref ::= "{" type ":" code "@" region "}"
+type ::= struct-type | chem-type | elec-type | meta-mtype
+chem-type ::= ligand-type | "R" | "Gp" | "2m" | "K" | "Ph" | "NR" | "TF" | "G" | "T" | "E" | "V"
+ligand-type ::= "L.nt" | "L.h" | "L.p" | "L.cb" | "L.ni" | "L.ns" | "L.mb"
+elec-type ::= "E.v" | "E.lf" | "E.gj" | "Ch" | "Ch.vg" | "Ch.mec" | "Ch.trp"
+meta-mtype ::= "M.atp" | "M.glc" | "M.ros" | "M.o2" | "Mt" | "M:" ident
+struct-type ::= "N.pyr" | "N.da" | "N.5ht" | "N.gaba" | "N.gran" | "N.glia.mg" | "N.glia.as" | "N.glia" | "N.ent" | "N.eec" | "N.icc" | "B.gut" | "B.bbb" | "B.beh" | "P.agg" | "P.oligo" | "N"
+
+code ::= code-char+
+code-char ::= [a-zA-Z0-9_.] | "-" | "α" | "β" | "γ" | "δ" | "ε" | "κ" | "τ"
+
+region ::= cns-region | bg-region | bs-region | sp-region | ens-region | endo-region | periph-region | "behavior"
+cns-region ::= "PVN" | "LC" | "DRN" | "VTA" | "NAc" | "AMY" | "BLA" | "CeA" | "HPC" | "PFC" | "ACC" | "INS" | "SCN" | "PIT" | "PAG" | "RVM" | "EC" | "SN" | "LH" | "BST" | "POA" | "DG" | "thalamus" | "NBM"
+bg-region ::= "striatum" | "GPi" | "GPe" | "STN"
+bs-region ::= "brainstem" | "pons" | "SLD"
+sp-region ::= "spinal"
+ens-region ::= "ENS" | "GUT" | "VAG" | "NTS" | "DMV" | "AP"
+endo-region ::= "ARC" | "ADR" | "THYROID" | "GONAD"
+periph-region ::= "LIVER" | "systemic" | "plasma" | "kidney" | "cardiac"
+
+# --- PRIMITIVES ---
+ident ::= [a-zA-Z_][a-zA-Z0-9_.:-]*
+ws ::= " "+

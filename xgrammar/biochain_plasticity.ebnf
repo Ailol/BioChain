@@ -1,0 +1,88 @@
+# BioChain PLASTICITY — vLLM/xgrammar constrained decoding grammar (GBNF)
+# Constrains Δ0-Δ3 declarations, ⊟ cascades, pathway-sorted layout.
+# Model chooses WHICH entities change and HOW — grammar ensures valid structure.
+
+root ::= delta-pathways delta-cross?
+
+# --- PATHWAY-SORTED Δ BLOCKS ---
+delta-pathways ::= delta-pathway+
+delta-pathway ::= "::Δ_pathway" ws ident "\n" delta-refs? delta-body
+delta-refs ::= "::Δ_refs" ws (ref-list | "—") "\n"
+ref-list ::= node-ref (ws node-ref)*
+delta-body ::= delta+ cascade*
+
+# --- CROSS-PATHWAY ---
+delta-cross ::= "::Δ_cross" "\n" delta+ cascade*
+
+# --- DELTA OPERATOR ---
+delta ::= "Δ" rank ":" ws trigger ws "≫" ws target ws "[τ:" duration "]" depends? ws status? "\n"
+rank ::= "0" | "1" | "2" | "3"
+
+# --- TRIGGER ---
+trigger ::= node-ref "(" trigger-prop ":" trigger-val ")"
+trigger-prop ::= "release" | "baseline" | "synthesis" | "reuptake" | "secretion" | "pool" | "conversion" | "aggregation" | "pattern" | "spines" | "dendrite" | "axon" | "myelin" | "state" | "volume" | "neurogenesis" | "permeability" | "motility" | "innervation" | "pool_capacity" | "receptor_density" | "neuron_count" | "gain" | "gate" | "tau" | "pr" | "dens" | "st" | "coup" | "fate" | "propagation"
+trigger-val ::= ident
+
+# --- TARGET ---
+target ::= node-ref "(" target-prop ":" transition ")"
+target-prop ::= trigger-prop
+transition ::= ident "→" ident
+
+# --- DEPENDS ---
+depends ::= ws "depends:" delta-ref ("," delta-ref)*
+delta-ref ::= "Δ" rank "_" ident
+
+# --- STATUS ---
+status ::= "status:" status-val
+status-val ::= "pending" | "active" | "complete" | "blocked" | "reversible" | "consolidating"
+
+# --- ⊟ CASCADE ---
+cascade ::= "⊟" ws ident ":" ws cascade-step ("→" cascade-step)+ ws "[total:" duration ",position:" rank "]" "\n"
+cascade-step ::= delta-ref ws "[τ:" duration "]"
+
+# --- DURATION ---
+duration ::= dur-num dur-unit
+dur-num ::= [0-9]+
+dur-unit ::= "ms" | "s" | "min" | "h" | "d" | "wk" | "mo" | "yr"
+
+# --- Δ0 BEHAVIORAL TRANSITIONS ---
+# (covered by trigger-prop "pattern" and transition values)
+
+# --- Δ3 FATE TRANSITIONS ---
+# fate transitions use target-prop "fate" with transitions like:
+#   ↺⁻→↺⁻(mechanism_impaired)
+#   ↺⁻(CAUSE)→↺⁺
+#   ↺⁰→↺⁰(CAUSE)
+#   →□→released
+#   functional→X
+#   voluntary→compulsive
+#   active→extinguished
+#   situational→generalized
+
+# --- Δ3 AGGREGATE PROPAGATION ---
+# uses target-prop "propagation" with transition R1→R2
+
+# --- NODE REFERENCE (full-form, matches BASE) ---
+node-ref ::= "{" type ":" code "@" region "}"
+type ::= struct-type | chem-type | elec-type | meta-mtype
+chem-type ::= ligand-type | "R" | "Gp" | "2m" | "K" | "Ph" | "NR" | "TF" | "G" | "T" | "E" | "V"
+ligand-type ::= "L.nt" | "L.h" | "L.p" | "L.cb" | "L.ni" | "L.ns" | "L.mb"
+elec-type ::= "E.v" | "E.lf" | "E.gj" | "Ch" | "Ch.vg" | "Ch.mec" | "Ch.trp"
+meta-mtype ::= "M.atp" | "M.glc" | "M.ros" | "M.o2" | "Mt" | "M:" ident
+struct-type ::= "N.pyr" | "N.da" | "N.5ht" | "N.gaba" | "N.gran" | "N.glia.mg" | "N.glia.as" | "N.glia" | "N.ent" | "N.eec" | "N.icc" | "B.gut" | "B.bbb" | "B.beh" | "P.agg" | "P.oligo" | "N"
+
+code ::= code-char+
+code-char ::= [a-zA-Z0-9_.] | "-" | "α" | "β" | "γ" | "δ" | "ε" | "κ" | "τ"
+
+region ::= cns-region | bg-region | bs-region | sp-region | ens-region | endo-region | periph-region | "behavior"
+cns-region ::= "PVN" | "LC" | "DRN" | "VTA" | "NAc" | "AMY" | "BLA" | "CeA" | "HPC" | "PFC" | "ACC" | "INS" | "SCN" | "PIT" | "PAG" | "RVM" | "EC" | "SN" | "LH" | "BST" | "POA" | "DG" | "thalamus" | "NBM"
+bg-region ::= "striatum" | "GPi" | "GPe" | "STN"
+bs-region ::= "brainstem" | "pons" | "SLD"
+sp-region ::= "spinal"
+ens-region ::= "ENS" | "GUT" | "VAG" | "NTS" | "DMV" | "AP"
+endo-region ::= "ARC" | "ADR" | "THYROID" | "GONAD"
+periph-region ::= "LIVER" | "systemic" | "plasma" | "kidney" | "cardiac"
+
+# --- PRIMITIVES ---
+ident ::= [a-zA-Z_][a-zA-Z0-9_.:-]*
+ws ::= " "+

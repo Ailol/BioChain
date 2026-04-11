@@ -1,9 +1,0 @@
-C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\spacetimedb_primitives-69e1eae59d6a86d4.d: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\attr.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\col_list.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\errno.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\ids.rs
-
-C:\Users\ailon\repo\MultiAgentAiMcp\biochain-module\target\wasm32-unknown-unknown\debug\deps\libspacetimedb_primitives-69e1eae59d6a86d4.rmeta: C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\lib.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\attr.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\col_list.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\errno.rs C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\ids.rs
-
-C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\lib.rs:
-C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\attr.rs:
-C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\col_list.rs:
-C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\errno.rs:
-C:\Users\ailon\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spacetimedb-primitives-2.0.3\src\ids.rs:
