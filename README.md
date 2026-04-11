@@ -1,5 +1,8 @@
 # Chain Core
 
+Co-author: Ailo
+Co-author: Claude
+
 Universal diamond compiler for structured signal cascade analysis. Converts domain-specific BNF formulas into executable graph programs via a 4-layer pipeline (BASE → PLASTICITY → META → CONVERGENCE), stores them in SpacetimeDB, and enables simulation and convergence analysis.
 
 The compiler is domain-agnostic. Domain-specific vocabulary (node types, regions, cascade tags, semantic rules) is supplied via domain packs. The grammar, operators, state arrows, closure invariants, and cross-layer linking rules are universal across all Chain domains.
