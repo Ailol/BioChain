@@ -1,4 +1,7 @@
 use crate::db::base::tables::*;
+use crate::db::plasticity::tables::*;
+use crate::db::meta::tables::*;
+use crate::db::convergence::tables::*;
 use spacetimedb::ReducerContext;
 use std::collections::HashMap;
 
@@ -63,11 +66,18 @@ impl ValidationReport {
 // ═══════════════════════════════════════════════════════════════════
 
 pub struct ProgramSnapshot {
+    // BASE
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
     pub tensors: Vec<Tensor>,
-    pub node_by_id: HashMap<u64, usize>,   // node.id → index in nodes
+    pub node_by_id: HashMap<u64, usize>,
     pub node_by_key: HashMap<String, usize>, // "code@region" → index in nodes
+    // PLASTICITY
+    pub delta_ops: Vec<DeltaOp>,
+    // META
+    pub meta_ops: Vec<MetaOp>,
+    // CONVERGENCE
+    pub convs: Vec<Conv>,
 }
 
 impl ProgramSnapshot {
@@ -75,6 +85,9 @@ impl ProgramSnapshot {
         let nodes: Vec<Node> = ctx.db.node().by_program().filter(program_id).collect();
         let edges: Vec<Edge> = ctx.db.edge().by_program().filter(program_id).collect();
         let tensors: Vec<Tensor> = ctx.db.tensor().by_program().filter(program_id).collect();
+        let delta_ops: Vec<DeltaOp> = ctx.db.delta_op().by_program().filter(program_id).collect();
+        let meta_ops: Vec<MetaOp> = ctx.db.meta_op().by_program().filter(program_id).collect();
+        let convs: Vec<Conv> = ctx.db.conv().by_program().filter(program_id).collect();
 
         let node_by_id: HashMap<u64, usize> = nodes.iter().enumerate()
             .map(|(i, n)| (n.id, i)).collect();
@@ -84,7 +97,23 @@ impl ProgramSnapshot {
                 (key, i)
             }).collect();
 
-        Self { nodes, edges, tensors, node_by_id, node_by_key }
+        Self { nodes, edges, tensors, node_by_id, node_by_key, delta_ops, meta_ops, convs }
+    }
+
+    /// Build a snapshot from pre-collected data (for testing without SpacetimeDB).
+    #[cfg(test)]
+    pub fn from_parts(
+        nodes: Vec<Node>, edges: Vec<Edge>, tensors: Vec<Tensor>,
+        delta_ops: Vec<DeltaOp>, meta_ops: Vec<MetaOp>, convs: Vec<Conv>,
+    ) -> Self {
+        let node_by_id: HashMap<u64, usize> = nodes.iter().enumerate()
+            .map(|(i, n)| (n.id, i)).collect();
+        let node_by_key: HashMap<String, usize> = nodes.iter().enumerate()
+            .map(|(i, n)| {
+                let key = format!("{}@{}", n.code, n.region.as_deref().unwrap_or(""));
+                (key, i)
+            }).collect();
+        Self { nodes, edges, tensors, node_by_id, node_by_key, delta_ops, meta_ops, convs }
     }
 
     pub fn node(&self, id: u64) -> Option<&Node> {
