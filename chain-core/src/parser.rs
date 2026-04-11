@@ -41,7 +41,8 @@ pub fn ingest_bnf(
 }
 
 fn ingest_base(ctx: &ReducerContext, program_id: u64, text: &str) -> Result<(), String> {
-    let parsed = parse_base(text)?;
+    let vocab = biochain_vocab();
+    let parsed = parse_base(text, &vocab)?;
 
     // update program domains/phase
     let mut prog = ctx.db.program().id().find(program_id).unwrap();
@@ -349,7 +350,8 @@ fn insert_chain_elements(
 }
 
 fn ingest_plasticity(ctx: &ReducerContext, program_id: u64, text: &str) -> Result<(), String> {
-    let deltas = parse_plasticity(text)?;
+    let vocab = biochain_vocab();
+    let deltas = parse_plasticity(text, &vocab)?;
 
     // validate triggers against existing nodes
     for d in &deltas {
@@ -392,7 +394,8 @@ fn ingest_plasticity(ctx: &ReducerContext, program_id: u64, text: &str) -> Resul
 }
 
 fn ingest_meta(ctx: &ReducerContext, program_id: u64, text: &str) -> Result<(), String> {
-    let entries = parse_meta(text)?;
+    let vocab = biochain_vocab();
+    let entries = parse_meta(text, &vocab)?;
 
     for e in entries {
         ctx.db.meta_op().insert(MetaOp {
@@ -417,7 +420,8 @@ fn ingest_meta(ctx: &ReducerContext, program_id: u64, text: &str) -> Result<(), 
 }
 
 fn ingest_convergence(ctx: &ReducerContext, program_id: u64, text: &str) -> Result<(), String> {
-    let entries = parse_convergence(text)?;
+    let vocab = biochain_vocab();
+    let entries = parse_convergence(text, &vocab)?;
 
     for e in entries {
         match e {
@@ -504,9 +508,10 @@ pub fn lint_bnf(
     pipeline: String,
     bnf_text: String,
 ) -> Result<(), String> {
+    let vocab = biochain_vocab();
     match pipeline.as_str() {
         "base" => {
-            let result = lint_base(&bnf_text);
+            let result = lint_base(&bnf_text, &vocab);
             log::info!(
                 "LINT_BASE|valid:{}|nodes:{}|edges:{}|chains:{}|issues:{}",
                 result.valid, result.node_count, result.edge_count,
@@ -524,17 +529,17 @@ pub fn lint_bnf(
             }
         }
         "plasticity" => {
-            let deltas = parse_plasticity(&bnf_text)?;
+            let deltas = parse_plasticity(&bnf_text, &vocab)?;
             log::info!("LINT_PLASTICITY|ok|deltas:{}", deltas.len());
             Ok(())
         }
         "meta" => {
-            let entries = parse_meta(&bnf_text)?;
+            let entries = parse_meta(&bnf_text, &vocab)?;
             log::info!("LINT_META|ok|entries:{}", entries.len());
             Ok(())
         }
         "convergence" => {
-            let entries = parse_convergence(&bnf_text)?;
+            let entries = parse_convergence(&bnf_text, &vocab)?;
             log::info!("LINT_CONVERGENCE|ok|entries:{}", entries.len());
             Ok(())
         }

@@ -1,8 +1,65 @@
 // ═══════════════════════════════════════════════════════════════════
-//  parser_core.rs — BioChain BNF parser (all 4 pipelines) + linter
-//  Rewritten from scratch 2026-03-13
+//  parser_core.rs — Diamond BNF parser (all 4 pipelines) + linter
+//  Domain-agnostic: vocabulary supplied via ParserLookup.
 //  No regex, no panics, no infinite loops. Pure &str manipulation.
 // ═══════════════════════════════════════════════════════════════════
+
+// ── 0. Parser vocabulary lookup ─────────────────────────────────
+
+/// Vocabulary lookup for the parser. Holds node types and cascade tags
+/// sorted by descending length for longest-match-first semantics.
+/// Constructed from a domain pack at startup.
+pub struct ParserLookup {
+    /// Node type tokens, sorted by descending length.
+    node_types: Vec<String>,
+    /// Cascade tag tokens, sorted by descending length.
+    cascade_tags: Vec<String>,
+}
+
+impl ParserLookup {
+    /// Build a lookup from raw token lists. Sorts both by descending length
+    /// to guarantee longest-match-first behavior.
+    pub fn new(mut node_types: Vec<String>, mut cascade_tags: Vec<String>) -> Self {
+        node_types.sort_by(|a, b| b.len().cmp(&a.len()));
+        cascade_tags.sort_by(|a, b| b.len().cmp(&a.len()));
+        Self { node_types, cascade_tags }
+    }
+
+    /// Try to match a node type prefix at the start of `s`.
+    /// Returns the matched type and the remainder after the ':' separator.
+    /// Longest match wins.
+    pub fn match_node_type<'a>(&self, s: &'a str) -> Option<(&str, &'a str)> {
+        for t in &self.node_types {
+            if s.starts_with(t.as_str()) {
+                let after = &s[t.len()..];
+                if after.starts_with(':') {
+                    return Some((t.as_str(), &after[1..]));
+                }
+            }
+        }
+        None
+    }
+
+    /// Try to strip a cascade tag prefix from a line.
+    /// Returns the chain portion after the tag.
+    pub fn strip_cascade_tag<'a>(&self, line: &'a str) -> Option<&'a str> {
+        for tag in &self.cascade_tags {
+            if line.starts_with(tag.as_str()) {
+                let after_tag = &line[tag.len()..];
+                if let Some(rest) = after_tag.strip_prefix(':') {
+                    let trimmed = rest.trim_start();
+                    if trimmed.starts_with('{') || trimmed.starts_with('\u{2299}') {
+                        return Some(trimmed);
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    pub fn node_types(&self) -> &[String] { &self.node_types }
+    pub fn cascade_tags(&self) -> &[String] { &self.cascade_tags }
+}
 
 // ── 1. Data structures ──────────────────────────────────────────
 
@@ -317,87 +374,52 @@ impl<'a> Cur<'a> {
     }
 }
 
-// ── 3. Known type prefixes (longest first) ──────────────────────
+// ── 3. BioChain vocabulary (default domain pack) ────────────────
 
-const KNOWN_TYPES: &[&str] = &[
-    // struct — longest first to avoid prefix collisions
-    "N.glia.mg",
-    "N.glia.as",
-    "N.glia",
-    "N.pyr",
-    "N.da",
-    "N.5ht",
-    "N.gaba",
-    "N.gran",
-    "N.ent",
-    "N.eec",
-    "N.icc",
-    "P.oligo",
-    "P.agg",
-    "B.gut",
-    "B.bbb",
-    "B.beh",
-    // chem
-    "L.nt",
-    "L.h",
-    "L.p",
-    "L.cb",
-    "L.ni",
-    "L.ns",
-    "L.mb",
-    // elec
-    "E.lf",
-    "E.gj",
-    "E.v",
-    "Ch.vg",
-    "Ch.mec",
-    "Ch.trp",
-    "Ch",
-    // meta
-    "M.atp",
-    "M.glc",
-    "M.ros",
-    "M.o2",
-    "Mt",
-    // single-letter last
-    "Gp",
-    "2m",
-    "Ph",
-    "TF",
-    "NR",
-    "R",
-    "K",
-    "G",
-    "T",
-    "E",
-    "V",
-    "N",
-    "B",
-    "M",
-];
+/// Build a ParserLookup for the BioChain domain.
+/// This is the backward-compatible default; future domains load from TOML.
+pub fn biochain_vocab() -> ParserLookup {
+    ParserLookup::new(
+        vec![
+            // struct
+            "N.glia.mg", "N.glia.as", "N.glia",
+            "N.pyr", "N.da", "N.5ht", "N.gaba", "N.gran",
+            "N.ent", "N.eec", "N.icc",
+            "P.oligo", "P.agg",
+            "B.gut", "B.bbb", "B.beh",
+            // chem
+            "L.nt", "L.h", "L.p", "L.cb", "L.ni", "L.ns", "L.mb",
+            // elec
+            "E.lf", "E.gj", "E.v", "Ch.vg", "Ch.mec", "Ch.trp", "Ch",
+            // meta
+            "M.atp", "M.glc", "M.ros", "M.o2", "Mt",
+            // single-letter
+            "Gp", "2m", "Ph", "TF", "NR", "R", "K", "G", "T", "E", "V", "N", "B", "M",
+        ].into_iter().map(String::from).collect(),
+        vec![
+            "GPCR.G12", "GPCR.Gs", "GPCR.Gi", "GPCR.Gq",
+            "GUT_HORMONE", "IONOTROPIC", "TRANSPORT", "CYTOKINE",
+            "NUCLEAR", "RECYCLE", "VAGAL", "RTK", "ENZ",
+        ].into_iter().map(String::from).collect(),
+    )
+}
 
 // ── 4. Node parser ──────────────────────────────────────────────
 
 /// Parse a single node from content between { and }.
 /// Format: [TYPE:]CODE[STATE](PROPS)@REGION[(PROPS)]
-fn parse_node_inner(content: &str) -> Result<ParsedNode, String> {
+fn parse_node_inner(content: &str, vocab: &ParserLookup) -> Result<ParsedNode, String> {
     let s = content.trim();
     if s.is_empty() {
         return Err("Empty node".into());
     }
 
-    // 1) Try to match TYPE: prefix (longest first)
+    // 1) Try to match TYPE: prefix (longest first via vocab)
     let mut kind = String::new();
     let mut rest = s;
-    for t in KNOWN_TYPES {
-        if rest.starts_with(t) {
-            let after = &rest[t.len()..];
-            if after.starts_with(':') {
-                kind = t.to_string();
-                rest = &after[1..]; // skip the ':'
-                break;
-            }
-        }
+    if let Some((matched_type, remainder)) = vocab.match_node_type(s) {
+        kind = matched_type.to_string();
+        rest = remainder;
     }
 
     // 2) Split on last '@' to separate code_part from region
@@ -453,7 +475,7 @@ fn parse_node_inner(content: &str) -> Result<ParsedNode, String> {
 }
 
 /// Extract a {node} at the current position. Returns (ParsedNode, bytes_consumed).
-fn extract_braced_node(s: &str) -> Result<(ParsedNode, usize), String> {
+fn extract_braced_node(s: &str, vocab: &ParserLookup) -> Result<(ParsedNode, usize), String> {
     if !s.starts_with('{') {
         return Err(format!("Expected '{{' at: {}", &s[..s.len().min(20)]));
     }
@@ -480,7 +502,7 @@ fn extract_braced_node(s: &str) -> Result<(ParsedNode, usize), String> {
         return Err("Unmatched '{'".into());
     }
     let inner = &s['{'.len_utf8()..end - '}'.len_utf8()];
-    let node = parse_node_inner(inner)?;
+    let node = parse_node_inner(inner, vocab)?;
     Ok((node, end))
 }
 
@@ -601,7 +623,7 @@ fn try_parse_edge(s: &str) -> Option<(&str, usize)> {
 
 /// Parse a chain line into ChainElement list.
 /// Input: the line content after optional ⊙ prefix.
-fn parse_chain_line(line: &str, is_root: bool) -> Result<Vec<ChainElement>, String> {
+fn parse_chain_line(line: &str, is_root: bool, vocab: &ParserLookup) -> Result<Vec<ChainElement>, String> {
     let mut elements = Vec::new();
     let mut cur = Cur::new(line);
     let mut first_node = true;
@@ -664,7 +686,7 @@ fn parse_chain_line(line: &str, is_root: bool) -> Result<Vec<ChainElement>, Stri
 
         // Node?
         if rest.starts_with('{') {
-            let (mut node, consumed) = extract_braced_node(rest)?;
+            let (mut node, consumed) = extract_braced_node(rest, vocab)?;
             if first_node && is_root {
                 node.is_root = true;
             }
@@ -683,7 +705,7 @@ fn parse_chain_line(line: &str, is_root: bool) -> Result<Vec<ChainElement>, Stri
 
 // ── 6. parse_base ───────────────────────────────────────────────
 
-pub fn parse_base(text: &str) -> Result<ParsedBase, String> {
+pub fn parse_base(text: &str, vocab: &ParserLookup) -> Result<ParsedBase, String> {
     let mut result = ParsedBase::default();
 
     for (line_idx, raw_line) in text.lines().enumerate() {
@@ -731,27 +753,27 @@ pub fn parse_base(text: &str) -> Result<ParsedBase, String> {
 
             // ∫{ — integration
             if line.starts_with("\u{222B}{") || line.starts_with("\u{222B} {") {
-                return parse_integration_line(line, &mut result.integrations);
+                return parse_integration_line(line, &mut result.integrations, vocab);
             }
 
             // ⊗( — conditional
             if line.starts_with("\u{2297}(") || line.starts_with("\u{2297} (") {
-                return parse_conditional_line(line, &mut result.conditionals);
+                return parse_conditional_line(line, &mut result.conditionals, vocab);
             }
 
             // ◈ — composite
             if line.starts_with('\u{25C8}') {
-                return parse_composite_line(line, &mut result.composites);
+                return parse_composite_line(line, &mut result.composites, vocab);
             }
 
             // ⚡ — dysreg
             if line.starts_with('\u{26A1}') {
-                return parse_dysreg_line(line, &mut result.dysregs);
+                return parse_dysreg_line(line, &mut result.dysregs, vocab);
             }
 
             // ⊕ (not ⊕⊳) — observable
             if line.starts_with('\u{2295}') && !line.starts_with("\u{2295}\u{22B3}") {
-                return parse_observable_line(line, &mut result.observables);
+                return parse_observable_line(line, &mut result.observables, vocab);
             }
 
             // ⊙{ — root chain
@@ -761,7 +783,7 @@ pub fn parse_base(text: &str) -> Result<ParsedBase, String> {
                 } else {
                     &line["\u{2299}".len()..]
                 };
-                let chain = parse_chain_line(chain_start, true)?;
+                let chain = parse_chain_line(chain_start, true, vocab)?;
                 if !chain.is_empty() {
                     result.chains.push(chain);
                 }
@@ -769,13 +791,11 @@ pub fn parse_base(text: &str) -> Result<ParsedBase, String> {
             }
 
             // CASCADE_TAG:{... or CASCADE_TAG: {... — cascade-tagged chain
-            // Tags: GPCR.Gs, GPCR.Gi, GPCR.Gq, GPCR.G12, NUCLEAR, RTK, CYTOKINE,
-            //        IONOTROPIC, VAGAL, GUT_HORMONE, ENZ, RECYCLE, TRANSPORT
-            if let Some(chain_start) = try_strip_cascade_tag(line) {
+            if let Some(chain_start) = vocab.strip_cascade_tag(line) {
                 if contains_protocol_op(chain_start) {
-                    return parse_protocol_line(chain_start, &mut result.protocols);
+                    return parse_protocol_line(chain_start, &mut result.protocols, vocab);
                 }
-                let chain = parse_chain_line(chain_start, false)?;
+                let chain = parse_chain_line(chain_start, false, vocab)?;
                 if !chain.is_empty() {
                     result.chains.push(chain);
                 }
@@ -786,9 +806,9 @@ pub fn parse_base(text: &str) -> Result<ParsedBase, String> {
             if line.starts_with('{') {
                 // Detect protocol: line contains ⊲ (not ⊲̃)
                 if contains_protocol_op(line) {
-                    return parse_protocol_line(line, &mut result.protocols);
+                    return parse_protocol_line(line, &mut result.protocols, vocab);
                 }
-                let chain = parse_chain_line(line, false)?;
+                let chain = parse_chain_line(line, false, vocab)?;
                 if !chain.is_empty() {
                     result.chains.push(chain);
                 }
@@ -807,31 +827,7 @@ pub fn parse_base(text: &str) -> Result<ParsedBase, String> {
     Ok(result)
 }
 
-/// Known cascade tag names (longest first to avoid prefix collisions)
-const CASCADE_TAGS: &[&str] = &[
-    "GPCR.G12", "GPCR.Gs", "GPCR.Gi", "GPCR.Gq",
-    "GUT_HORMONE", "IONOTROPIC", "TRANSPORT", "CYTOKINE",
-    "NUCLEAR", "RECYCLE", "VAGAL", "RTK", "ENZ",
-];
-
-/// Try to strip a cascade tag prefix from a line.
-/// Returns the chain portion after the tag (with leading whitespace trimmed)
-/// if the line starts with a valid cascade tag followed by ':'.
-/// Handles both `TAG:{...` and `TAG: {...` (with optional space).
-fn try_strip_cascade_tag(line: &str) -> Option<&str> {
-    for tag in CASCADE_TAGS {
-        if line.starts_with(tag) {
-            let after_tag = &line[tag.len()..];
-            if let Some(rest) = after_tag.strip_prefix(':') {
-                let trimmed = rest.trim_start();
-                if trimmed.starts_with('{') || trimmed.starts_with('\u{2299}') {
-                    return Some(trimmed);
-                }
-            }
-        }
-    }
-    None
-}
+// CASCADE_TAGS and try_strip_cascade_tag removed — now in ParserLookup::strip_cascade_tag
 
 /// Check if line contains the protocol operator ⊲ (but not ⊲̃ with combining tilde)
 fn contains_protocol_op(line: &str) -> bool {
@@ -897,7 +893,7 @@ fn split_code_region(s: &str) -> Result<(String, String), String> {
     }
 }
 
-fn parse_integration_line(line: &str, integs: &mut Vec<ParsedIntegration>) -> Result<(), String> {
+fn parse_integration_line(line: &str, integs: &mut Vec<ParsedIntegration>, vocab: &ParserLookup) -> Result<(), String> {
     // ∫{UNIT}←(INPUTS)→{OUTPUT}:MODE
     let mut cur = Cur::new(line);
     cur.eat_str("\u{222B}"); // ∫
@@ -905,7 +901,7 @@ fn parse_integration_line(line: &str, integs: &mut Vec<ParsedIntegration>) -> Re
 
     // Parse unit node
     let unit_str = cur.balanced('{', '}').ok_or("Integration: missing unit braces")?;
-    let unit = parse_node_inner(unit_str)?;
+    let unit = parse_node_inner(unit_str, vocab)?;
 
     cur.skip_ws();
     // ← arrow
@@ -929,7 +925,7 @@ fn parse_integration_line(line: &str, integs: &mut Vec<ParsedIntegration>) -> Re
 
     // {OUTPUT}
     let out_str = cur.balanced('{', '}').ok_or("Integration: missing output braces")?;
-    let out_node = parse_node_inner(out_str)?;
+    let out_node = parse_node_inner(out_str, vocab)?;
 
     // :MODE
     cur.skip_ws();
@@ -999,7 +995,7 @@ fn parse_sign_val(s: &str) -> (String, Option<f32>) {
     }
 }
 
-fn parse_protocol_line(line: &str, protos: &mut Vec<ParsedProtocol>) -> Result<(), String> {
+fn parse_protocol_line(line: &str, protos: &mut Vec<ParsedProtocol>, vocab: &ParserLookup) -> Result<(), String> {
     // {SOURCE}⊲{TARGET}[PARAMS]
     let proto_op = "\u{22B2}"; // ⊲
     let split_pos = line.find(proto_op).ok_or("Protocol: missing ⊲")?;
@@ -1008,10 +1004,10 @@ fn parse_protocol_line(line: &str, protos: &mut Vec<ParsedProtocol>) -> Result<(
     let rest = &line[split_pos + proto_op.len()..];
 
     // Parse source node
-    let (src_node, _) = extract_braced_node(src_part.trim())?;
+    let (src_node, _) = extract_braced_node(src_part.trim(), vocab)?;
 
     // Parse target node
-    let (tgt_node, consumed) = extract_braced_node(rest.trim())?;
+    let (tgt_node, consumed) = extract_braced_node(rest.trim(), vocab)?;
     let after_target = rest.trim()[consumed..].trim();
 
     // Parse [PARAMS] if present
@@ -1079,7 +1075,7 @@ fn parse_protocol_line(line: &str, protos: &mut Vec<ParsedProtocol>) -> Result<(
     Ok(())
 }
 
-fn parse_conditional_line(line: &str, conds: &mut Vec<ParsedConditional>) -> Result<(), String> {
+fn parse_conditional_line(line: &str, conds: &mut Vec<ParsedConditional>, vocab: &ParserLookup) -> Result<(), String> {
     // ⊗(CONDITIONS)⟹{TARGET}:ACTION
     let implies = "\u{27F9}"; // ⟹
     let split = line.find(implies).ok_or("Conditional: missing ⟹")?;
@@ -1109,12 +1105,12 @@ fn parse_conditional_line(line: &str, conds: &mut Vec<ParsedConditional>) -> Res
         if p.is_empty() {
             continue;
         }
-        items.push(parse_cond_item(p)?);
+        items.push(parse_cond_item(p, vocab)?);
     }
 
     // Parse effect: {TARGET}:ACTION[:VALUE]
     let effect = effect_part.trim();
-    let (eff_node, consumed) = extract_braced_node(effect)?;
+    let (eff_node, consumed) = extract_braced_node(effect, vocab)?;
     let after = effect[consumed..].trim();
     let (action, value, switch) = if after.starts_with(':') {
         let rest = &after[1..];
@@ -1144,7 +1140,7 @@ fn parse_conditional_line(line: &str, conds: &mut Vec<ParsedConditional>) -> Res
     Ok(())
 }
 
-fn parse_cond_item(s: &str) -> Result<CondItem, String> {
+fn parse_cond_item(s: &str, vocab: &ParserLookup) -> Result<CondItem, String> {
     let s = s.trim();
     let negated = s.starts_with('\u{00AC}') || s.starts_with('!'); // ¬ or !
     let s = if negated {
@@ -1158,7 +1154,7 @@ fn parse_cond_item(s: &str) -> Result<CondItem, String> {
     if !s.starts_with('{') {
         return Err(format!("CondItem: expected node, got: {}", s));
     }
-    let (node, consumed) = extract_braced_node(s)?;
+    let (node, consumed) = extract_braced_node(s, vocab)?;
     let rest = s[consumed..].trim();
 
     // Parse comparison operator and state
@@ -1180,7 +1176,7 @@ fn parse_cond_item(s: &str) -> Result<CondItem, String> {
     })
 }
 
-fn parse_composite_line(line: &str, comps: &mut Vec<ParsedComposite>) -> Result<(), String> {
+fn parse_composite_line(line: &str, comps: &mut Vec<ParsedComposite>, vocab: &ParserLookup) -> Result<(), String> {
     // ◈NAME:{CODE@REGION}+{CODE@REGION}+...
     let mut cur = Cur::new(line);
     cur.eat_str("\u{25C8}"); // ◈
@@ -1194,7 +1190,7 @@ fn parse_composite_line(line: &str, comps: &mut Vec<ParsedComposite>) -> Result<
     for part in rest.split('+') {
         let p = part.trim();
         if p.starts_with('{') {
-            if let Ok((node, _)) = extract_braced_node(p) {
+            if let Ok((node, _)) = extract_braced_node(p, vocab) {
                 refs.push((node.code, node.region.unwrap_or_default()));
             }
         }
@@ -1204,7 +1200,7 @@ fn parse_composite_line(line: &str, comps: &mut Vec<ParsedComposite>) -> Result<
     Ok(())
 }
 
-fn parse_dysreg_line(line: &str, dysregs: &mut Vec<ParsedDysreg>) -> Result<(), String> {
+fn parse_dysreg_line(line: &str, dysregs: &mut Vec<ParsedDysreg>, vocab: &ParserLookup) -> Result<(), String> {
     // ⚡TYPE:CHAIN_ELEMENTS
     let mut cur = Cur::new(line);
     cur.eat_str("\u{26A1}"); // ⚡
@@ -1212,13 +1208,13 @@ fn parse_dysreg_line(line: &str, dysregs: &mut Vec<ParsedDysreg>) -> Result<(), 
     cur.eat(':');
 
     let chain_text = cur.rest().trim();
-    let elements = parse_chain_line(chain_text, false)?;
+    let elements = parse_chain_line(chain_text, false, vocab)?;
 
     dysregs.push(ParsedDysreg { dtype, elements });
     Ok(())
 }
 
-fn parse_observable_line(line: &str, obs: &mut Vec<ParsedObservable>) -> Result<(), String> {
+fn parse_observable_line(line: &str, obs: &mut Vec<ParsedObservable>, vocab: &ParserLookup) -> Result<(), String> {
     // ⊕NAME→{TARGET}(DETAIL)
     let mut cur = Cur::new(line);
     cur.eat_str("\u{2295}"); // ⊕
@@ -1231,7 +1227,7 @@ fn parse_observable_line(line: &str, obs: &mut Vec<ParsedObservable>) -> Result<
 
     // Parse {TARGET}
     let after_trimmed = after_arrow.trim();
-    let (target_node, consumed) = extract_braced_node(after_trimmed)?;
+    let (target_node, consumed) = extract_braced_node(after_trimmed, vocab)?;
 
     // Parse (DETAIL) if present
     let remainder = after_trimmed[consumed..].trim();
@@ -1253,7 +1249,7 @@ fn parse_observable_line(line: &str, obs: &mut Vec<ParsedObservable>) -> Result<
 
 // ── 7. parse_plasticity ─────────────────────────────────────────
 
-pub fn parse_plasticity(text: &str) -> Result<Vec<ParsedDelta>, String> {
+pub fn parse_plasticity(text: &str, vocab: &ParserLookup) -> Result<Vec<ParsedDelta>, String> {
     let mut deltas = Vec::new();
 
     for (line_idx, raw_line) in text.lines().enumerate() {
@@ -1268,7 +1264,7 @@ pub fn parse_plasticity(text: &str) -> Result<Vec<ParsedDelta>, String> {
                 let after_delta = &line["\u{0394}".len()..];
                 let first_char = after_delta.chars().next().unwrap_or(' ');
                 if first_char.is_ascii_digit() {
-                    return parse_delta_op_line(line, &mut deltas);
+                    return parse_delta_op_line(line, &mut deltas, vocab);
                 }
             }
 
@@ -1288,7 +1284,7 @@ pub fn parse_plasticity(text: &str) -> Result<Vec<ParsedDelta>, String> {
     Ok(deltas)
 }
 
-fn parse_delta_op_line(line: &str, deltas: &mut Vec<ParsedDelta>) -> Result<(), String> {
+fn parse_delta_op_line(line: &str, deltas: &mut Vec<ParsedDelta>, vocab: &ParserLookup) -> Result<(), String> {
     // Δ0: {TRIGGER} ≫ {TARGET(prop:before→after)} [τ:duration] status:X depends:ΔN
     let mut cur = Cur::new(line);
     cur.eat_str("\u{0394}"); // Δ
@@ -1300,7 +1296,7 @@ fn parse_delta_op_line(line: &str, deltas: &mut Vec<ParsedDelta>) -> Result<(), 
 
     // Parse trigger node
     let trigger_str = cur.balanced('{', '}').ok_or("Delta: missing trigger braces")?;
-    let trigger = parse_node_inner(trigger_str)?;
+    let trigger = parse_node_inner(trigger_str, vocab)?;
 
     cur.skip_ws();
     // ≫ operator
@@ -1311,7 +1307,7 @@ fn parse_delta_op_line(line: &str, deltas: &mut Vec<ParsedDelta>) -> Result<(), 
 
     // Parse target node (may have props like sensitivity:norm→des)
     let target_str = cur.balanced('{', '}').ok_or("Delta: missing target braces")?;
-    let target = parse_node_inner(target_str)?;
+    let target = parse_node_inner(target_str, vocab)?;
 
     // Extract change from target props
     let (change_prop, change_before, change_after) = if let Some((k, v)) = target.props.first() {
@@ -1430,7 +1426,7 @@ fn extract_kv(s: &str, prefix: &str) -> Option<String> {
 
 // ── 8. parse_meta ───────────────────────────────────────────────
 
-pub fn parse_meta(text: &str) -> Result<Vec<ParsedMetaEntry>, String> {
+pub fn parse_meta(text: &str, vocab: &ParserLookup) -> Result<Vec<ParsedMetaEntry>, String> {
     let mut entries = Vec::new();
 
     // Combining tilde
@@ -1447,16 +1443,16 @@ pub fn parse_meta(text: &str) -> Result<Vec<ParsedMetaEntry>, String> {
 
         let res: Result<(), String> = (|| {
             if line.starts_with(sigma_tilde) {
-                return parse_meta_entry(line, sigma_tilde, "setpoint", &mut entries);
+                return parse_meta_entry(line, sigma_tilde, "setpoint", &mut entries, vocab);
             }
             if line.starts_with(tri_tilde) {
-                return parse_meta_entry(line, tri_tilde, "protocol", &mut entries);
+                return parse_meta_entry(line, tri_tilde, "protocol", &mut entries, vocab);
             }
             if line.starts_with(int_tilde) {
-                return parse_meta_entry(line, int_tilde, "structural", &mut entries);
+                return parse_meta_entry(line, int_tilde, "structural", &mut entries, vocab);
             }
             if line.starts_with(tensor_tilde) {
-                return parse_meta_entry(line, tensor_tilde, "architecture", &mut entries);
+                return parse_meta_entry(line, tensor_tilde, "architecture", &mut entries, vocab);
             }
             Ok(())
         })();
@@ -1474,6 +1470,7 @@ fn parse_meta_entry(
     prefix: &str,
     rank: &str,
     entries: &mut Vec<ParsedMetaEntry>,
+    vocab: &ParserLookup,
 ) -> Result<(), String> {
     // PREFIX[WINDOW]({NODE}(property:before→after)) KEY:VAL KEY:VAL
     let mut cur = Cur::new(line);
@@ -1490,7 +1487,7 @@ fn parse_meta_entry(
     let body = cur.balanced('(', ')').ok_or("Meta: missing body parens")?;
 
     // Inside body: {NODE}(property:before→after) or {NODE}[property:before→after]
-    let (node, consumed) = extract_braced_node(body.trim())?;
+    let (node, consumed) = extract_braced_node(body.trim(), vocab)?;
     let after_node = body.trim()[consumed..].trim();
 
     // Extract property change
@@ -1557,7 +1554,7 @@ fn parse_prop_change(s: &str) -> (String, String) {
 
 // ── 9. parse_convergence ────────────────────────────────────────
 
-pub fn parse_convergence(text: &str) -> Result<Vec<ParsedConvEntry>, String> {
+pub fn parse_convergence(text: &str, vocab: &ParserLookup) -> Result<Vec<ParsedConvEntry>, String> {
     let mut entries = Vec::new();
 
     let conv_state = "\u{222E}"; // ∮
@@ -1812,12 +1809,12 @@ fn parse_conv_flag(line: &str, entries: &mut Vec<ParsedConvEntry>) -> Result<(),
 
 /// Lint BASE pipeline BNF text.
 /// Runs parse_base then performs post-parse validation checks.
-pub fn lint_base(text: &str) -> LintResult {
+pub fn lint_base(text: &str, vocab: &ParserLookup) -> LintResult {
     let mut issues = Vec::new();
     let mut node_count = 0usize;
     let mut edge_count = 0usize;
 
-    let parsed = match parse_base(text) {
+    let parsed = match parse_base(text, vocab) {
         Ok(p) => p,
         Err(e) => {
             issues.push(LintIssue {
@@ -2038,7 +2035,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_domains() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert_eq!(result.domains.len(), 12);
         assert!(result.domains.contains(&"L.nt".to_string()));
         assert!(result.domains.contains(&"B.beh".to_string()));
@@ -2046,7 +2043,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_phase() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert!(result.phase.is_some());
         let phase = result.phase.unwrap();
         assert!(phase.contains("chronic_stress"));
@@ -2054,7 +2051,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_seeds() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert_eq!(result.seeds.len(), 2);
         assert_eq!(result.seeds[0].code, "CRH");
         assert_eq!(result.seeds[0].region, "PVN");
@@ -2063,7 +2060,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_chains() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         // 5 chain lines + 1 root chain = 6 chains total
         assert!(result.chains.len() >= 5, "Expected at least 5 chains, got {}", result.chains.len());
 
@@ -2081,7 +2078,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_node_with_props() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         // Find the CRH-R1 node which has (Gs) prop
         let found = result.chains.iter().any(|chain| {
             chain.iter().any(|el| {
@@ -2097,7 +2094,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_integrations() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert_eq!(result.integrations.len(), 2);
         assert_eq!(result.integrations[0].unit.code, "5HT_tone");
         assert_eq!(result.integrations[0].inputs.len(), 3);
@@ -2106,7 +2103,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_protocols() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert_eq!(result.protocols.len(), 1);
         assert_eq!(result.protocols[0].source_code, "5HT");
         assert_eq!(result.protocols[0].polarity, Some("inh".to_string()));
@@ -2116,7 +2113,7 @@ mod tests {
 
     #[test]
     fn test_parse_base_conditionals() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert_eq!(result.conditionals.len(), 1);
         assert_eq!(result.conditionals[0].conditions.len(), 2);
         assert_eq!(result.conditionals[0].effect_code, "DA");
@@ -2125,14 +2122,14 @@ mod tests {
 
     #[test]
     fn test_parse_base_dysregs() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert_eq!(result.dysregs.len(), 1);
         assert_eq!(result.dysregs[0].dtype, "sus");
     }
 
     #[test]
     fn test_parse_base_observables() {
-        let result = parse_base(SAMPLE_BASE).unwrap();
+        let result = parse_base(SAMPLE_BASE, &biochain_vocab()).unwrap();
         assert_eq!(result.observables.len(), 3);
         assert_eq!(result.observables[0].name, "serum_cortisol");
         assert_eq!(result.observables[0].target_code, "CORT");
@@ -2146,7 +2143,7 @@ mod tests {
 
     #[test]
     fn test_parse_plasticity() {
-        let result = parse_plasticity(SAMPLE_PLASTICITY).unwrap();
+        let result = parse_plasticity(SAMPLE_PLASTICITY, &biochain_vocab()).unwrap();
         assert_eq!(result.len(), 4);
 
         assert_eq!(result[0].rank, 0);
@@ -2165,7 +2162,7 @@ mod tests {
 
     #[test]
     fn test_parse_meta() {
-        let result = parse_meta(SAMPLE_META).unwrap();
+        let result = parse_meta(SAMPLE_META, &biochain_vocab()).unwrap();
         assert_eq!(result.len(), 4);
 
         assert_eq!(result[0].rank, "setpoint");
@@ -2179,7 +2176,7 @@ mod tests {
 
     #[test]
     fn test_parse_convergence() {
-        let result = parse_convergence(SAMPLE_CONVERGENCE).unwrap();
+        let result = parse_convergence(SAMPLE_CONVERGENCE, &biochain_vocab()).unwrap();
         assert_eq!(result.len(), 6);
 
         // Check state entry
@@ -2221,7 +2218,7 @@ mod tests {
 
     #[test]
     fn test_lint_base() {
-        let result = lint_base(SAMPLE_BASE);
+        let result = lint_base(SAMPLE_BASE, &biochain_vocab());
         assert!(result.valid, "Should be valid, issues: {:?}", result.issues);
         assert!(result.node_count > 0);
         assert!(result.edge_count > 0);
@@ -2230,7 +2227,8 @@ mod tests {
 
     #[test]
     fn test_parse_node_with_dash_code() {
-        let node = parse_node_inner("R:CRH-R1(Gs)@PIT").unwrap();
+        let v = biochain_vocab();
+        let node = parse_node_inner("R:CRH-R1(Gs)@PIT", &v).unwrap();
         assert_eq!(node.code, "CRH-R1");
         assert_eq!(node.kind, "R");
         assert_eq!(node.region, Some("PIT".to_string()));
@@ -2239,7 +2237,8 @@ mod tests {
 
     #[test]
     fn test_parse_node_shorthand() {
-        let node = parse_node_inner("ACTH@PIT").unwrap();
+        let v = biochain_vocab();
+        let node = parse_node_inner("ACTH@PIT", &v).unwrap();
         assert_eq!(node.code, "ACTH");
         assert_eq!(node.kind, "");
         assert_eq!(node.region, Some("PIT".to_string()));
@@ -2247,7 +2246,8 @@ mod tests {
 
     #[test]
     fn test_parse_node_with_state() {
-        let node = parse_node_inner("L.h:CRH[+]@PVN").unwrap();
+        let v = biochain_vocab();
+        let node = parse_node_inner("L.h:CRH[+]@PVN", &v).unwrap();
         assert_eq!(node.code, "CRH");
         assert_eq!(node.kind, "L.h");
         assert!(node.state.is_some());
@@ -2256,7 +2256,7 @@ mod tests {
 
     #[test]
     fn test_empty_input() {
-        let result = parse_base("").unwrap();
+        let result = parse_base("", &biochain_vocab()).unwrap();
         assert!(result.chains.is_empty());
     }
 
@@ -2282,7 +2282,7 @@ RTK:{L.p:BDNF[=]@HPC}→{R:TrkB(RTK)@HPC}→{K:ERK@HPC}→{TF:CREB@HPC}→{G:BDN
 ⚡hormonal_collapse_cascade:{L.h:CORT@PVN}↺⁺
 "#;
 
-        let result = parse_base(input).unwrap();
+        let result = parse_base(input, &biochain_vocab()).unwrap();
 
         // Should have 7 cascade-tagged chains (GPCR.Gs, GPCR.Gi, IONOTROPIC, GPCR.Gi, GPCR.Gq, RTK, + dysreg chain)
         assert!(result.chains.len() >= 6, "Expected at least 6 chains, got {}", result.chains.len());
@@ -2323,7 +2323,7 @@ RTK:{L.p:BDNF[=]@HPC}→{R:TrkB(RTK)@HPC}→{K:ERK@HPC}→{TF:CREB@HPC}→{G:BDN
         let input = r#"@domain: L.nt L.h R Gp 2m K TF G
 GPCR.Gs: {L.h:CRH[+]@PVN}→{R:CRH-R(Gs)@PIT}→{Gp:Gs@PIT}→⊘
 "#;
-        let result = parse_base(input).unwrap();
+        let result = parse_base(input, &biochain_vocab()).unwrap();
         assert_eq!(result.chains.len(), 1, "Should parse cascade-tagged chain with space after colon");
         let node_count = result.chains[0].iter().filter(|e| matches!(e, ChainElement::Node(_))).count();
         assert!(node_count >= 3, "Should have at least 3 nodes");
@@ -2331,10 +2331,11 @@ GPCR.Gs: {L.h:CRH[+]@PVN}→{R:CRH-R(Gs)@PIT}→{Gp:Gs@PIT}→⊘
 
     #[test]
     fn test_all_cascade_tags() {
+        let v = biochain_vocab();
         // Verify all 13 cascade tags are recognized
-        for tag in CASCADE_TAGS {
+        for tag in v.cascade_tags() {
             let input = format!("{}:{{L.nt:DA[+]@VTA}}→{{R:D1@NAc}}→⊘", tag);
-            let result = parse_base(&input).unwrap();
+            let result = parse_base(&input, &v).unwrap();
             assert_eq!(result.chains.len(), 1, "Tag '{}' should produce 1 chain", tag);
         }
     }
@@ -2342,11 +2343,11 @@ GPCR.Gs: {L.h:CRH[+]@PVN}→{R:CRH-R(Gs)@PIT}→{Gp:Gs@PIT}→⊘
     #[test]
     fn test_malformed_input_no_panic() {
         // Should not panic on malformed input
-        let _ = parse_base("{unclosed");
-        let _ = parse_base("random garbage text 12345");
-        let _ = parse_base("{}→{}→{}"); // empty nodes
-        let _ = parse_plasticity("Δ garbage");
-        let _ = parse_meta("σ̃ garbage");
-        let _ = parse_convergence("∮ garbage");
+        let _ = parse_base("{unclosed", &biochain_vocab());
+        let _ = parse_base("random garbage text 12345", &biochain_vocab());
+        let _ = parse_base("{}→{}→{}", &biochain_vocab()); // empty nodes
+        let _ = parse_plasticity("Δ garbage", &biochain_vocab());
+        let _ = parse_meta("σ̃ garbage", &biochain_vocab());
+        let _ = parse_convergence("∮ garbage", &biochain_vocab());
     }
 }
