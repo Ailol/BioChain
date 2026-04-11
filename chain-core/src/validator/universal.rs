@@ -9,11 +9,11 @@
 //!
 //! - [x] A1. Declaration-before-use: every node has a non-empty kind (type was resolved)
 //! - [x] A2. Root constraints: ⊙ nodes must have Δ≠0 and outgoing edges
-//! - [ ] A3. Δ has τ: every DeltaOp must have a non-empty tau field
-//! - [ ] A4. σ̃ has pull: every MetaOp with rank "setpoint" must have pull != None
-//! - [ ] A5. ⊲̃ has unlocks_with: every MetaOp with rank "protocol" must have
+//! - [x] A3. Δ has τ: every DeltaOp must have a non-empty tau field
+//! - [x] A4. σ̃ has pull: every MetaOp with rank "setpoint" must have pull != None
+//! - [x] A5. ⊲̃ has unlocks_with: every MetaOp with rank "protocol" must have
 //!       unlocks_with that is either a non-empty condition or the literal "none"
-//! - [ ] A6. ∮ has 3 vectors: every Conv with kind "state" must have exactly 3
+//! - [x] A6. ∮ has 3 vectors: every Conv with kind "state" must have exactly 3
 //!       vectors (v_past, v_current, v_meta)
 //!
 //! ## Group B — Cross-reference invariants (need entity table)
@@ -21,30 +21,32 @@
 //! - [x] B1. Protocol targets exist: every ⊲ references nodes in the symbol table
 //! - [x] B2. Conditional refs exist: every ⊗ condition/effect node exists
 //! - [x] B3. Integration inputs exist: every ∫ input references an existing node
-//! - [ ] B4. Δ depends: resolves — every depends: entry on a DeltaOp resolves
+//! - [x] B4. Δ depends: resolves — every depends: entry on a DeltaOp resolves
 //!       to another DeltaOp in the same program
-//! - [ ] B5. ⊟ cascade steps exist: every cascade_name on a DeltaOp, the
-//!       referenced cascade must contain DeltaOps with matching cascade_name
-//! - [ ] B6. ⊕ observable targets exist: every observable (Diag kind="composite"
-//!       or Conv kind="monitor") references nodes that exist
-//! - [ ] B7. ⚡resist refs: every Conv flag_type="resist" must reference both a
-//!       DeltaOp (via Δ ref) and a MetaOp σ̃ that exist
-//! - [ ] B8. ⚡cascade refs: every Conv flag_type="cascade" must reference a ⊟
-//!       cascade_name that exists among DeltaOps
-//! - [ ] B9. ⊕⊳ monitor refs: every Conv kind="monitor" with monitor_flag_ref
+//! - [x] B5. ⊟ cascade consistency: every cascade must have ≥2 steps
+//! - [ ] B6. ⊕ observable targets exist — deferred: needs Diag table in snapshot
+//!       (observables stored as Diag entries, not yet collected)
+//! - [ ] B7. ⚡resist refs resolve — deferred: flag_expr parsing needed to extract
+//!       structured Δ/σ̃ references from free-text flag expressions
+//! - [ ] B8. ⚡cascade refs resolve — deferred: same as B7, flag_expr is free-text
+//! - [x] B9. ⊕⊳ monitor refs: every Conv kind="monitor" with monitor_flag_ref
 //!       must reference a flag or trajectory that exists
 //!
 //! ## Group C — Scope invariants (need pathway/block context)
 //!
 //! - [x] C1. Ring closure consistency: ring IDs on edges are paired
-//! - [ ] C2. ⊟ rank monotonicity: within a cascade, Δ ranks are non-decreasing
-//! - [ ] C3. Δ depends: scope — depends: refs must resolve to a lower-rank Δ
+//! - [x] C2. ⊟ rank monotonicity: within a cascade, Δ ranks are non-decreasing
+//! - [ ] C3. Δ depends: scope — deferred: requires pathway-scoped traversal
+//!       context to enforce "depends: must resolve to a lower-rank Δ within
+//!       the same pathway or declared ::Δ_refs." Current check (B4) validates
+//!       existence only, not scope.
 //!
 //! ## Testing strategy
 //!
 //! Each invariant gets two tests minimum: one positive (clean construct passes)
 //! and one negative (deliberately broken construct fails with expected error).
-//! Tests construct ProgramSnapshot directly without SpacetimeDB.
+//! Tests construct ProgramSnapshot directly without SpacetimeDB (verified:
+//! zero parse_* calls in test module — pure isolation).
 //! Assertions use `errors.iter().any(|e| ...)` not index-based access.
 
 use super::common::*;
