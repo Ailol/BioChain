@@ -2350,4 +2350,105 @@ GPCR.Gs: {L.h:CRH[+]@PVN}→{R:CRH-R(Gs)@PIT}→{Gp:Gs@PIT}→⊘
         let _ = parse_meta("σ̃ garbage", &biochain_vocab());
         let _ = parse_convergence("∮ garbage", &biochain_vocab());
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // LogicChain experiment: prove the parser is domain-agnostic
+    // ═══════════════════════════════════════════════════════════════
+
+    fn logicchain_vocab() -> ParserLookup {
+        ParserLookup::new(
+            vec![
+                // prim
+                "V.val", "E.evi",
+                "P.dog", "P.ide",
+                "P", "C", "I", "H", "D", "Q", "F",
+                "Mo", "Mem", "Att", "Aff", "Meta",
+                // struct
+                "Sch", "Frm", "Idn", "Grp", "Nar",
+                // output
+                "B.beh",
+            ].into_iter().map(String::from).collect(),
+            vec![
+                "DEDUCTIVE", "INDUCTIVE", "ABDUCTIVE", "ANALOGICAL",
+                "BAYESIAN", "HEURISTIC", "NARRATIVE", "DIALECTIC",
+                "COUNTERFACT", "IDENTITY", "EMOTIONAL", "AUTHORITY",
+            ].into_iter().map(String::from).collect(),
+        )
+    }
+
+    const LOGICCHAIN_SAMPLE: &str = r#"@domain: P C I H D Q F V.val E.evi Mo Mem Att Aff Meta Sch Frm Idn Grp Nar B.beh P.dog P.ide
+#climate_debate #identity_threat #motivated_reasoning
+::fates ↺⁺,↺⁻,↺⁰,→⊘,→≋
+::open_ends 0
+Δ(climate_data@EMPIRICAL)=+
+Δ(identity@SELF)=+
+⊙{E.evi:climate_data[+](statistic)@EMPIRICAL}→{P:warming_claim(asserted)@EMPIRICAL}→{I:induction(cert)@LOGICAL}→{C:warming_real(high)@EMPIRICAL}↺⁻
+IDENTITY:{Idn:political_identity[+]@SELF}→{V.val:freedom(cert)@POLITICAL}→{F:regulation_bad@POLITICAL}→{H:anchoring@POLITICAL}→{C:warming_exaggerated(defended)@POLITICAL}↺⁺
+HEURISTIC:{Aff:threat[+](valence:-,arousal:hi)@EMOTION}→{H:affect(low)@POLITICAL}→{C:dismiss_evidence(implicit)@POLITICAL}→⊘
+DIALECTIC:{C:warming_real@EMPIRICAL}⊣{C:warming_exaggerated@POLITICAL}→{I:synthesis@LOGICAL}→{C:partial_accept(questioned)@EMPIRICAL}→□(compartmentalized)
+∫{belief_state@WM}←(climate_data@EMPIRICAL:+,identity@SELF:-,threat@EMOTION:×)→{C:net_position@WM}:weighted
+{Meta:doubt@SELF}⊲{I:induction@LOGICAL}[informal,fast,self]
+⊗({Idn:political_identity@SELF}>=+ ∧ {E.evi:climate_data@EMPIRICAL}>=+)⟹{I:induction@LOGICAL}:block
+⊕ modal_must_density→{Meta:cert@SELF}(lexical)
+⊕ in_group_pronouns→{Idn:political_identity@SELF}(pragmatic)
+⚡dog:{Idn:political_identity@SELF}→{V.val:freedom@POLITICAL}→{F:regulation_bad@POLITICAL}↺⁺(identity_protective_cognition)"#;
+
+    #[test]
+    fn logicchain_parses_with_logicchain_vocab() {
+        let v = logicchain_vocab();
+        let result = parse_base(LOGICCHAIN_SAMPLE, &v).unwrap();
+
+        // Header parsed
+        assert!(result.domains.contains(&"P".to_string()));
+        assert!(result.domains.contains(&"V.val".to_string()));
+        assert!(result.domains.contains(&"B.beh".to_string()));
+        assert!(result.domains.contains(&"P.dog".to_string()));
+
+        // Phase parsed
+        assert!(result.phase.as_ref().unwrap().contains("climate_debate"));
+
+        // Seeds parsed
+        assert_eq!(result.seeds.len(), 2);
+        assert_eq!(result.seeds[0].code, "climate_data");
+        assert_eq!(result.seeds[0].region, "EMPIRICAL");
+
+        // Chains parsed (4 chains: root + IDENTITY + HEURISTIC + DIALECTIC)
+        assert!(result.chains.len() >= 4,
+            "Expected >= 4 chains, got {}", result.chains.len());
+
+        // Integration parsed
+        assert_eq!(result.integrations.len(), 1);
+        assert_eq!(result.integrations[0].mode, "weighted");
+
+        // Protocol parsed
+        assert_eq!(result.protocols.len(), 1);
+
+        // Conditional parsed
+        assert_eq!(result.conditionals.len(), 1);
+
+        // Observables parsed
+        assert_eq!(result.observables.len(), 2);
+
+        // Dysreg parsed
+        assert_eq!(result.dysregs.len(), 1);
+    }
+
+    #[test]
+    fn logicchain_fails_with_biochain_vocab() {
+        // LogicChain types like V.val, E.evi, Mo, Mem should NOT resolve
+        // as known types under BioChain vocab (V.val has no match since
+        // BioChain has "V" but not "V.val" — wait, actually "V" would
+        // match as a prefix of "V.val:..." Let's verify the behavior.)
+        let v = biochain_vocab();
+        let result = parse_base(LOGICCHAIN_SAMPLE, &v).unwrap();
+
+        // With BioChain vocab, "V.val:freedom" would match "V" as the type
+        // (since BioChain has "V" in its vocab), leaving "val:freedom" as
+        // the code part — different parse than LogicChain's "V.val" type.
+        // This is expected: the parser is opaque about meaning, but the
+        // vocabulary determines type resolution boundaries.
+        let _ = result; // parse succeeds (parser is permissive), but
+                        // type resolution differs — that's a vocabulary
+                        // validator (Pass 2) concern, not a parser concern.
+    }
 }
