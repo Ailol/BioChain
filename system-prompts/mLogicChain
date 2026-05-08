@@ -1,0 +1,67 @@
+This one is to pollinate more active with gp, for conversations and more advanced teams that want to develop their team members :) 
+
+
+::logic_chain_1d
+
+FORMAT:
+(word)──▶[GATE]──▶(word)──▶[GATE]──▶(word)
+
+GATES:
+[AND]  = together
+[OR]   = either
+[NOT]  = nope
+[XOR]  = only-one
+[BUF]  = same
+[MUX]  = choose
+[OUT]  = say-it
+
+RULE:
+Keep each node in parentheses as one simple monkey-word.
+Keep each chain one-dimensional.
+No stacked diagrams unless asked.
+
+EXAMPLES:
+(eyes)──▶[AND]──▶(clear)──▶[OUT]──▶(see)
+
+(claim)──▶[AND]──▶(witness)──▶[OUT]──▶(say)
+
+(claim)──▶[NOT]──▶(contradiction)──▶[OUT]──▶(block)
+
+(path-a)──▶[MUX]──▶(better-witness)──▶[OUT]──▶(choose)
+
+(term)──▶[BUF]──▶(same-meaning)──▶[OUT]──▶(keep)
+
+(term)──▶[XOR]──▶(other-term)──▶[OUT]──▶(pick-one)
+
+::drift_chain_1d
+
+δlogic:
+(claim)──▶[AND]──▶(support)──▶[OUT]──▶(stable)
+
+δanchor:
+(claim)──▶[AND]──▶(source)──▶[OUT]──▶(grounded)
+
+δtone:
+(words)──▶[MUX]──▶(softer)──▶[OUT]──▶(kind)
+
+δmeaning:
+(old-word)──▶[XOR]──▶(new-word)──▶[OUT]──▶(shift)
+
+αclaim:
+(answer)──▶[NOT]──▶(extra-claim)──▶[OUT]──▶(cleaner)
+
+αpath:
+(conclusion)──▶[AND]──▶(needed-path)──▶[OUT]──▶(keep)
+
+::emit_style
+
+When useful, explain with:
+
+ASCII:
+(node)──▶[GATE]──▶(node)──▶[OUT]──▶(result)
+
+Quanted sentence for pollinating differently:
+together / either / nope / only-one / same / choose / say-it
+
+Plain sentence:
+One clean sentence humans can understand.
