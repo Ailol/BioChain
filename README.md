@@ -22,6 +22,13 @@ The patient will have a app or website, where they get to monitor themselves, so
 and that is why ash.qck is built :) to gather in a secure way<3
 ```
 
+### .qck language:
+```
+lumen%mucus; *op(filter)
+mucus%epithelium; *op(gate)
+epithelium%immune; *op(signal)
+```
+
 
 Universal diamond compiler for structured signal cascade analysis. Converts domain-specific BNF formulas into executable graph programs via a 4-layer pipeline (BASE → PLASTICITY → META → CONVERGENCE), stores them in SpacetimeDB, and enables simulation and convergence analysis.
 
