@@ -13,8 +13,14 @@ The peak'
 ```
 Its so good, that in 5 minutes you can run ALL medications through lets say
 - reasoning is bad when im stressed, and it will find the best fucking thing that fixes that, or supplements or foods or coffee even <33
-````
-
+```
+---
+### The idea is that:
+```
+doctors will be able tor ead in a request for prescription the chain, how it was compiled and why the request comes in.
+The patient will have a app or website, where they get to monitor themselves, so that lowback pain problems also gather data.
+and that is why ash.qck is built :) to gather in a secure way<3
+```
 
 
 Universal diamond compiler for structured signal cascade analysis. Converts domain-specific BNF formulas into executable graph programs via a 4-layer pipeline (BASE → PLASTICITY → META → CONVERGENCE), stores them in SpacetimeDB, and enables simulation and convergence analysis.
