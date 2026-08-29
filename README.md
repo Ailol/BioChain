@@ -3,6 +3,7 @@
 ```
 Co-author: Ailo > its life, day to day, and to minmax
 Co-author: Claude >this is a structured signal cascade analysis.
+The sheriff' of old that made it huge: Børre P, as nato got 12 revolvers on the table, and børre started that movement with "it makes sense, its like having a revolver in the holster,ready to shoot at any moment, thank ailo and claude(+gcd) <3" 
 ```
 The notion'
 > Yesterday you put in what you ate, today you wake up with "good/bad simulations about the day"
