@@ -1,6 +1,6 @@
 # Base BioChain
 
-<img width="335" height="300" alt="base positive biochain" src="https://github.com/user-attachments/assets/c5bbbad0-ac19-41a2-bc8e-9d58e621c8e9" />
+<img width="535" height="400" alt="base positive biochain" src="https://github.com/user-attachments/assets/c5bbbad0-ac19-41a2-bc8e-9d58e621c8e9" />
 
 # Negating BioChain
 
